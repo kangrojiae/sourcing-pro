@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Sourcing Pro 수집기 설정</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --line:#e8ebee; --line2:#eef1f4; --text:#1f2937; --sub:#8a93a0; --sub2:#a3abb6;
+    --teal:#12a58c; --orange:#f5642d; --red:#e5484d; --green:#16a34a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",-apple-system,"Segoe UI",sans-serif;
+    font-size:13px;padding:36px 24px;
+  }
+  .wrap{max-width:600px;margin:0 auto;}
+  h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.6px;color:#242c38;}
+  h1 span{color:var(--orange);}
+  .lead{margin:9px 0 26px;font-size:12.5px;color:var(--sub);line-height:1.65;letter-spacing:-.2px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px;}
+  h2{margin:0 0 4px;font-size:14px;font-weight:800;letter-spacing:-.35px;color:#1b222c;}
+  .sub{margin:0 0 18px;font-size:11.5px;color:var(--sub);line-height:1.65;letter-spacing:-.2px;}
+  label{display:block;font-size:11.5px;color:#6b7480;font-weight:600;margin:14px 0 6px;letter-spacing:-.2px;}
+  input{
+    width:100%;border:1px solid #e3e7ec;border-radius:9px;padding:10px 12px;font-size:12.5px;
+    color:#333c48;background:#fff;outline:none;letter-spacing:-.2px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .hint{margin-top:6px;font-size:10.5px;color:var(--sub2);line-height:1.6;letter-spacing:-.2px;}
+  .btns{display:flex;gap:9px;margin-top:22px;}
+  button{
+    border:none;border-radius:9px;padding:10px 18px;cursor:pointer;font-family:inherit;
+    font-size:12.5px;font-weight:700;letter-spacing:-.2px;
+  }
+  .primary{background:var(--teal);color:#fff;}
+  .ghost{background:#fff;border:1px solid var(--line);color:#5b6472;}
+  .danger{background:#fff;border:1px solid #f6d5d6;color:var(--red);}
+  button:disabled{opacity:.55;cursor:not-allowed;}
+  .msg{margin-top:16px;font-size:11.5px;line-height:1.65;letter-spacing:-.2px;color:var(--sub);}
+  .msg.ok{color:#0f8f78;} .msg.err{color:var(--red);}
+  pre{
+    margin-top:12px;background:#f7f9fa;border:1px solid var(--line2);border-radius:9px;padding:12px;
+    font-size:10.5px;line-height:1.6;color:#3f4753;overflow:auto;max-height:240px;white-space:pre-wrap;word-break:break-all;
+  }
+  ol{margin:0;padding-left:18px;font-size:11.5px;color:#6b7480;line-height:1.9;letter-spacing:-.2px;}
+  ol b{color:#3f4753;}
+  code{
+    background:#f1f3f6;border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;
+  }
+  .note{
+    background:#fffaeb;border:1px solid #fceec4;border-radius:11px;padding:13px 15px;margin-top:18px;
+    font-size:11.5px;color:#9a7b3a;line-height:1.65;letter-spacing:-.2px;
+  }
+  .note b{color:#7d6229;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SOURCING <span>PRO</span> 수집기 설정</h1>
+  <p class="lead">키워드 검색량을 받아오려면 네이버 검색광고 API 키가 필요합니다. 입력한 값은 이 브라우저 안에만 저장되며 어디로도 전송되지 않습니다.</p>
+
+  <div class="card">
+    <h2>네이버 검색광고 API</h2>
+    <p class="sub">검색광고 계정의 도구 &gt; API 관리자에서 발급합니다.</p>
+    <ol>
+      <li><a href="https://searchad.naver.com" target="_blank" rel="noopener">searchad.naver.com</a> 에 로그인합니다.</li>
+      <li>오른쪽 위 <b>도구</b> &gt; <b>API 사용 관리</b> 로 들어갑니다.</li>
+      <li><b>네이버 검색광고 API 라이선스</b>를 발급하면 액세스라이선스와 비밀키가 나옵니다.</li>
+      <li>같은 화면 위쪽의 <b>CUSTOMER_ID</b> 를 함께 적어둡니다.</li>
+    </ol>
+
+    <label for="apiKey">액세스라이선스 (X-API-KEY)</label>
+    <input id="apiKey" spellcheck="false" placeholder="0100000000...">
+    <label for="secret">비밀키 (Secret Key)</label>
+    <input id="secret" type="password" spellcheck="false" placeholder="AQAAAAA...">
+    <div class="hint">비밀키는 저장 후 다시 보이지 않습니다. 바꿀 때만 새로 입력하세요.</div>
+    <label for="customer">CUSTOMER_ID</label>
+    <input id="customer" spellcheck="false" placeholder="1234567">
+
+    <div class="btns">
+      <button class="primary" id="save">저장</button>
+      <button class="ghost" id="test">연결 테스트</button>
+      <button class="danger" id="clear">지우기</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <pre id="raw" hidden></pre>
+
+    <div class="note"><b>키는 이 브라우저에만 저장됩니다.</b> Sourcing Pro 페이지나 서버로 넘어가지 않습니다. 공용 PC에서는 다 쓰신 뒤 지우기를 눌러주세요.</div>
+  </div>
+</div>
+<script src="options.js"></script>
+</body>
+</html>

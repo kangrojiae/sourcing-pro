@@ -1,0 +1,3322 @@
+﻿<title>Sourcing Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+  :root{
+    --bg:#f4f6f8;
+    --line:#e8ebee;
+    --line2:#eef1f4;
+    --text:#1f2937;
+    --sub:#8a93a0;
+    --sub2:#a3abb6;
+    --teal:#12a58c;
+    --teal-d:#0e8f79;
+    --teal-l:#e8f7f3;
+    --orange:#f5642d;
+    --orange-l:#fff1ec;
+    --red:#e5484d;
+    --green:#16a34a;
+    --amber:#f5a524;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+    --font:"Pretendard","Pretendard Variable","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:13px;
+    -webkit-font-smoothing:antialiased;
+  }
+  input,select,textarea{font-family:inherit;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  button:disabled{cursor:not-allowed;opacity:.55;}
+  a{color:inherit;}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ================= AUTH ================= */
+  .auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 424px;background:var(--bg);}
+  .auth-side{
+    background:#141b24;color:#e6ebf1;padding:56px 52px;display:flex;flex-direction:column;gap:34px;justify-content:center;
+  }
+  .auth-side h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-1px;color:#fff;}
+  .auth-side h1 span{color:var(--orange);}
+  .auth-side .tag{margin:9px 0 0;font-size:13px;color:#8f9bab;letter-spacing:-.3px;}
+  .auth-feat{display:flex;flex-direction:column;gap:14px;max-width:470px;}
+  .auth-feat div{display:flex;gap:11px;align-items:flex-start;font-size:13px;color:#b6c0cd;line-height:1.55;letter-spacing:-.2px;}
+  .auth-feat b{color:#fff;font-weight:700;}
+  .auth-feat i{
+    flex:0 0 20px;width:20px;height:20px;border-radius:6px;background:#23303d;color:var(--teal);
+    font-style:normal;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .auth-demo{background:#1b232d;border:1px solid #26313d;border-radius:14px;padding:16px 18px;max-width:470px;}
+  .auth-demo .cap{font-size:10px;font-weight:700;letter-spacing:.8px;color:#6d7b8b;text-transform:uppercase;}
+  .auth-demo .row{display:flex;gap:26px;margin-top:12px;flex-wrap:wrap;}
+  .auth-demo .row div{min-width:0;}
+  .auth-demo .k{font-size:10.5px;color:#7d8b9a;letter-spacing:-.2px;}
+  .auth-demo .v{margin-top:4px;font-size:17px;font-weight:800;letter-spacing:-.5px;color:#e9eef4;}
+  .auth-demo .v.good{color:#3ddc9a;}
+  .auth-main{background:#fff;display:flex;align-items:center;justify-content:center;padding:40px 44px;border-left:1px solid var(--line);}
+  .auth-card{width:100%;max-width:328px;}
+  .auth-card h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.6px;color:#1b222c;}
+  .auth-card .lead{margin:8px 0 26px;font-size:12.5px;color:var(--sub);letter-spacing:-.2px;line-height:1.6;}
+  .auth-card label{display:block;font-size:11.5px;color:#6b7480;font-weight:600;margin:14px 0 7px;letter-spacing:-.2px;}
+  .auth-card input{
+    width:100%;border:1px solid #e3e7ec;border-radius:9px;padding:11px 12px;font-size:13px;
+    color:#333c48;background:#fff;outline:none;letter-spacing:-.2px;
+  }
+  .auth-card input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .auth-submit{
+    width:100%;margin-top:22px;background:linear-gradient(135deg,#1cb894,#0f9c86);color:#fff;border-radius:10px;
+    padding:12px 0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;box-shadow:0 3px 10px rgba(18,165,140,.28);
+  }
+  .auth-alt{margin-top:16px;text-align:center;font-size:12px;color:var(--sub);letter-spacing:-.2px;}
+  .auth-alt button{color:var(--teal);font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+  .auth-err{
+    margin-top:16px;background:#fff1f1;border:1px solid #ffd9d9;color:#c53236;border-radius:9px;
+    padding:10px 12px;font-size:11.5px;line-height:1.5;letter-spacing:-.2px;
+  }
+  .auth-note{margin-top:24px;padding-top:16px;border-top:1px solid var(--line2);font-size:10.5px;color:var(--sub2);line-height:1.6;letter-spacing:-.2px;}
+
+  /* ================= LAYOUT ================= */
+  .app{display:flex;min-height:100vh;}
+  .sidebar{
+    width:208px;flex:0 0 208px;background:#fff;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+  }
+  .brand{padding:22px 20px 18px;}
+  .brand h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.4px;color:#242c38;}
+  .brand h1 span{color:var(--orange);}
+  .brand p{margin:5px 0 0;font-size:9.5px;color:var(--sub2);letter-spacing:-.5px;white-space:nowrap;}
+  .nav{padding:6px 12px;display:flex;flex-direction:column;gap:2px;}
+  .nav a{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+    color:#6b7480;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:-.2px;
+  }
+  .nav a:hover{background:#f6f7f9;}
+  .nav a.active{background:var(--orange-l);color:var(--orange);font-weight:700;}
+  .nav a.active svg{stroke:var(--orange);}
+  .nav svg{width:16px;height:16px;stroke:#98a1ac;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:0 0 16px;}
+  .nav .tagme{margin-left:auto;font-size:9px;font-weight:800;color:#fff;background:#2b3542;border-radius:5px;padding:2px 5px;letter-spacing:0;}
+  .nav-div{height:1px;background:var(--line2);margin:12px 20px;}
+  .ext-box{margin:auto 14px 18px;border-radius:14px;padding:13px 12px;border:1px solid var(--line);background:#fbfcfd;}
+  .ext-box .st{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:-.2px;color:#3f4753;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#cfd5dc;flex:0 0 7px;}
+  .dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14);}
+  .dot.off{background:#cbd2d9;}
+  .ext-box p{margin:7px 0 0;font-size:10.5px;color:var(--sub);line-height:1.55;letter-spacing:-.2px;}
+  .ext-box button{
+    width:100%;margin-top:10px;background:#2b3542;color:#fff;border-radius:9px;padding:8px 0;
+    font-size:11px;font-weight:700;letter-spacing:-.2px;
+  }
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 24px;border-bottom:1px solid var(--line);background:#fff;
+  }
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub);min-width:0;}
+  .crumbs svg{width:15px;height:15px;stroke:#a3abb6;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:0 0 15px;}
+  .crumbs .sep{color:#cfd5dc;}
+  .crumbs .cur{color:#3f4753;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .top-right{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .ghost-btn{
+    display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;
+    padding:8px 14px;border-radius:9px;font-size:12.5px;color:#5b6472;font-weight:500;
+  }
+  .ghost-btn svg{width:14px;height:14px;stroke:#7d8794;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .user{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#3f4753;font-weight:600;}
+  .avatar{width:26px;height:26px;border-radius:50%;background:#eef1f4;display:flex;align-items:center;justify-content:center;flex:0 0 26px;}
+  .avatar svg{width:14px;height:14px;stroke:#98a1ac;stroke-width:1.8;fill:none;}
+  .role-chip{font-size:9.5px;font-weight:800;letter-spacing:-.1px;padding:3px 6px;border-radius:6px;background:#eef1f4;color:#6b7480;}
+  .role-chip.admin{background:#2b3542;color:#fff;}
+
+  .page{padding:20px 24px 34px;flex:1;}
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:18px;}
+  .page-head h2{margin:0;font-size:25px;font-weight:800;letter-spacing:-.8px;color:#1b222c;}
+  .page-head p{margin:7px 0 0;font-size:12.5px;color:var(--sub);letter-spacing:-.2px;}
+  .actions{display:flex;align-items:center;gap:9px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+  .act{
+    display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;color:#4f5866;box-shadow:var(--shadow);
+  }
+  .act svg{width:15px;height:15px;stroke:#6f7885;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .act.primary{
+    background:linear-gradient(135deg,#1cb894,#0f9c86);color:#fff;border:none;
+    box-shadow:0 3px 10px rgba(18,165,140,.28);padding:10px 20px;
+  }
+  .act.primary svg{stroke:#fff;}
+  .act.danger{color:var(--red);border-color:#f6d5d6;}
+  .act.danger svg{stroke:var(--red);}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .cols{display:grid;grid-template-columns:404px minmax(0,1fr);gap:18px;align-items:start;}
+
+  /* ================= COUPANG PANEL ================= */
+  .cp{border:1.5px solid #ffd9c9;overflow:hidden;}
+  .cp-head{display:flex;align-items:center;gap:11px;padding:16px 18px;background:#fff6f2;border-bottom:1px solid #ffe6da;}
+  .cp-logo{width:34px;height:34px;border-radius:9px;background:#f13d2c;color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:0 0 34px;}
+  .cp-head h3{margin:0;font-size:15px;font-weight:800;color:#e14a22;letter-spacing:-.3px;}
+  .cp-head p{margin:3px 0 0;font-size:11.5px;color:#b58a78;letter-spacing:-.2px;}
+  .cp-body{padding:18px;}
+  .prod{display:flex;gap:14px;}
+  .thumb{
+    width:104px;height:104px;flex:0 0 104px;border-radius:13px;background:#fdeef0;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .thumb img{width:100%;height:100%;object-fit:cover;}
+  .prod-info{min-width:0;flex:1;}
+  .prod-info .pname{font-size:13.5px;font-weight:700;line-height:1.45;letter-spacing:-.3px;color:#242c38;word-break:break-word;}
+  .prod-info .pname.empty{color:var(--sub2);font-weight:500;}
+  .cat{margin-top:7px;font-size:11px;color:var(--sub2);letter-spacing:-.2px;word-break:break-all;}
+  .price{margin-top:8px;font-size:21px;font-weight:800;color:#f13d2c;letter-spacing:-.6px;}
+  .rate{margin-top:7px;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--sub);flex-wrap:wrap;}
+  .rate b{color:var(--amber);font-weight:700;}
+  .rate .star{color:var(--amber);}
+  .rate .bar{color:#dfe3e8;}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+  .stat{background:#f7f9fa;border:1px solid #edf0f3;border-radius:11px;padding:12px 13px;}
+  .stat .k{font-size:11px;color:var(--sub);letter-spacing:-.2px;}
+  .stat .v{margin-top:5px;font-size:17px;font-weight:800;letter-spacing:-.5px;color:#222a35;}
+
+  .field{margin-top:16px;}
+  .field label{display:block;font-size:11.5px;color:#6b7480;font-weight:600;margin-bottom:7px;letter-spacing:-.2px;}
+  .input-row{display:flex;gap:8px;}
+  .input{
+    flex:1;min-width:0;border:1px solid #e3e7ec;border-radius:9px;padding:10px 12px;
+    font-size:12px;color:#5b6472;background:#fff;outline:none;letter-spacing:-.2px;
+  }
+  .input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .icon-btn{
+    width:38px;flex:0 0 38px;border:1px solid #e3e7ec;border-radius:9px;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{background:#f7f9fa;}
+  .icon-btn svg{width:15px;height:15px;stroke:#7d8794;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .grab-btn{
+    flex:0 0 auto;display:flex;align-items:center;gap:6px;background:var(--teal);color:#fff;border-radius:9px;
+    padding:0 14px;font-size:11.5px;font-weight:700;letter-spacing:-.2px;
+  }
+  .grab-btn svg{width:13px;height:13px;stroke:#fff;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .grab-btn.busy{background:#9fb3b0;}
+  .suffix{position:relative;flex:1;display:flex;}
+  .suffix .input{padding-right:34px;font-weight:600;color:#333c48;}
+  .suffix span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#9aa3ae;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* ================= 1688 PANEL ================= */
+  .cn{border:1.5px solid #c9ece4;overflow:hidden;}
+  .cn-head{display:flex;align-items:center;gap:11px;padding:16px 18px;background:#eefaf6;border-bottom:1px solid #d6f0e9;flex-wrap:wrap;}
+  .cn-logo{
+    width:52px;height:34px;border-radius:9px;background:#1668c8;color:#fff;font-weight:800;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 52px;letter-spacing:-.3px;
+  }
+  .cn-head h3{margin:0;font-size:15px;font-weight:800;color:#0f8f78;letter-spacing:-.3px;}
+  .cn-head p{margin:3px 0 0;font-size:11.5px;color:#7fa79d;letter-spacing:-.2px;}
+  .hint{
+    margin-left:auto;display:flex;align-items:center;gap:7px;background:#fffaeb;border:1px solid #fceec4;
+    border-radius:9px;padding:8px 13px;font-size:11.5px;color:#9a7b3a;letter-spacing:-.2px;flex-shrink:0;
+  }
+  .find1688{
+    margin-left:auto;display:flex;align-items:center;gap:7px;background:#123c34;color:#fff;
+    border-radius:10px;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:-.2px;flex-shrink:0;
+    box-shadow:0 2px 8px rgba(18,60,52,.22);
+  }
+  .find1688 svg{width:14px;height:14px;stroke:#fff;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .find1688.busy{background:#5c6b66;box-shadow:none;}
+  .find1688.alt{background:var(--teal);margin-left:8px;}
+  .assist{
+    margin:0 16px 4px;padding:13px 16px;background:#fffaeb;border:1px solid #fceec4;border-radius:12px;
+    font-size:11.5px;color:#9a7b3a;line-height:1.75;letter-spacing:-.2px;
+  }
+  .assist b{color:#7d6229;}
+  .assist .ai{
+    display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:5px;
+    background:#9a7b3a;color:#fff;font-size:9.5px;font-weight:800;margin-right:7px;vertical-align:middle;
+  }
+  .assist .ai:not(:first-child){margin-left:0;margin-top:8px;}
+  .cn-head .hint{margin-left:0;}
+  .srcname{
+    background:#f7f9fa;border:1px solid var(--line2);border-radius:9px;padding:10px 12px;
+    font-size:12px;color:#3f4753;line-height:1.6;letter-spacing:-.2px;word-break:break-word;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{
+    border:1px solid #cfe9e2;background:#fff;color:var(--teal);border-radius:20px;
+    padding:6px 13px;font-size:12px;font-weight:700;letter-spacing:-.2px;
+  }
+  .chip:hover{background:var(--teal-l);}
+
+  .cn-body{padding:16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+
+  .item{border:1.5px solid #e9edf1;border-radius:13px;padding:12px;background:#fff;transition:.15s;position:relative;}
+  .item.sel{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .idx{
+    width:22px;height:22px;border-radius:7px;background:#eef1f4;color:#7d8794;
+    font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  }
+  .item.sel .idx{background:#123c34;color:#fff;}
+  .item-top .right{display:flex;align-items:center;gap:6px;}
+  .clear-x{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+  .clear-x svg{width:11px;height:11px;stroke:#b6bec7;stroke-width:2.2;fill:none;stroke-linecap:round;}
+  .clear-x:hover{background:#f4f6f8;}
+  .clear-x:hover svg{stroke:var(--red);}
+  .radio{
+    width:17px;height:17px;border-radius:50%;border:1.6px solid #d7dde3;background:#fff;
+    display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 17px;
+  }
+  .item.sel .radio{border-color:var(--teal);}
+  .radio i{display:none;width:8px;height:8px;border-radius:50%;background:var(--teal);}
+  .item.sel .radio i{display:block;}
+  .item-img{
+    width:100%;aspect-ratio:1/1;border-radius:11px;background:#f5f6f8;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:10px;
+  }
+  .item-img img{width:100%;height:100%;object-fit:cover;}
+  .item-name{font-size:12px;font-weight:700;line-height:1.45;letter-spacing:-.3px;color:#2a323d;min-height:34px;word-break:break-word;}
+  .item-name.empty{color:var(--sub2);font-weight:500;}
+  .best{
+    position:absolute;top:-9px;left:12px;background:var(--green);color:#fff;font-size:9.5px;font-weight:800;
+    border-radius:6px;padding:3px 7px;letter-spacing:-.2px;box-shadow:0 2px 6px rgba(22,163,74,.3);
+  }
+  .urlrow{margin-top:9px;display:flex;gap:5px;}
+  .urlrow input{
+    flex:1;min-width:0;border:1px solid #e6eaee;border-radius:8px;padding:7px 9px;font-size:10.5px;
+    color:#5b6472;outline:none;background:#fff;
+  }
+  .urlrow input:focus{border-color:var(--teal);}
+  .btns{display:flex;gap:6px;margin-top:8px;}
+  .b-fill{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--teal);color:#fff;
+    border-radius:8px;padding:8px 0;font-size:11px;font-weight:700;letter-spacing:-.2px;
+  }
+  .b-fill.busy{background:#9fb3b0;}
+  .b-fill svg{width:12px;height:12px;stroke:#fff;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .b-out{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #cfe9e2;color:#12a58c;
+    border-radius:8px;padding:8px 0;font-size:11px;font-weight:700;background:#fff;letter-spacing:-.2px;text-decoration:none;
+  }
+  .b-out svg{width:12px;height:12px;stroke:#12a58c;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .f{margin-top:11px;}
+  .f label{display:block;font-size:10.5px;color:#8a93a0;font-weight:600;margin-bottom:6px;letter-spacing:-.2px;}
+  .f input{
+    width:100%;border:1px solid #e3e7ec;border-radius:8px;padding:8px 10px;font-size:12px;
+    color:#333c48;font-weight:600;outline:none;background:#fff;letter-spacing:-.2px;
+  }
+  .f input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .f input.plain{font-weight:500;color:#5b6472;}
+  .mini-profit{
+    margin-top:11px;border-top:1px dashed #e6eaee;padding-top:9px;display:flex;align-items:baseline;justify-content:space-between;
+  }
+  .mini-profit .k{font-size:10.5px;color:#8a93a0;letter-spacing:-.2px;}
+  .mini-profit .v{font-size:13px;font-weight:800;letter-spacing:-.3px;color:var(--green);}
+  .mini-profit .v.neg{color:var(--red);}
+
+  /* ================= CALC ================= */
+  .calc{margin-top:18px;overflow:hidden;}
+  .calc-head{display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid var(--line2);flex-wrap:wrap;}
+  .calc-ico{width:34px;height:34px;border-radius:9px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex:0 0 34px;}
+  .calc-ico svg{width:18px;height:18px;stroke:#fff;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .calc-head h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.4px;color:#1b222c;}
+  .calc-head .desc{font-size:11.5px;color:var(--sub2);letter-spacing:-.2px;margin-left:2px;}
+  .calc-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .fx{background:#f7f9fa;border:1px solid #edf0f3;border-radius:10px;padding:7px 13px;text-align:right;}
+  .fx .k{font-size:10px;color:var(--sub2);}
+  .fx .v{font-size:11.5px;font-weight:700;color:#3f4753;margin-top:2px;}
+  .fx .v em{font-style:normal;color:#c3cad2;margin-right:3px;}
+  .fx-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:600;color:#5b6472;background:#fff;}
+  .fx-btn svg{width:14px;height:14px;stroke:#7d8794;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+  .tiles{padding:18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+  .tile{border-radius:13px;padding:15px;display:flex;gap:12px;align-items:flex-start;}
+  .t-ico{width:30px;height:30px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 30px;}
+  .t-ico svg{width:15px;height:15px;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .tile .k{font-size:11px;font-weight:600;letter-spacing:-.2px;}
+  .tile .v{margin-top:6px;font-size:21px;font-weight:800;letter-spacing:-.7px;line-height:1.1;}
+  .tile .v small{font-size:11px;font-weight:600;margin-left:3px;}
+  .tile .s{margin-top:6px;font-size:10.5px;letter-spacing:-.2px;line-height:1.5;}
+  .t1{background:#eef4ff;} .t1 .k{color:#4a6ea8;} .t1 .v{color:#1f4e9c;} .t1 .s{color:#7d97c2;} .t1 .t-ico svg{stroke:#3b82f6;}
+  .t2{background:#eafaf5;} .t2 .k{color:#4b8a7c;} .t2 .v{color:#0f7a66;} .t2 .s{color:#84b3a8;} .t2 .t-ico svg{stroke:#12a58c;}
+  .t3{background:#f3f0ff;} .t3 .k{color:#7161ad;} .t3 .v{color:#5b46a8;} .t3 .s{color:#a396d1;} .t3 .t-ico svg{stroke:#7c5cf0;}
+  .t4{background:#fff3ec;} .t4 .k{color:#b1785c;} .t4 .v{color:#e8622c;} .t4 .s{color:#c9a08c;} .t4 .t-ico svg{stroke:#f5642d;}
+  .t5{background:#e9f9ef;} .t5 .k{color:#4d8c65;} .t5 .v{color:#128c4a;} .t5 .s{color:#7fb896;} .t5 .t-ico svg{stroke:#16a34a;}
+  .t5.loss{background:#fff1f1;} .t5.loss .k{color:#a8595c;} .t5.loss .v{color:var(--red);} .t5.loss .s{color:#c99295;} .t5.loss .t-ico svg{stroke:var(--red);}
+
+  /* ---------- api key panel ---------- */
+  .apibox{
+    display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);
+  }
+  .apibox.on{background:#f4fbf9;border-color:#cfe9e2;box-shadow:none;}
+  .apibox.off{background:#fff8f4;border-color:#ffd9c9;}
+  .apibox > div{flex:1;min-width:0;}
+  .apibox .ab-t{font-size:13px;font-weight:700;color:#242c38;letter-spacing:-.3px;}
+  .apibox .ab-s{margin-top:4px;font-size:11.5px;color:var(--sub);letter-spacing:-.2px;line-height:1.6;}
+  .apibox button{flex-shrink:0;}
+
+  /* ---------- coupang ranking ---------- */
+  .rankno{
+    display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;
+    background:#f1f3f6;color:#6b7480;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;
+  }
+  .rankno.top{background:#123c34;color:#fff;}
+  .revcell{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+  .revcell .bar-track{flex:0 0 56px;}
+
+  /* ---------- season banner ---------- */
+  .season{
+    display:flex;gap:12px;align-items:flex-start;margin:0 16px 16px;padding:13px 15px;
+    background:#f2f7ff;border:1px solid #dce8fa;border-radius:12px;
+  }
+  .season .sc-ico{font-size:15px;line-height:1.4;flex-shrink:0;}
+  .season .sc-t{font-size:12.5px;font-weight:600;color:#2c4f85;letter-spacing:-.2px;}
+  .season .sc-t b{color:#1f4e9c;font-weight:800;}
+  .season .sc-s{margin-top:5px;font-size:11.5px;color:#6b87ad;letter-spacing:-.2px;line-height:1.6;}
+  .season .sc-s b{color:#2c4f85;font-weight:700;}
+  .season-chip{
+    font-size:9.5px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:7px;
+    background:#eef4ff;color:#3b82f6;vertical-align:middle;
+  }
+
+  /* ---------- keyword recommendation ---------- */
+  .reco{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line2);}
+  .reco:last-child{border-bottom:none;}
+  .reco .rank{
+    flex:0 0 26px;width:26px;height:26px;border-radius:9px;background:#123c34;color:#fff;
+    font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .reco .rmain{flex:1;min-width:0;}
+  .rtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+  .rkw{font-size:14.5px;font-weight:800;color:#1b222c;letter-spacing:-.4px;word-break:break-all;}
+  .rscore{font-size:17px;font-weight:800;color:#0f7a66;letter-spacing:-.5px;flex-shrink:0;}
+  .rscore small{font-size:10.5px;font-weight:600;margin-left:2px;}
+  .rscore em{
+    font-style:normal;font-size:9.5px;font-weight:700;color:#9a7b3a;background:#fffaeb;
+    border:1px solid #fceec4;border-radius:5px;padding:2px 5px;margin-left:7px;vertical-align:middle;
+  }
+  .rmeta{margin-top:8px;font-size:11.5px;color:var(--sub);letter-spacing:-.2px;}
+  .rsay{margin-top:5px;font-size:12px;color:#4f5866;letter-spacing:-.2px;line-height:1.6;}
+
+  .summary{
+    padding:4px 18px 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:0 32px;border-top:1px solid var(--line2);margin-top:2px;
+  }
+  .srow{
+    display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+    padding:9px 0;border-bottom:1px solid var(--line2);
+  }
+  .srow .sk{font-size:11.5px;color:var(--sub);letter-spacing:-.2px;}
+  .srow .sv{font-size:12.5px;font-weight:700;color:#333c48;letter-spacing:-.3px;}
+  .srow.total{grid-column:1/-1;border-bottom:none;padding-top:12px;margin-top:4px;border-top:1.5px solid #dfe4ea;}
+  .srow.total .sk{font-size:12.5px;font-weight:700;color:#2a323d;}
+  .srow.total .sv{font-size:16px;font-weight:800;color:var(--green);letter-spacing:-.5px;}
+  .srow.total .sv.neg{color:var(--red);}
+  @media (max-width:900px){ .summary{grid-template-columns:1fr;} }
+
+  .memo{display:flex;align-items:center;gap:12px;padding:14px 18px;border-top:1px solid var(--line2);}
+  .memo-label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#3f4753;flex-shrink:0;}
+  .memo input{flex:1;border:none;outline:none;font-size:12.5px;color:#3f4753;background:transparent;letter-spacing:-.2px;min-width:0;}
+  .memo input::placeholder{color:#b6bec7;}
+  .memo .count{font-size:11px;color:#b6bec7;flex-shrink:0;}
+
+  /* ================= TABLES / LISTS ================= */
+  .toolbar{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line2);flex-wrap:wrap;}
+  .search{position:relative;flex:1;min-width:180px;max-width:360px;display:flex;}
+  .search input{
+    width:100%;border:1px solid #e3e7ec;border-radius:9px;padding:9px 12px 9px 32px;font-size:12.5px;
+    color:#3f4753;outline:none;letter-spacing:-.2px;background:#fff;
+  }
+  .search input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:#9aa3ae;stroke-width:1.8;fill:none;stroke-linecap:round;}
+  select.sel-box{
+    border:1px solid #e3e7ec;border-radius:9px;padding:9px 11px;font-size:12.5px;color:#3f4753;
+    background:#fff;outline:none;letter-spacing:-.2px;
+  }
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px;}
+  thead th{
+    text-align:left;font-size:11px;font-weight:700;color:#8a93a0;letter-spacing:-.2px;
+    padding:11px 16px;border-bottom:1px solid var(--line2);white-space:nowrap;background:#fcfdfd;
+  }
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--line2);color:#3f4753;letter-spacing:-.2px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#fbfcfd;}
+  td.r,th.r{text-align:right;}
+  .cell-prod{display:flex;align-items:center;gap:11px;min-width:0;}
+  .cell-thumb{width:40px;height:40px;flex:0 0 40px;border-radius:9px;background:#f5f6f8;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .cell-thumb img{width:100%;height:100%;object-fit:cover;}
+  .cell-prod .nm{font-weight:700;color:#242c38;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;}
+  .cell-prod .sm{font-size:10.5px;color:var(--sub2);margin-top:3px;}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;border-radius:20px;padding:4px 9px;letter-spacing:-.2px;}
+  .pill.good{background:#e9f9ef;color:#128c4a;}
+  .pill.mid{background:#fffaeb;color:#9a7b3a;}
+  .pill.bad{background:#fff1f1;color:#c53236;}
+  .pill.gray{background:#f1f3f6;color:#6b7480;}
+  .row-btns{display:flex;gap:6px;justify-content:flex-end;}
+  .tiny{
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;color:#5b6472;background:#fff;
+  }
+  .tiny:hover{background:#f7f9fa;}
+  .tiny.danger{color:var(--red);border-color:#f6d5d6;}
+  .empty-state{padding:52px 20px;text-align:center;}
+  .empty-state .ic{font-size:26px;}
+  .empty-state h4{margin:12px 0 0;font-size:14px;font-weight:700;color:#3f4753;letter-spacing:-.3px;}
+  .empty-state p{margin:7px 0 0;font-size:12px;color:var(--sub);letter-spacing:-.2px;line-height:1.6;}
+  .empty-state button{margin-top:16px;}
+
+  /* ================= DASH ================= */
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 17px;box-shadow:var(--shadow);}
+  .kpi .k{font-size:11.5px;color:var(--sub);letter-spacing:-.2px;}
+  .kpi .v{margin-top:8px;font-size:24px;font-weight:800;letter-spacing:-.8px;color:#1b222c;}
+  .kpi .s{margin-top:6px;font-size:10.5px;color:var(--sub2);letter-spacing:-.2px;}
+  .kpi.hero{background:linear-gradient(135deg,#14352e,#123c34);border:none;}
+  .kpi.hero .k{color:#8fb8ad;} .kpi.hero .v{color:#fff;} .kpi.hero .s{color:#6f9d92;}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid var(--line2);}
+  .sec-head h3{margin:0;font-size:14px;font-weight:800;letter-spacing:-.35px;color:#1b222c;}
+  .sec-head a{font-size:12px;color:var(--teal);font-weight:700;text-decoration:none;}
+  .bars{padding:17px;display:flex;flex-direction:column;gap:13px;}
+  .bar-row{display:grid;grid-template-columns:minmax(0,150px) 1fr auto;gap:12px;align-items:center;}
+  .bar-row .lb{font-size:12px;color:#4f5866;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{height:9px;border-radius:20px;background:#f0f2f5;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#1cb894,#0f9c86);}
+  .bar-fill.warn{background:linear-gradient(90deg,#f7b955,#f5a524);}
+  .bar-fill.bad{background:linear-gradient(90deg,#f08a8d,#e5484d);}
+  .bar-row .vl{font-size:12px;font-weight:800;color:#242c38;letter-spacing:-.3px;}
+
+  /* ================= GUIDE ================= */
+  .guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;}
+  .gd{padding:22px 24px;}
+  .gd h3{margin:0 0 4px;font-size:15px;font-weight:800;letter-spacing:-.4px;color:#1b222c;}
+  .gd .lead{margin:0 0 18px;font-size:12px;color:var(--sub);letter-spacing:-.2px;line-height:1.6;}
+  .steps{display:flex;flex-direction:column;gap:16px;counter-reset:s;}
+  .step{display:flex;gap:13px;}
+  .step .n{
+    flex:0 0 24px;width:24px;height:24px;border-radius:8px;background:#123c34;color:#fff;
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  }
+  .step h4{margin:2px 0 0;font-size:12.5px;font-weight:700;color:#2a323d;letter-spacing:-.3px;}
+  .step p{margin:6px 0 0;font-size:11.5px;color:#6b7480;line-height:1.65;letter-spacing:-.2px;}
+  code.k{
+    background:#f1f3f6;border:1px solid var(--line);border-radius:5px;padding:1px 5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;color:#3f4753;
+  }
+  .callout{
+    margin-top:18px;background:#fffaeb;border:1px solid #fceec4;border-radius:11px;padding:13px 15px;
+    font-size:11.5px;color:#9a7b3a;line-height:1.65;letter-spacing:-.2px;
+  }
+  .callout b{color:#7d6229;}
+
+  /* ================= MODAL ================= */
+  .scrim{
+    position:fixed;inset:0;background:rgba(20,27,36,.42);display:flex;align-items:center;justify-content:center;
+    padding:24px;z-index:60;
+  }
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:432px;box-shadow:0 18px 48px rgba(16,24,40,.22);overflow:hidden;max-height:92vh;display:flex;flex-direction:column;}
+  .modal-head{padding:18px 20px 0;}
+  .modal-head h3{margin:0;font-size:16px;font-weight:800;letter-spacing:-.4px;color:#1b222c;}
+  .modal-head p{margin:7px 0 0;font-size:12px;color:var(--sub);letter-spacing:-.2px;line-height:1.6;}
+  .modal-body{padding:18px 20px;overflow-y:auto;}
+  .mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .mfield{margin-bottom:12px;}
+  .mfield label{display:block;font-size:11px;color:#6b7480;font-weight:600;margin-bottom:6px;letter-spacing:-.2px;}
+  .mfield input{
+    width:100%;border:1px solid #e3e7ec;border-radius:9px;padding:10px 11px;font-size:12.5px;
+    color:#333c48;font-weight:600;outline:none;letter-spacing:-.2px;background:#fff;
+  }
+  .mfield input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,165,140,.10);}
+  .mfield .hintx{margin-top:6px;font-size:10.5px;color:var(--sub2);letter-spacing:-.2px;}
+  .modal-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line2);background:#fcfdfd;}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#4f5866;font-weight:600;letter-spacing:-.2px;cursor:pointer;}
+  .chk input{width:15px;height:15px;accent-color:var(--teal);}
+
+  /* ================= TOAST ================= */
+  .toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:80;}
+  .toast{
+    background:#1b232d;color:#e9eef4;border-radius:11px;padding:12px 16px;font-size:12.5px;font-weight:600;
+    letter-spacing:-.2px;box-shadow:0 10px 26px rgba(16,24,40,.26);display:flex;align-items:center;gap:9px;max-width:360px;
+  }
+  .toast.err{background:#7d2226;}
+  .toast.ok::before{content:"✓";color:#3ddc9a;font-weight:800;}
+  .toast.err::before{content:"!";font-weight:800;color:#ffc9c9;}
+
+  .spin{
+    width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;
+    display:inline-block;animation:sp .7s linear infinite;
+  }
+  @keyframes sp{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion:reduce){.spin{animation-duration:2s;} *{transition:none!important;}}
+
+  @media (max-width:1500px){
+    .cols{grid-template-columns:1fr;}
+    .cn-body{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .tiles{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:1080px){
+    .auth{grid-template-columns:1fr;}
+    .auth-side{display:none;}
+    .auth-main{border-left:none;}
+    .guide{grid-template-columns:1fr;}
+  }
+  @media (max-width:900px){
+    .sidebar{display:none;}
+    .cn-body,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .page-head{flex-direction:column;}
+    .actions{justify-content:flex-start;}
+  }
+</style>
+
+<div id="root"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =======================================================================
+   0. utils
+   ======================================================================= */
+var $ = function(s,r){ return (r||document).querySelector(s); };
+var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+var esc = function(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+};
+var nf = function(n){ return Math.round(Number(n)||0).toLocaleString('ko-KR'); };
+var won = function(n){ return nf(n)+'원'; };
+var num = function(v){
+  var x = parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));
+  return isFinite(x) ? x : 0;
+};
+var nowIso = function(){ return new Date().toISOString(); };
+var fmtDate = function(iso){
+  if(!iso) return '-';
+  var d = new Date(iso);
+  if(isNaN(d)) return '-';
+  var p = function(n){ return (n<10?'0':'')+n; };
+  return d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+};
+var rid = function(p){
+  return (p||'r') + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+};
+var debounce = function(fn,ms){
+  var t; return function(){ var a=arguments,s=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(s,a); },ms); };
+};
+function toast(msg,kind){
+  var box = $('#toasts');
+  var el = document.createElement('div');
+  el.className = 'toast ' + (kind==='err'?'err':'ok');
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(function(){ el.remove(); }, kind==='err'?5200:3000);
+}
+function safeLocal(fn,dflt){
+  try { return fn(); } catch(e){ return dflt; }
+}
+
+/* placeholder illustration — same earbud drawing as the original mock */
+function phSvg(tone){
+  var fill = tone==='dark' ? '#2b3138' : '#ffffff';
+  var line = tone==='dark' ? '#454c55' : '#cdd4db';
+  return '<svg viewBox="0 0 120 120" width="70%" height="70%" aria-hidden="true">'+
+    '<g fill="'+fill+'" stroke="'+line+'" stroke-width="1.4">'+
+    '<path d="M30 26c6 0 11 5 11 12 0 6-4 10-9 10s-9-4-9-10c0-7 1-12 7-12z"/>'+
+    '<path d="M27 46h9c1.5 0 2.5 1.2 2.5 2.8v27c0 2.5-2 4.4-4.5 4.4h-5c-2.5 0-4.5-1.9-4.5-4.4v-27C24.5 47.2 25.5 46 27 46z"/>'+
+    '<path d="M62 26c6 0 11 5 11 12 0 6-4 10-9 10s-9-4-9-10c0-7 1-12 7-12z"/>'+
+    '<path d="M59 46h9c1.5 0 2.5 1.2 2.5 2.8v27c0 2.5-2 4.4-4.5 4.4h-5c-2.5 0-4.5-1.9-4.5-4.4v-27C56.5 47.2 57.5 46 59 46z"/>'+
+    '<rect x="78" y="40" width="32" height="46" rx="12"/>'+
+    '<path d="M78 54h32" fill="none"/>'+
+    '</g></svg>';
+}
+function imgOr(src,tone){
+  return src ? '<img src="'+esc(src)+'" alt="">' : phSvg(tone);
+}
+
+/* =======================================================================
+   1. store — artifact db, with a localStorage fallback
+   ======================================================================= */
+var Store = {
+  db:null, mode:'local', ready:false,
+  async init(){
+    var db = null;
+    try { db = await window.claude.use('db'); } catch(e){ db = null; }
+    this.db = db;
+    this.mode = db ? 'db' : 'local';
+    this.ready = true;
+    return this.mode;
+  },
+  _lk(path){ return 'sp.local.'+path; },
+  async get(path){
+    if(this.db){
+      var s = await this.db.doc(path).get();
+      return s.exists ? Object.assign({}, s.data()) : null;
+    }
+    return safeLocal(function(){
+      var v = localStorage.getItem(Store._lk(path));
+      return v ? JSON.parse(v) : null;
+    }, null);
+  },
+  async set(path,data){
+    if(this.db) return this.db.doc(path).set(data);
+    var self = this;
+    return safeLocal(function(){
+      localStorage.setItem(self._lk(path), JSON.stringify(data));
+      var col = path.slice(0, path.lastIndexOf('/'));
+      var id = path.slice(path.lastIndexOf('/')+1);
+      var idxKey = 'sp.idx.'+col;
+      var idx = JSON.parse(localStorage.getItem(idxKey)||'[]');
+      if(idx.indexOf(id)<0){ idx.push(id); localStorage.setItem(idxKey, JSON.stringify(idx)); }
+    });
+  },
+  async del(path){
+    if(this.db) return this.db.doc(path).delete();
+    var self = this;
+    return safeLocal(function(){
+      localStorage.removeItem(self._lk(path));
+      var col = path.slice(0, path.lastIndexOf('/'));
+      var id = path.slice(path.lastIndexOf('/')+1);
+      var idxKey = 'sp.idx.'+col;
+      var idx = JSON.parse(localStorage.getItem(idxKey)||'[]').filter(function(x){ return x!==id; });
+      localStorage.setItem(idxKey, JSON.stringify(idx));
+    });
+  },
+  async list(col){
+    if(this.db){
+      var snap = await this.db.collection(col).limit(1000).get();
+      return snap.docs.map(function(d){ return Object.assign({_id:d.id}, d.data()); });
+    }
+    var self = this;
+    return safeLocal(function(){
+      var idx = JSON.parse(localStorage.getItem('sp.idx.'+col)||'[]');
+      return idx.map(function(id){
+        var v = localStorage.getItem(self._lk(col+'/'+id));
+        return v ? Object.assign({_id:id}, JSON.parse(v)) : null;
+      }).filter(Boolean);
+    }, []);
+  }
+};
+
+/* asset uploads keep thumbnails out of the 256KB document budget */
+var INLINE_IMG_MAX = 20000;
+function dataUrlToBlob(dataUrl){
+  var parts = String(dataUrl).split(',');
+  var mime = (parts[0].match(/data:([^;]+)/) || [,'image/jpeg'])[1];
+  var bin = atob(parts[1] || '');
+  var arr = new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+var Assets = {
+  ns:null, tried:false,
+  async get(){
+    if(this.tried) return this.ns;
+    this.tried = true;
+    try { this.ns = await window.claude.use('assets'); } catch(e){ this.ns = null; }
+    return this.ns;
+  },
+  async store(dataUrl){
+    if(!dataUrl || dataUrl.indexOf('data:')!==0) return dataUrl||'';
+    var small = dataUrl.length < INLINE_IMG_MAX ? dataUrl : '';
+    var ns = await this.get();
+    if(!ns) return small;
+    try {
+      var up = await ns.upload(dataUrlToBlob(dataUrl));
+      return up && up.url ? up.url : small;
+    } catch(e){
+      return small;
+    }
+  }
+};
+
+/* =======================================================================
+   2. extension bridge
+   ======================================================================= */
+var Ext = {
+  present:false, version:'', waiters:{}, seq:0, onChange:null,
+  init(){
+    var self = this;
+    window.addEventListener('message', function(ev){
+      var d = ev.data;
+      if(!d || d.__sp !== 'ext') return;
+      if(d.type === 'hello'){
+        var was = self.present;
+        self.present = true;
+        self.version = d.version || '';
+        if(!was && self.onChange) self.onChange();
+        return;
+      }
+      if(d.type === 'result'){
+        var w = self.waiters[d.reqId];
+        if(w){ delete self.waiters[d.reqId]; w(d); }
+      }
+    });
+    window.postMessage({__sp:'page', type:'ping'}, '*');
+    setTimeout(function(){ window.postMessage({__sp:'page', type:'ping'}, '*'); }, 900);
+  },
+  ask(payload, timeoutMs, timeoutMsg){
+    var self = this;
+    return new Promise(function(resolve){
+      if(!self.present){
+        resolve({ok:false, error:'확장프로그램이 연결되지 않았습니다. 이용 가이드에서 설치 방법을 확인하세요.'});
+        return;
+      }
+      var reqId = 'q'+(++self.seq)+'_'+Date.now();
+      var done = false;
+      self.waiters[reqId] = function(d){
+        if(done) return; done = true;
+        resolve({ok:!!d.ok, data:d.data, error:d.error, needsKey:!!d.needsKey, assisted:!!d.assisted});
+      };
+      window.postMessage(Object.assign({__sp:'page', reqId:reqId}, payload), '*');
+      setTimeout(function(){
+        if(done) return; done = true;
+        delete self.waiters[reqId];
+        resolve({ok:false, error:timeoutMsg});
+      }, timeoutMs);
+    });
+  },
+  collect(url){
+    return this.ask({type:'collect', url:url}, 45000,
+      '수집 시간이 초과되었습니다. 해당 사이트에 로그인되어 있는지 확인해주세요.');
+  },
+  rate(force){
+    return this.ask({type:'fx', force:!!force}, 30000,
+      '환율을 가져오는 데 시간이 너무 걸렸습니다.');
+  },
+  keywords(seed){
+    return this.ask({type:'keywords', seed:seed}, 30000,
+      '검색광고 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.');
+  },
+  shopCount(keyword){
+    return this.ask({type:'shopCount', keyword:keyword}, 40000,
+      '네이버쇼핑 확인이 시간 초과되었습니다.');
+  },
+  image1688(dataUrl, limit){
+    return this.ask({type:'image1688', dataUrl:dataUrl, limit:limit||20, withImages:true}, 180000,
+      '1688 이미지 검색이 시간 초과되었습니다.');
+  },
+  grab1688Tab(limit){
+    return this.ask({type:'grab1688Tab', limit:limit||20, withImages:true}, 90000,
+      '1688 탭을 읽는 데 시간이 너무 걸렸습니다.');
+  },
+  search1688(keyword, limit){
+    return this.ask({type:'search1688', keyword:keyword, limit:limit||5, withImages:true}, 90000,
+      '1688 검색이 시간 초과되었습니다.');
+  },
+  keyStatus(){
+    return this.ask({type:'keyStatus'}, 8000, '확장프로그램이 응답하지 않습니다.');
+  },
+  openOptions(){
+    return this.ask({type:'openOptions'}, 8000, '설정 화면을 열지 못했습니다.');
+  },
+  coupangTop(keyword, limit, withImages){
+    return this.ask({type:'coupangTop', keyword:keyword, limit:limit||5, withImages:!!withImages},
+      withImages ? 90000 : 45000,
+      '쿠팡 검색이 시간 초과되었습니다.');
+  }
+};
+
+/* 상품명을 1688에서 쓸 중국어 검색어로 바꾼다 */
+var Sampler = {
+  ns:null, tried:false,
+  async get(){
+    if(this.tried) return this.ns;
+    this.tried = true;
+    try { this.ns = await window.claude.use('sample'); } catch(e){ this.ns = null; }
+    return this.ns;
+  },
+  async chinese(name){
+    var ns = await this.get();
+    if(!ns) return null;
+    var prompt =
+      '아래는 한국 쿠팡의 상품명이다. 이 물건을 중국 1688에서 찾을 때 쓸 검색어를 만들어라.\n' +
+      '규칙: 중국어 간체로 쓴다. 브랜드명, 색상, 수량, 세트 표기, 포장 단위는 뺀다. ' +
+      '물건 자체를 가리키는 짧은 명사구로 만든다. 보통 2~6자다.\n' +
+      '상품명: ' + name + '\n' +
+      'JSON으로만 답한다: {"keyword":"주 검색어","alt":["대안1","대안2"],"ko":"한국어로 무엇인지"}';
+    try {
+      var r = await ns.json(prompt, {modelTier:'quick', cache:true});
+      if(!r || !r.keyword) return null;
+      return {
+        keyword: String(r.keyword).trim(),
+        alt: Array.isArray(r.alt) ? r.alt.map(String).slice(0,3) : [],
+        ko: r.ko ? String(r.ko) : ''
+      };
+    } catch(e){ return null; }
+  }
+};
+
+/* =======================================================================
+   3. domain — settings & profit math
+   ======================================================================= */
+var DEFAULTS = {
+  rate:185,          // 환율을 받아오지 못했을 때 쓰는 값
+  rateLocked:false,  // 이 분석을 그때 환율로 묶어둘지
+  multiplier:1.45,   // 한국도착까지 모든비용 = 환율 적용 상품가격 × 이 값
+  feeRate:11.88,     // 쿠팡 판매 수수료율 (%, 부가세 포함)
+  feeCategory:'',    // 고른 수수료 카테고리
+  logistics:2500,    // 입출고배송비 (원)
+  shipSize:''        // 고른 배송 규격
+};
+
+/* 쿠팡 판매 수수료율표. 받는 대로 여기에 채우면 화면에 카테고리 선택이 나타난다.
+   형식: {name:'영상가전 > 영상액세서리', rate:5.8} */
+var FEE_TABLE = [];
+
+/* 입출고배송 요금표. 형식: {name:'극소형', fee:2000} */
+var SHIP_TABLE = [];
+function siteOf(url){
+  var u = String(url||'');
+  if(/coupang\.com/i.test(u)) return 'coupang';
+  if(/1688\.com/i.test(u)) return '1688';
+  return '';
+}
+/* 기존 값 위에 덧붙여 붙여넣은 주소를 되살린다 — 마지막 http 부터가 진짜 주소다 */
+function cleanUrl(v){
+  v = String(v==null?'':v).trim().replace(/\s+/g,'');
+  var i = v.lastIndexOf('http');
+  if(i > 0) v = v.slice(i);
+  return v;
+}
+function validUrl(v){
+  try {
+    var u = new URL(v);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch(e){ return ''; }
+}
+/* 환율은 네이버에서 받아온 최신값을 쓴다. 분석마다 고정해 둔 경우에만 그 값을 지킨다. */
+function effRate(rec){
+  var s = Object.assign({}, DEFAULTS, (rec && rec.settings) || {});
+  if(s.rateLocked) return num(s.rate);
+  if(App && App.fx && num(App.fx.rate)) return num(App.fx.rate);
+  return num(s.rate);
+}
+function calc(rec){
+  var s = Object.assign({}, DEFAULTS, rec.settings||{});
+  s.rate = effRate(rec);
+  var cand = (rec.candidates||[])[rec.selected||0] || {};
+  var sell = num(rec.coupang && rec.coupang.price);
+  var qty = num(rec.monthlyQty);
+  var cny = num(cand.price);
+  var goods = cny * s.rate;                    // 환율 적용 상품가격
+  var extra = goods * num(s.multiplier);       // 한국도착까지 모든비용
+  var arrival = goods + extra;                 // 한국 도착시 상품 원가
+  var fee = sell * (num(s.feeRate)/100);       // 쿠팡 판매 수수료
+  var logistics = num(s.logistics);            // 입출고배송비
+  var total = arrival + fee + logistics;
+  var profit = sell - total;
+  var margin = sell ? (profit/sell*100) : 0;
+  return {
+    s:s, cny:cny, unitKrw:goods, goods:goods, extra:extra, arrival:arrival,
+    fee:fee, logistics:logistics, total:total, sell:sell,
+    profit:profit, margin:margin, qty:qty, monthly:profit*qty
+  };
+}
+function calcFor(rec, i){
+  var clone = Object.assign({}, rec, {selected:i});
+  return calc(clone);
+}
+function blankCandidate(){
+  return {url:'', name:'', price:'', moq:'', opt:'', image:''};
+}
+function blankRecord(user){
+  return {
+    id: rid('rec_'),
+    ownerId: user.uid,
+    ownerName: user.name,
+    title: '새 비교 분석',
+    coupang: {url:'', name:'', category:'', price:'', rating:'', reviews:'', image:''},
+    candidates: [blankCandidate(),blankCandidate(),blankCandidate(),blankCandidate(),blankCandidate()],
+    selected: 0,
+    monthlyQty: 500,
+    settings: Object.assign({}, user.settings || DEFAULTS),
+    memo: '',
+    createdAt: nowIso(),
+    updatedAt: nowIso()
+  };
+}
+function normalizeRecord(r){
+  var out = Object.assign({}, r);
+  out.coupang = Object.assign({url:'',name:'',category:'',price:'',rating:'',reviews:'',image:''}, r.coupang||{});
+  var c = (r.candidates||[]).slice(0,5);
+  while(c.length < 5) c.push(blankCandidate());
+  out.candidates = c.map(function(x){ return Object.assign(blankCandidate(), x||{}); });
+  out.settings = Object.assign({}, DEFAULTS, r.settings||{});
+  out.selected = Math.min(4, Math.max(0, num(r.selected)));
+  return out;
+}
+
+/* =======================================================================
+   4. auth
+   ======================================================================= */
+async function sha256(text){
+  if(window.crypto && crypto.subtle){
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ('0'+b.toString(16)).slice(-2);
+    }).join('');
+  }
+  var h = 0, i;
+  for(i=0;i<text.length;i++){ h = ((h<<5)-h+text.charCodeAt(i))|0; }
+  return 'w'+(h>>>0).toString(16);
+}
+var Auth = {
+  user:null,
+  async register(uid, name, pw){
+    uid = String(uid||'').trim().toLowerCase();
+    if(!/^[a-z0-9_.\-]{3,20}$/.test(uid)) throw new Error('아이디는 영문 소문자, 숫자, _ . - 조합으로 3~20자여야 합니다.');
+    if(!name || name.trim().length < 1) throw new Error('이름을 입력해주세요.');
+    if(!pw || pw.length < 6) throw new Error('비밀번호는 6자 이상이어야 합니다.');
+    var existing = await Store.get('users/'+uid);
+    if(existing) throw new Error('이미 사용 중인 아이디입니다.');
+    var all = await Store.list('users');
+    var salt = rid('s');
+    var user = {
+      uid: uid, name: name.trim(),
+      salt: salt, hash: await sha256(salt+':'+pw),
+      role: (all.length === 0 || uid === 'admin') ? 'admin' : 'user',
+      disabled: false,
+      settings: Object.assign({}, DEFAULTS),
+      createdAt: nowIso(), lastLoginAt: nowIso()
+    };
+    await Store.set('users/'+uid, user);
+    this._session(uid);
+    this.user = user;
+    return user;
+  },
+  async login(uid, pw){
+    uid = String(uid||'').trim().toLowerCase();
+    var u = await Store.get('users/'+uid);
+    if(!u) throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
+    if(u.disabled) throw new Error('사용이 중지된 계정입니다. 관리자에게 문의하세요.');
+    var h = await sha256(u.salt+':'+pw);
+    if(h !== u.hash) throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
+    u.lastLoginAt = nowIso();
+    await Store.set('users/'+uid, u);
+    this._session(uid);
+    this.user = u;
+    return u;
+  },
+  async resume(){
+    var uid = safeLocal(function(){ return localStorage.getItem('sp.session'); }, null);
+    if(!uid) return null;
+    var u = await Store.get('users/'+uid);
+    if(!u || u.disabled){ this.logout(); return null; }
+    this.user = u;
+    return u;
+  },
+  _session(uid){ safeLocal(function(){ localStorage.setItem('sp.session', uid); }); },
+  logout(){
+    this.user = null;
+    safeLocal(function(){ localStorage.removeItem('sp.session'); });
+  }
+};
+
+/* =======================================================================
+   5. app state
+   ======================================================================= */
+var App = {
+  route:'dash',
+  record:null,
+  records:[],
+  users:[],
+  filterUser:'',
+  query:'',
+  fx:null,
+  busy:{},
+  kw:{seed:'', rows:[], sort:'total', ran:false, error:'', exclude:'',
+      progress:null, scored:false, stop:false, season:true, leadWeeks:6},
+  rank:{keyword:'', items:[], at:''},
+  imgData:{},   /* 쿠팡 썸네일 원본. 저장하지 않고 이번 방문에만 들고 있는다. */
+  apiKey:null   /* null 이면 아직 확인 전 */
+};
+
+/* 검색광고 API 키가 등록돼 있는지 확장프로그램에 물어본다 */
+async function checkApiKey(){
+  if(!Ext.present){ App.apiKey = null; return; }
+  var res = await Ext.keyStatus();
+  App.apiKey = res.ok && res.data ? !!res.data.hasKey : false;
+}
+async function openApiSettings(){
+  if(!Ext.present){
+    toast('확장프로그램이 연결되지 않았습니다. 이용 가이드를 확인하세요.','err');
+    return;
+  }
+  var res = await Ext.openOptions();
+  if(res.ok) toast('새 탭에서 API 키 설정을 열었습니다');
+  else toast('열지 못했습니다. 크롬 툴바의 확장프로그램 아이콘을 눌러 열어주세요.','err');
+}
+function apiKeyPanel(){
+  if(!Ext.present){
+    return '<div class="callout" style="margin-top:0;">'+
+      '<b>확장프로그램이 연결되지 않았습니다.</b> 키워드 조회, 환율, 상품 수집은 모두 확장프로그램이 담당합니다. '+
+      '이용 가이드에서 설치 방법을 확인해주세요.</div>';
+  }
+  if(App.apiKey === true){
+    return '<div class="apibox on">'+
+      '<span class="dot on"></span>'+
+      '<div><div class="ab-t">네이버 검색광고 API 연결됨</div>'+
+        '<div class="ab-s">키워드 발굴에서 검색량을 바로 조회할 수 있습니다.</div></div>'+
+      '<button class="tiny" id="apiOpen">키 다시 설정</button>'+
+    '</div>';
+  }
+  if(App.apiKey === false){
+    return '<div class="apibox off">'+
+      '<span class="dot off"></span>'+
+      '<div><div class="ab-t">네이버 검색광고 API 키가 없습니다</div>'+
+        '<div class="ab-s">키를 등록해야 키워드 검색량을 볼 수 있습니다. 키는 이 브라우저에만 저장됩니다.</div></div>'+
+      '<button class="act primary" id="apiOpen" style="padding:9px 16px;">API 키 등록하기</button>'+
+    '</div>';
+  }
+  return '<div class="apibox">'+
+    '<span class="dot"></span>'+
+    '<div><div class="ab-t">API 키 상태를 확인하는 중입니다</div>'+
+      '<div class="ab-s">잠시만 기다려주세요.</div></div>'+
+  '</div>';
+}
+
+/* 검색량 대비 상품 수. 낮을수록 팔기 쉽다고 본다. */
+function kwRatio(row){
+  if(!row || !row.shopCount || !row.total) return null;
+  return row.shopCount / row.total;
+}
+function kwGrade(row){
+  var r = kwRatio(row);
+  if(r === null) return {cls:'gray', text:'미확인'};
+  if(r < 1)  return {cls:'good', text:'매우 좋음'};
+  if(r < 5)  return {cls:'good', text:'좋음'};
+  if(r < 20) return {cls:'mid',  text:'보통'};
+  return {cls:'bad', text:'과열'};
+}
+function adScore(comp){
+  if(/낮음/.test(comp||'')) return 1;
+  if(/중간/.test(comp||'')) return 0.6;
+  if(/높음/.test(comp||'')) return 0.3;
+  return 0.6;
+}
+/* 점수 = 수요 40 + 경쟁 40 + 모바일 비중 10 + 광고 경쟁 10 */
+function kwScore(row){
+  var demand = Math.min(1, Math.log10((row.total||0)+1)/5);   // 월 10만 검색이 만점
+  var ratio = kwRatio(row);
+  var comp = ratio === null ? null : Math.min(1, 1/(1+ratio/3));
+  var mob = row.total ? (row.mobile/row.total) : 0;
+  var ad = adScore(row.comp);
+  var c = comp === null ? ad : comp;
+  return {
+    score: Math.round(100*(0.4*demand + 0.4*c + 0.1*mob + 0.1*ad)),
+    estimated: comp === null
+  };
+}
+function kwReason(row){
+  var parts = ['월 검색 '+nf(row.total)+'회'];
+  if(row.shopCount) parts.push('등록 상품 '+nf(row.shopCount)+'개');
+  var ratio = kwRatio(row);
+  if(ratio !== null) parts.push('경쟁률 '+ratio.toFixed(1));
+  if(row.total && row.mobile/row.total > 0.75) parts.push('모바일 검색이 대부분');
+  if(/낮음/.test(row.comp||'')) parts.push('광고 경쟁 낮음');
+  return parts.join(' · ');
+}
+function kwVerdict(row){
+  var r = kwRatio(row);
+  if(r === null) return '상품 수를 확인하면 경쟁률이 나옵니다.';
+  if(r < 1)  return '수요에 비해 등록된 상품이 매우 적습니다. 지금 들어갈 만합니다.';
+  if(r < 5)  return '수요 대비 상품이 적은 편입니다. 상세페이지로 승부해볼 만합니다.';
+  if(r < 20) return '평범한 경쟁입니다. 가격이나 구성으로 차별점이 필요합니다.';
+  return '이미 상품이 넘칩니다. 후발주자로는 어렵습니다.';
+}
+function kwExcluded(keyword){
+  var words = String(App.kw.exclude||'').split(/[,\s]+/).map(function(w){ return w.trim(); }).filter(Boolean);
+  if(!words.length) return false;
+  return words.some(function(w){ return keyword.indexOf(w) >= 0; });
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+/* ---------- 환율 ---------- */
+async function loadFx(){
+  try {
+    var doc = await Store.get('config/fx');
+    if(doc && num(doc.rate)) App.fx = doc;
+  } catch(e){ /* 저장소를 못 읽으면 기본 환율로 간다 */ }
+}
+async function refreshFx(force, silent){
+  App.busy.fx = true;
+  var res = await Ext.rate(force);
+  App.busy.fx = false;
+  if(!res.ok || !res.data || !num(res.data.rate)){
+    if(!silent) toast(res.error || '환율 값을 읽지 못했습니다.','err');
+    return false;
+  }
+  var d = res.data;
+  App.fx = {
+    rate: num(d.rate),
+    label: d.label || '고시 환율',
+    base: num(d.base),
+    send: num(d.send),
+    source: d.source || '네이버 금융',
+    fetchedAt: nowIso(),
+    by: Auth.user ? Auth.user.uid : ''
+  };
+  try { await Store.set('config/fx', App.fx); } catch(e){ /* 공용 저장 실패는 화면 표시에 영향 없음 */ }
+  return true;
+}
+function fxCaption(){
+  if(!App.fx) return '적용 환율';
+  var t = new Date(App.fx.fetchedAt);
+  var hh = isNaN(t) ? '' : (' · '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2));
+  return App.fx.source + ' ' + App.fx.label + hh;
+}
+
+function go(route, opts){
+  App.route = route;
+  if(opts && opts.record) App.record = opts.record;
+  location.hash = '#/'+route;
+  render();
+}
+
+/* =======================================================================
+   6. auth screen
+   ======================================================================= */
+var authMode = 'login';
+var authErr = '';
+
+function renderAuth(){
+  var demo = calc({
+    coupang:{price:49900}, candidates:[{price:38.5}], selected:0,
+    monthlyQty:500, settings:DEFAULTS
+  });
+  $('#root').innerHTML =
+  '<div class="auth">'+
+    '<div class="auth-side">'+
+      '<div>'+
+        '<h1>SOURCING <span>PRO</span></h1>'+
+        '<p class="tag">스마트한 소싱이 더 큰 기회를 만듭니다</p>'+
+      '</div>'+
+      '<div class="auth-feat">'+
+        '<div><i>1</i><span><b>링크만 붙여넣으세요.</b> 크롬 확장프로그램이 쿠팡과 1688 페이지를 열어 썸네일, 상품명, 가격, 리뷰를 가져옵니다.</span></div>'+
+        '<div><i>2</i><span><b>후보 5개를 나란히 비교합니다.</b> 환율, 관세, 쿠팡 수수료, 입출고배송비를 반영한 개당 이익금이 카드마다 표시됩니다.</span></div>'+
+        '<div><i>3</i><span><b>보관함에 남습니다.</b> 저장한 비교 분석은 계정별로 쌓이고, 관리자는 전체 사용자의 기록을 한 곳에서 봅니다.</span></div>'+
+      '</div>'+
+      '<div class="auth-demo">'+
+        '<div class="cap">예시 계산 · 판매가 49,900원 / 1688 ¥38.50</div>'+
+        '<div class="row">'+
+          '<div><div class="k">한국 도착가</div><div class="v num">'+won(demo.arrival)+'</div></div>'+
+          '<div><div class="k">총 지출</div><div class="v num">'+won(demo.total)+'</div></div>'+
+          '<div><div class="k">개당 이익금</div><div class="v good num">'+won(demo.profit)+'</div></div>'+
+          '<div><div class="k">이익률</div><div class="v good num">'+demo.margin.toFixed(1)+'%</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="auth-main">'+
+      '<div class="auth-card">'+
+        (authMode==='login'
+          ? '<h2>로그인</h2><p class="lead">아이디와 비밀번호를 입력해 소싱 기록을 이어서 관리하세요.</p>'
+          : '<h2>계정 만들기</h2><p class="lead">아이디를 정하면 바로 시작할 수 있습니다. 첫 번째 계정은 관리자 권한을 갖습니다.</p>')+
+        '<form id="authForm">'+
+          '<label for="aid">아이디</label>'+
+          '<input id="aid" autocomplete="username" placeholder="영문 소문자·숫자 3~20자" spellcheck="false">'+
+          (authMode==='signup' ? '<label for="anm">이름</label><input id="anm" autocomplete="name" placeholder="홍길동">' : '')+
+          '<label for="apw">비밀번호</label>'+
+          '<input id="apw" type="password" autocomplete="'+(authMode==='login'?'current-password':'new-password')+'" placeholder="6자 이상">'+
+          (authErr ? '<div class="auth-err">'+esc(authErr)+'</div>' : '')+
+          '<button class="auth-submit" type="submit" id="authGo">'+(authMode==='login'?'로그인':'계정 만들고 시작하기')+'</button>'+
+        '</form>'+
+        '<div class="auth-alt">'+
+          (authMode==='login'
+            ? '계정이 없으신가요? <button type="button" id="toSignup">계정 만들기</button>'
+            : '이미 계정이 있으신가요? <button type="button" id="toLogin">로그인</button>')+
+        '</div>'+
+        '<p class="auth-note">이 로그인은 화면과 기록을 계정별로 나누기 위한 것입니다. 저장소는 이 페이지를 열 수 있는 조직 구성원이 함께 쓰는 공간이므로, 실제 인증이 필요한 비밀번호는 사용하지 마세요.</p>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+
+  var f = $('#authForm');
+  f.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var btn = $('#authGo');
+    btn.disabled = true;
+    authErr = '';
+    try {
+      if(authMode==='login'){
+        await Auth.login($('#aid').value, $('#apw').value);
+      } else {
+        await Auth.register($('#aid').value, $('#anm').value, $('#apw').value);
+      }
+      await boot();
+      toast('환영합니다, '+Auth.user.name+' 님');
+    } catch(err){
+      authErr = err && err.message ? err.message : '처리 중 문제가 발생했습니다.';
+      renderAuth();
+      var idf = $('#aid'); if(idf) idf.focus();
+    }
+  });
+  var s1 = $('#toSignup'), s2 = $('#toLogin');
+  if(s1) s1.onclick = function(){ authMode='signup'; authErr=''; renderAuth(); };
+  if(s2) s2.onclick = function(){ authMode='login'; authErr=''; renderAuth(); };
+  var idf = $('#aid'); if(idf) idf.focus();
+}
+
+/* =======================================================================
+   7. shell
+   ======================================================================= */
+var NAV = [
+  {id:'dash',    label:'대시보드',      icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+  {id:'keywords', label:'키워드 발굴',    icon:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/><path d="M11 8v6M8 11h6"/>'},
+  {id:'compare', label:'상품 비교 분석', icon:'<path d="M12 3v18"/><path d="M7 8l5-5 5 5"/><path d="M4 12h16"/>'},
+  {id:'list',    label:'상품 보관함',    icon:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'},
+  {id:'guide',   label:'이용 가이드',    icon:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 3.7"/><path d="M12 17.5h.01"/>'},
+  {id:'admin',   label:'어드민',        admin:true, icon:'<path d="M12 3l8 3v6c0 4.4-3.2 7.9-8 9-4.8-1.1-8-4.6-8-9V6z"/><path d="M9 12l2 2 4-4"/>'},
+  {id:'settings',label:'설정',          divider:true, icon:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 004.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V2a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/>'}
+];
+var CRUMB = {
+  dash:['대시보드'], compare:['상품 비교 분석','쿠팡 vs 1688 상품 비교'],
+  keywords:['키워드 발굴','검색량과 경쟁 강도'],
+  rank:['키워드 발굴','쿠팡 노출 순위'],
+  list:['상품 보관함'], admin:['관리','어드민 콘솔'], guide:['이용 가이드'], settings:['설정']
+};
+var ROUTES = ['dash','keywords','rank','compare','list','admin','guide','settings'];
+
+function shell(inner){
+  var u = Auth.user;
+  var isAdmin = u.role === 'admin';
+  var crumb = CRUMB[App.route] || ['대시보드'];
+  var navHtml = NAV.filter(function(n){ return !n.admin || isAdmin; }).map(function(n){
+    return (n.divider ? '<div class="nav-div"></div>' : '') +
+      '<a href="#/'+n.id+'" class="'+(App.route===n.id?'active':'')+'" data-nav="'+n.id+'">'+
+        '<svg viewBox="0 0 24 24">'+n.icon+'</svg>'+n.label+
+        (n.id==='list' && App.records.length ? '<span class="tagme">'+App.records.length+'</span>' : '')+
+      '</a>';
+  }).join('');
+
+  return ''+
+  '<div class="app">'+
+    '<aside class="sidebar">'+
+      '<div class="brand"><h1>SOURCING <span>PRO</span></h1><p>스마트한 소싱이 더 큰 기회를 만듭니다</p></div>'+
+      '<nav class="nav">'+navHtml+'</nav>'+
+      '<div class="ext-box">'+
+        '<div class="st"><span class="dot '+(Ext.present?'on':'off')+'"></span>'+(Ext.present?'수집기 연결됨':'수집기 미연결')+'</div>'+
+        '<p>'+(Ext.present
+          ? '링크를 넣고 수집 버튼을 누르면 상품 정보가 채워집니다.'+(Ext.version?' v'+esc(Ext.version):'')
+          : '크롬 확장프로그램을 설치하면 링크로 자동 수집할 수 있습니다.')+'</p>'+
+        (Ext.present ? '' : '<button data-nav="guide">설치하고 연결하기</button>')+
+      '</div>'+
+    '</aside>'+
+    '<div class="main">'+
+      '<div class="topbar">'+
+        '<div class="crumbs">'+
+          '<svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>'+
+          crumb.map(function(c,i){
+            return '<span class="sep">/</span><span class="'+(i===crumb.length-1?'cur':'')+'">'+esc(c)+'</span>';
+          }).join('')+
+        '</div>'+
+        '<div class="top-right">'+
+          '<button class="ghost-btn" data-nav="guide">'+
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 3.7"/><path d="M12 17.5h.01"/></svg>이용 가이드</button>'+
+          '<div class="user">'+
+            '<span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span>'+
+            esc(u.name)+' 님'+
+            '<span class="role-chip '+(isAdmin?'admin':'')+'">'+(isAdmin?'관리자':'일반')+'</span>'+
+          '</div>'+
+          '<button class="ghost-btn" id="logout">로그아웃</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="page">'+inner+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+/* =======================================================================
+   8. dashboard
+   ======================================================================= */
+function viewDash(){
+  var recs = App.records;
+  var withCalc = recs.map(function(r){ var c = calc(r); return {r:r, c:c}; })
+                     .filter(function(x){ return x.c.sell > 0 && x.c.cny > 0; });
+  var best = withCalc.slice().sort(function(a,b){ return b.c.margin - a.c.margin; });
+  var avgMargin = withCalc.length
+    ? withCalc.reduce(function(s,x){ return s + x.c.margin; },0) / withCalc.length : 0;
+  var monthlySum = withCalc.reduce(function(s,x){ return s + Math.max(0, x.c.monthly); },0);
+  var profitable = withCalc.filter(function(x){ return x.c.profit > 0; }).length;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>대시보드</h2><p>'+esc(Auth.user.name)+' 님의 소싱 기록 요약입니다.</p></div>'+
+    '<div class="actions">'+
+      '<button class="act" id="reload"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 4v5h-5"/></svg>새로고침</button>'+
+      '<button class="act primary" id="newRec"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 비교 분석</button>'+
+    '</div>'+
+  '</div>';
+
+  var kpis =
+  '<div class="kpis">'+
+    '<div class="kpi"><div class="k">저장된 비교 분석</div><div class="v num">'+nf(recs.length)+'</div>'+
+      '<div class="s">계산 가능한 기록 '+nf(withCalc.length)+'건</div></div>'+
+    '<div class="kpi"><div class="k">평균 이익률</div><div class="v num">'+(withCalc.length?avgMargin.toFixed(1)+'%':'-')+'</div>'+
+      '<div class="s">이익이 나는 기록 '+nf(profitable)+'건</div></div>'+
+    '<div class="kpi"><div class="k">월 예상 이익 합계</div><div class="v num">'+won(monthlySum)+'</div>'+
+      '<div class="s">각 기록의 월 판매량 기준</div></div>'+
+    '<div class="kpi hero"><div class="k">가장 수익성 높은 상품</div>'+
+      '<div class="v num">'+(best.length ? best[0].c.margin.toFixed(1)+'%' : '-')+'</div>'+
+      '<div class="s">'+(best.length ? esc((best[0].r.coupang.name || best[0].r.title).slice(0,26)) : '아직 기록이 없습니다')+'</div></div>'+
+  '</div>';
+
+  var rows = best.slice(0,6);
+  var maxM = rows.length ? Math.max(1, rows[0].c.margin) : 1;
+  var chart =
+  '<div class="card">'+
+    '<div class="sec-head"><h3>이익률 순위</h3><a href="#/list" data-nav="list">보관함 전체 보기</a></div>'+
+    (rows.length
+      ? '<div class="bars">'+rows.map(function(x){
+          var pct = Math.max(2, Math.min(100, x.c.margin / maxM * 100));
+          var cls = x.c.margin >= 30 ? '' : (x.c.margin >= 10 ? 'warn' : 'bad');
+          return '<div class="bar-row">'+
+            '<span class="lb">'+esc(x.r.coupang.name || x.r.title)+'</span>'+
+            '<span class="bar-track"><span class="bar-fill '+cls+'" style="width:'+pct.toFixed(1)+'%"></span></span>'+
+            '<span class="vl num">'+x.c.margin.toFixed(1)+'%</span>'+
+          '</div>';
+        }).join('')+'</div>'
+      : '<div class="empty-state"><div class="ic">📦</div><h4>아직 분석한 상품이 없습니다</h4>'+
+        '<p>쿠팡 상품 링크와 1688 후보 링크를 넣으면 이익률이 여기에 쌓입니다.</p>'+
+        '<button class="act primary" id="newRec2" style="margin:16px auto 0;">첫 비교 분석 시작하기</button></div>')+
+  '</div>';
+
+  return head + kpis + chart;
+}
+
+/* 계산 요약 — 단계마다 어떤 숫자가 들어갔는지 그대로 보여준다 */
+function summaryRows(c){
+  var rows = [
+    ['중국 1688 단가', '¥'+c.cny.toFixed(2)],
+    ['적용 환율', num(c.s.rate).toFixed(2)+'원'],
+    ['환율 적용 상품가격', won(c.goods)],
+    ['한국도착까지 모든비용 (×'+num(c.s.multiplier)+')', won(c.extra)],
+    ['한국 도착 상품 원가', won(c.arrival)],
+    ['쿠팡 판매 수수료율', num(c.s.feeRate).toFixed(2)+'%'],
+    ['쿠팡 판매 수수료', won(c.fee)],
+    ['입출고배송비', won(c.logistics)],
+    ['쿠팡 예상 판매가격', won(c.sell)]
+  ];
+  return rows.map(function(x){
+    return '<div class="srow"><span class="sk">'+esc(x[0])+'</span><span class="sv num">'+esc(x[1])+'</span></div>';
+  }).join('') +
+  '<div class="srow total"><span class="sk">1개 팔면 남는 이익금</span>'+
+  '<span class="sv num'+(c.profit<0?' neg':'')+'">'+won(c.profit)+'</span></div>';
+}
+
+/* =======================================================================
+   9. compare (main working screen)
+   ======================================================================= */
+function viewCompare(){
+  var r = App.record;
+  var c = calc(r);
+  var cp = r.coupang;
+  var best = -1, bestP = -Infinity;
+  r.candidates.forEach(function(cd,i){
+    if(!num(cd.price)) return;
+    var p = calcFor(r,i).profit;
+    if(p > bestP){ bestP = p; best = i; }
+  });
+
+  var head =
+  '<div class="page-head">'+
+    '<div>'+
+      '<h2>쿠팡 vs 1688 상품 비교</h2>'+
+      '<p>쿠팡의 판매 상품과 1688 소싱 후보 상품을 비교하여, 가장 수익성 높은 상품을 찾아보세요.</p>'+
+    '</div>'+
+    '<div class="actions">'+
+      '<button class="act" id="openList"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>불러오기</button>'+
+      '<button class="act" id="dupRec"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>복제</button>'+
+      '<button class="act" id="newRec"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새로 만들기</button>'+
+      '<button class="act primary" id="saveRec"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>저장</button>'+
+    '</div>'+
+  '</div>';
+
+  var coupang =
+  '<section class="card cp">'+
+    '<div class="cp-head"><div class="cp-logo">C</div>'+
+      '<div><h3>쿠팡 판매 상품</h3><p>비교 기준이 되는 쿠팡의 판매 상품입니다.</p></div></div>'+
+    '<div class="cp-body">'+
+      '<div class="field" style="margin-top:0;">'+
+        '<label for="cpUrl">쿠팡 상품 링크</label>'+
+        '<div class="input-row">'+
+          '<input class="input" id="cpUrl" value="'+esc(cp.url)+'" placeholder="https://www.coupang.com/vp/products/...">'+
+          '<button class="grab-btn'+(App.busy.cp?' busy':'')+'" id="cpGrab">'+
+            (App.busy.cp ? '<span class="spin"></span>수집 중'
+              : '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>수집')+'</button>'+
+          '<button class="icon-btn" id="cpOpen" title="새 탭에서 열기"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg></button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="prod" style="margin-top:18px;">'+
+        '<div class="thumb">'+imgOr(cp.image)+'</div>'+
+        '<div class="prod-info">'+
+          '<div class="pname'+(cp.name?'':' empty')+'">'+(cp.name ? esc(cp.name) : '링크를 넣고 수집하면 상품명이 채워집니다')+'</div>'+
+          '<div class="cat">'+(cp.category ? esc(cp.category) : '카테고리 미수집')+'</div>'+
+          '<div class="price num">'+(num(cp.price) ? won(cp.price) : '가격 미수집')+'</div>'+
+          '<div class="rate">'+
+            (cp.rating ? '<span class="star">★</span><b class="num">'+esc(cp.rating)+'</b>' : '<span class="star">☆</span><b>-</b>')+
+            '<span class="bar">|</span><span class="num">리뷰 '+(cp.reviews ? nf(cp.reviews) : 0)+'개</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="stats">'+
+        '<div class="stat"><div class="k">적용 수수료율</div><div class="v num">'+num(c.s.feeRate).toFixed(2)+'%</div></div>'+
+        '<div class="stat"><div class="k">개당 판매수수료</div><div class="v num">'+won(c.fee)+'</div></div>'+
+        '<div class="stat"><div class="k">적용 입출고배송비</div><div class="v num">'+won(c.logistics)+'</div></div>'+
+        '<div class="stat"><div class="k">월 예상판매량</div><div class="v num">'+nf(c.qty)+'개</div></div>'+
+      '</div>'+
+      '<div class="field two">'+
+        '<div><label for="cpPrice">쿠팡 판매가격 (원)</label>'+
+          '<div class="suffix"><input class="input" id="cpPrice" value="'+esc(nf(cp.price))+'"><span>원</span></div></div>'+
+        '<div><label for="qty">월 예상판매량</label>'+
+          '<div class="suffix"><input class="input" id="qty" value="'+esc(nf(r.monthlyQty))+'"><span>개</span></div></div>'+
+      '</div>'+
+      '<div class="field">'+
+        '<label for="feeRate">쿠팡 판매 수수료율 (부가세 포함)</label>'+
+        (FEE_TABLE.length
+          ? '<select class="input sel-box" id="feeCat" style="width:100%;margin-bottom:8px;">'+
+              '<option value="">직접 입력</option>'+
+              FEE_TABLE.map(function(f){
+                return '<option value="'+esc(f.name)+'"'+(c.s.feeCategory===f.name?' selected':'')+'>'+
+                  esc(f.name)+' · '+num(f.rate).toFixed(1)+'%</option>';
+              }).join('')+
+            '</select>'
+          : '')+
+        '<div class="input-row"><div class="suffix">'+
+          '<input class="input" id="feeRate" value="'+esc(num(c.s.feeRate).toFixed(2))+'"><span>%</span>'+
+        '</div></div>'+
+        (FEE_TABLE.length ? '' : '<div class="hintx" style="margin-top:6px;font-size:10.5px;color:var(--sub2);">수수료율표를 등록하면 카테고리를 골라 자동으로 채웁니다.</div>')+
+      '</div>'+
+      '<div class="field">'+
+        '<label for="logistics">입출고배송비 (개당)</label>'+
+        (SHIP_TABLE.length
+          ? '<select class="input sel-box" id="shipSize" style="width:100%;margin-bottom:8px;">'+
+              '<option value="">직접 입력</option>'+
+              SHIP_TABLE.map(function(t){
+                return '<option value="'+esc(t.name)+'"'+(c.s.shipSize===t.name?' selected':'')+'>'+
+                  esc(t.name)+' · '+nf(t.fee)+'원</option>';
+              }).join('')+
+            '</select>'
+          : '')+
+        '<div class="input-row"><div class="suffix">'+
+          '<input class="input" id="logistics" value="'+esc(nf(c.s.logistics))+'"><span>원</span>'+
+        '</div></div>'+
+        (SHIP_TABLE.length ? '' : '<div class="hintx" style="margin-top:6px;font-size:10.5px;color:var(--sub2);">배송 규격표를 등록하면 규격을 골라 자동으로 채웁니다.</div>')+
+      '</div>'+
+      '<div class="field">'+
+        '<label for="recTitle">분석 제목</label>'+
+        '<div class="input-row"><input class="input" id="recTitle" value="'+esc(r.title)+'" placeholder="예: 4분기 이어폰 소싱 검토"></div>'+
+      '</div>'+
+    '</div>'+
+  '</section>';
+
+  var items = r.candidates.map(function(cd,i){
+    var ci = calcFor(r,i);
+    var has = num(cd.price) > 0;
+    return ''+
+    '<div class="item'+(r.selected===i?' sel':'')+'" data-i="'+i+'">'+
+      (best===i && has ? '<span class="best">최고 이익</span>' : '')+
+      '<div class="item-top">'+
+        '<span class="idx">'+(i+1)+'</span>'+
+        '<span class="right">'+
+          '<button class="clear-x" data-clear="'+i+'" title="비우기"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button>'+
+          '<button class="radio" data-pick="'+i+'" aria-label="'+(i+1)+'번 후보 선택"><i></i></button>'+
+        '</span>'+
+      '</div>'+
+      '<div class="item-img">'+imgOr(cd.image, i%2?'dark':'')+'</div>'+
+      '<div class="item-name'+(cd.name?'':' empty')+'">'+(cd.name ? esc(cd.name) : '상품명 미수집')+'</div>'+
+      '<div class="urlrow">'+
+        '<input data-url="'+i+'" value="'+esc(cd.url)+'" placeholder="1688 상품 링크" spellcheck="false">'+
+      '</div>'+
+      '<div class="btns">'+
+        '<button class="b-fill'+(App.busy['c'+i]?' busy':'')+'" data-grab="'+i+'">'+
+          (App.busy['c'+i] ? '<span class="spin"></span>수집 중'
+            : '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>수집')+'</button>'+
+        '<button class="b-out" data-open="'+i+'"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>바로가기</button>'+
+      '</div>'+
+      '<div class="f"><label>1688 단가 (CNY)</label><input data-f="price" data-i="'+i+'" value="'+esc(cd.price)+'" placeholder="0.00"></div>'+
+      '<div class="mini-profit"><span class="k">개당 이익</span>'+
+        '<span class="v num'+(has && ci.profit<0?' neg':'')+'">'+(has ? won(ci.profit) : '-')+'</span></div>'+
+    '</div>';
+  }).join('');
+
+  var cn =
+  '<section class="card cn">'+
+    '<div class="cn-head"><div class="cn-logo">1688</div>'+
+      '<div><h3>1688 소싱 후보 상품 비교 (최대 5개)</h3><p>여러 상품을 비교하고, 가장 적합한 소싱 상품을 선택하세요.</p></div>'+
+      (function(){
+        var busy = App.busy.cn || App.busy.tr || App.busy.img;
+        var label = App.busy.img ? '썸네일 준비 중'
+          : (App.busy.cn ? (App.busy.cnMode || '1688 검색 중')
+            : (App.busy.tr ? '검색어 만드는 중' : ''));
+        return '<button class="find1688'+(busy?' busy':'')+'" id="find1688"'+(busy?' disabled':'')+'>'+
+          (busy ? '<span class="spin"></span>'+esc(label)
+            : '<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 15l4.5-4.5 3 3L15 10l5 5"/><circle cx="9" cy="8.5" r="1.2"/></svg>'+
+              '썸네일로 1688에서 찾기')+
+        '</button>';
+      })()+
+      (Ext.present
+        ? '<button class="find1688 alt'+(App.busy.cn||App.busy.tr||App.busy.img?' busy':'')+'" id="grabTab"'+
+            (App.busy.cn||App.busy.tr||App.busy.img?' disabled':'')+'>'+
+            '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>'+
+            '열린 1688 결과 가져오기</button>'
+        : '')+
+      '<div class="hint">💡 카드를 선택하면 하단 계산이 그 상품 기준으로 바뀝니다.</div></div>'+
+    (App.assisted
+      ? '<div class="assist">'+
+          '<span class="ai">1</span>새로 열린 1688 탭에서 오른쪽 패널의 <b>이미지 검색</b> 버튼을 누르세요. 1688은 두 번 눌러야 결과가 나옵니다.'+
+          '<span class="ai">2</span>상품 목록이 뜨면 이 화면으로 돌아와 <b>열린 1688 결과 가져오기</b> 를 누르세요.'+
+        '</div>'
+      : '')+
+    '<div class="cn-body" id="items">'+items+'</div>'+
+  '</section>';
+
+  var calcCard =
+  '<section class="card calc">'+
+    '<div class="calc-head">'+
+      '<div class="calc-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg></div>'+
+      '<h3>예상 비용 및 수익 계산</h3>'+
+      '<span class="desc">'+(r.selected+1)+'번 후보 기준 · 환율, 관세, 수수료, 배송비가 반영됩니다.</span>'+
+      '<div class="calc-right">'+
+        '<div class="fx"><div class="k">'+esc(r.settings.rateLocked ? '이 분석에 고정된 환율' : fxCaption())+'</div>'+
+          '<div class="v num"><em>↳</em>1 CNY = '+num(c.s.rate).toFixed(2)+'원</div></div>'+
+        '<button class="fx-btn'+(App.busy.fx?' busy':'')+'" id="fxReload"'+(App.busy.fx?' disabled':'')+'>'+
+          (App.busy.fx ? '환율 확인 중'
+            : '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 4v5h-5"/></svg>환율 새로고침')+'</button>'+
+        '<button class="fx-btn" id="openSettings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>계산 설정</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="tiles">'+
+      '<div class="tile t1"><div class="t-ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>'+
+        '<div><div class="k">환율 적용 상품가격</div><div class="v num">'+won(c.goods)+'</div>'+
+        '<div class="s num">¥'+c.cny.toFixed(2)+' × '+num(c.s.rate).toFixed(2)+'원</div></div></div>'+
+      '<div class="tile t2"><div class="t-ico"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="14" height="11" rx="1.5"/><path d="M15 9h4l3 3.5V17h-7z"/><circle cx="6" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/></svg></div>'+
+        '<div><div class="k">한국 도착 상품 원가</div><div class="v num">'+won(c.arrival)+'</div>'+
+        '<div class="s num">상품가격 + 모든비용 '+won(c.extra)+'</div></div></div>'+
+      '<div class="tile t3"><div class="t-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></div>'+
+        '<div><div class="k">판매시 들어가는 모든 지출</div><div class="v num">'+won(c.total)+'</div>'+
+        '<div class="s num">원가 + 수수료 '+won(c.fee)+' + 배송 '+won(c.logistics)+'</div></div></div>'+
+      '<div class="tile t4"><div class="t-ico"><svg viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0l-8-8A2 2 0 012 11.2V4a2 2 0 012-2h7.2a2 2 0 011.4.6l8 8a2 2 0 010 2.8z"/><path d="M7 7h.01"/></svg></div>'+
+        '<div><div class="k">쿠팡 예상 판매가격</div><div class="v num">'+won(c.sell)+'</div>'+
+        '<div class="s">비교 기준이 되는 판매가</div></div></div>'+
+      '<div class="tile t5'+(c.profit<0?' loss':'')+'"><div class="t-ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>'+
+        '<div><div class="k">'+(c.profit<0?'1개 팔면 나는 손실':'1개 팔면 남는 이익금')+'</div><div class="v num">'+won(c.profit)+'</div>'+
+        '<div class="s num">이익률 '+c.margin.toFixed(1)+'% · 월 '+won(c.monthly)+'</div></div></div>'+
+    '</div>'+
+    '<div class="summary" id="calcSummary">'+summaryRows(c)+'</div>'+
+    '<div class="memo"><span class="memo-label">📝 메모</span>'+
+      '<input id="memo" maxlength="500" value="'+esc(r.memo)+'" placeholder="이 상품을 소싱하려는 이유, 경쟁상품과의 차이점 등을 기록하세요.">'+
+      '<span class="count num" id="memoCount">'+String(r.memo||'').length+' / 500</span></div>'+
+  '</section>';
+
+  return head + '<div class="cols">'+coupang+cn+'</div>' + calcCard;
+}
+
+/* =======================================================================
+   9-b. keyword discovery
+   ======================================================================= */
+function seasonBanner(){
+  var s = seasonSentence();
+  return ''+
+  '<div class="season">'+
+    '<span class="sc-ico">🗓</span>'+
+    '<div>'+
+      '<div class="sc-t">오늘 '+esc(s.today)+' 기준 · 지금 주문하면 <b>'+esc(s.arrive)+'</b> 도착</div>'+
+      '<div class="sc-s">도착 후 파는 달은 '+esc(s.months)+' 입니다. <b>'+esc(s.names)+'</b> 상품을 우선하고, 철 지난 키워드는 목록에서 뺍니다.</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function viewKeywords(){
+  var k = App.kw;
+  var offSeason = 0;
+  var rows = k.rows.filter(function(r){
+    if(kwExcluded(r.keyword)) return false;
+    if(k.season && !seasonFits(r.keyword).fit){ offSeason++; return false; }
+    return true;
+  });
+  if(k.sort === 'score'){
+    rows.sort(function(a,b){ return kwScore(b).score - kwScore(a).score; });
+  } else if(k.sort === 'ratio'){
+    rows.sort(function(a,b){
+      var ra = kwRatio(a), rb = kwRatio(b);
+      if(ra === null && rb === null) return b.total - a.total;
+      if(ra === null) return 1;
+      if(rb === null) return -1;
+      return ra - rb;
+    });
+  } else if(k.sort === 'mobile'){
+    rows.sort(function(a,b){ return b.mobile - a.mobile; });
+  } else {
+    rows.sort(function(a,b){ return b.total - a.total; });
+  }
+
+  var running = !!k.progress;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>키워드 발굴</h2>'+
+      '<p>분야를 한 단어로 넣으면 연관 키워드를 모아 수요와 경쟁을 따져 순위를 매겨드립니다.</p></div>'+
+    '<div class="actions">'+
+      (k.rows.length ? '<button class="act" id="kwClear"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>결과 비우기</button>' : '')+
+    '</div>'+
+  '</div>';
+
+  var searchBar =
+  (App.apiKey === true ? '' : '<div style="margin-bottom:18px;">'+apiKeyPanel()+'</div>')+
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="toolbar">'+
+      '<span class="search" style="max-width:none;">'+
+        '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
+        '<input id="kwSeed" value="'+esc(k.seed)+'" placeholder="예: 주방용품, 캠핑, 블루투스이어폰">'+
+      '</span>'+
+      '<button class="act primary" id="kwReco"'+(App.busy.kw||running?' disabled':'')+'>'+
+        (App.busy.kw||running ? '분석 중'
+          : '<svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 10l-4.5 3.8L16.8 20 12 16.9 7.2 20l1.3-6.2L4 10l5.8-1.4z"/></svg>추천 키워드 뽑기')+'</button>'+
+      '<button class="act" id="kwAuto"'+(App.busy.kw||running?' disabled':'')+'>'+
+        '<svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 14h6v6h-6z"/><path d="M14 4h6v6h-6zM4 14h6v6H4z"/></svg>알아서 골라줘</button>'+
+      '<button class="act" id="kwGo"'+(App.busy.kw||running?' disabled':'')+'>검색량만 조회</button>'+
+      (k.rows.length
+        ? '<select class="sel-box" id="kwSort" style="margin-left:auto;">'+
+            '<option value="score"'+(k.sort==='score'?' selected':'')+'>추천 점수 순</option>'+
+            '<option value="total"'+(k.sort==='total'?' selected':'')+'>검색량 많은 순</option>'+
+            '<option value="mobile"'+(k.sort==='mobile'?' selected':'')+'>모바일 검색량 순</option>'+
+            '<option value="ratio"'+(k.sort==='ratio'?' selected':'')+'>경쟁 낮은 순</option>'+
+          '</select>'
+        : '')+
+    '</div>'+
+    '<div class="toolbar" style="border-bottom:none;padding-top:0;">'+
+      '<span class="search" style="max-width:280px;">'+
+        '<svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>'+
+        '<input id="kwExclude" value="'+esc(k.exclude)+'" placeholder="제외할 단어 (예: 삼성, 애플)">'+
+      '</span>'+
+      '<label class="chk"><input type="checkbox" id="kwSeason"'+(k.season?' checked':'')+'>시즌 필터</label>'+
+      '<select class="sel-box" id="kwLead">'+
+        [4,6,8,10].map(function(w){
+          return '<option value="'+w+'"'+(num(k.leadWeeks)===w?' selected':'')+'>소싱 리드타임 '+w+'주</option>';
+        }).join('')+
+      '</select>'+
+      (offSeason ? '<span class="pill gray">철 지난 키워드 '+nf(offSeason)+'개 숨김</span>' : '')+
+    '</div>'+
+    (k.season ? seasonBanner() : '')+
+    (running
+      ? '<div style="padding:0 16px 16px;">'+
+          '<div class="bar-row" style="grid-template-columns:1fr auto auto;gap:12px;">'+
+            '<span class="bar-track"><span class="bar-fill" style="width:'+
+              Math.round(k.progress.done / k.progress.total * 100)+'%"></span></span>'+
+            '<span class="vl num">'+k.progress.done+' / '+k.progress.total+'</span>'+
+            '<button class="tiny danger" id="kwStop">중단</button>'+
+          '</div>'+
+          '<div style="margin-top:8px;font-size:11.5px;color:var(--sub);letter-spacing:-.2px;">'+
+            '“'+esc(k.progress.label)+'” 의 등록 상품 수를 세는 중입니다</div>'+
+        '</div>'
+      : '')+
+    (k.error ? '<div style="padding:14px 16px;color:var(--red);font-size:12px;line-height:1.6;">'+esc(k.error)+'</div>' : '')+
+  '</div>';
+
+  var reco = '';
+  if(k.scored && rows.length){
+    var top = rows.slice().sort(function(a,b){ return kwScore(b).score - kwScore(a).score; }).slice(0,5);
+    reco =
+    '<div class="card" style="margin-bottom:18px;">'+
+      '<div class="sec-head"><h3>추천 키워드</h3>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">수요 40 · 경쟁 40 · 모바일 비중 10 · 광고 경쟁 10 으로 매긴 점수입니다</span></div>'+
+      '<div class="bars">'+top.map(function(row,i){
+        var sc = kwScore(row);
+        return '<div class="reco">'+
+          '<span class="rank">'+(i+1)+'</span>'+
+          '<div class="rmain">'+
+            '<div class="rtop">'+
+              '<span class="rkw">'+esc(row.keyword)+
+                (seasonOfKeyword(row.keyword).length
+                  ? '<span class="season-chip">'+esc(SEASON_LABEL[seasonOfKeyword(row.keyword)[0]])+' 상품</span>'
+                  : '')+'</span>'+
+              '<span class="rscore num">'+sc.score+'<small>점</small>'+
+                (sc.estimated ? '<em>추정</em>' : '')+'</span>'+
+            '</div>'+
+            '<span class="bar-track" style="margin-top:8px;"><span class="bar-fill'+
+              (sc.score>=60?'':(sc.score>=40?' warn':' bad'))+'" style="width:'+Math.max(3,sc.score)+'%"></span></span>'+
+            '<div class="rmeta num">'+esc(kwReason(row))+'</div>'+
+            '<div class="rsay">'+esc(kwVerdict(row))+'</div>'+
+          '</div>'+
+          '<div class="row-btns" style="flex-shrink:0;flex-direction:column;align-items:stretch;">'+
+            '<button class="tiny" data-rank="'+esc(row.keyword)+'"'+
+              (App.busy['rank_'+row.keyword]?' disabled':'')+'>'+
+              (App.busy['rank_'+row.keyword] ? '수집 중' : '쿠팡 노출 20위 보기')+'</button>'+
+            '<button class="tiny" data-top="'+esc(row.keyword)+'"'+(App.busy['top_'+row.keyword]?' disabled':'')+'>'+
+              (App.busy['top_'+row.keyword] ? '가져오는 중' : '1위로 바로 비교')+'</button>'+
+          '</div>'+
+        '</div>';
+      }).join('')+'</div>'+
+    '</div>';
+  }
+
+  var body;
+  if(!k.rows.length){
+    body =
+    '<div class="card"><div class="empty-state">'+
+      '<div class="ic">🔎</div>'+
+      '<h4>'+(k.ran ? '결과가 없습니다' : '무엇을 팔지 정하지 않으셨어도 됩니다')+'</h4>'+
+      '<p>'+(k.ran
+        ? '다른 단어로 다시 시도해보세요. 띄어쓰기 없이 붙여 쓰면 결과가 더 잘 나옵니다.'
+        : '<b>알아서 골라줘</b>를 누르면 중국 소싱에 잘 맞는 분야 중 몇 개를 무작위로 골라 시작합니다.<br>'+
+          '거기서 연관 키워드를 모으고 검색량과 등록 상품 수를 확인해 순위를 매겨드립니다.<br><br>'+
+          '검색광고 API 키는 확장프로그램 아이콘 → 검색광고 API 키 설정에서 등록합니다.')+'</p>'+
+      (k.ran ? '' : '<button class="act primary" id="kwAuto2" style="margin:18px auto 0;">알아서 골라줘</button>')+
+    '</div></div>';
+  } else {
+    body =
+    '<div class="card">'+
+      '<div class="sec-head"><h3>연관 키워드 '+nf(rows.length)+'개</h3>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">경쟁률은 네이버쇼핑 상품 수 ÷ 월간 검색량입니다</span></div>'+
+      '<div class="tbl-wrap"><table>'+
+        '<thead><tr>'+
+          '<th>키워드</th><th class="r">월간 검색량</th><th class="r">PC</th><th class="r">모바일</th>'+
+          '<th class="r">광고 경쟁</th><th class="r">상품 수</th><th class="r">경쟁률</th><th>판정</th><th></th>'+
+        '</tr></thead>'+
+        '<tbody>'+rows.map(function(row){
+          var g = kwGrade(row);
+          var ratio = kwRatio(row);
+          var busyShop = App.busy['shop_'+row.keyword];
+          var busyTop = App.busy['top_'+row.keyword];
+          return '<tr>'+
+            '<td style="font-weight:700;color:#242c38;">'+esc(row.keyword)+
+              (row.low ? ' <span class="pill gray">10 미만</span>' : '')+'</td>'+
+            '<td class="r num" style="font-weight:700;">'+nf(row.total)+'</td>'+
+            '<td class="r num" style="color:var(--sub);">'+nf(row.pc)+'</td>'+
+            '<td class="r num" style="color:var(--sub);">'+nf(row.mobile)+'</td>'+
+            '<td class="r">'+(row.comp ? '<span class="pill gray">'+esc(row.comp)+'</span>' : '-')+'</td>'+
+            '<td class="r num">'+(row.shopCount ? nf(row.shopCount) : '-')+'</td>'+
+            '<td class="r num">'+(ratio === null ? '-' : ratio.toFixed(1))+'</td>'+
+            '<td><span class="pill '+g.cls+'">'+g.text+'</span></td>'+
+            '<td><div class="row-btns">'+
+              '<button class="tiny" data-shop="'+esc(row.keyword)+'"'+(busyShop?' disabled':'')+'>'+
+                (busyShop ? '확인 중' : '경쟁 확인')+'</button>'+
+              '<button class="tiny" data-rank="'+esc(row.keyword)+'"'+
+                (App.busy['rank_'+row.keyword]?' disabled':'')+'>'+
+                (App.busy['rank_'+row.keyword] ? '수집 중' : '쿠팡 20위')+'</button>'+
+              '<button class="tiny" data-top="'+esc(row.keyword)+'"'+(busyTop?' disabled':'')+'>'+
+                (busyTop ? '가져오는 중' : '비교 분석')+'</button>'+
+            '</div></td>'+
+          '</tr>';
+        }).join('')+'</tbody>'+
+      '</table></div>'+
+      '<div style="padding:13px 16px;border-top:1px solid var(--line2);font-size:11px;color:var(--sub2);line-height:1.6;">'+
+        '경쟁 확인은 네이버쇼핑 페이지를 한 번 열어 상품 수를 셉니다. 한 번에 몰아서 누르지 말고 관심 있는 키워드만 눌러주세요.'+
+      '</div>'+
+    '</div>';
+  }
+
+  return head + searchBar + reco + body;
+}
+
+/* 중국 소싱으로 접근하기 좋은 분야들. 씨앗을 정하지 못했을 때 여기서 무작위로 고른다.
+   s 는 그 물건이 팔리는 철이다. all 은 연중 꾸준히 팔리는 것. */
+var SEED_POOL = [
+  {k:'주방용품',        s:'all'},    {k:'수납정리',      s:'all'},
+  {k:'욕실용품',        s:'all'},    {k:'생활잡화',      s:'all'},
+  {k:'청소용품',        s:'all'},    {k:'반려동물용품',  s:'all'},
+  {k:'차량용품',        s:'all'},    {k:'스마트폰악세서리', s:'all'},
+  {k:'노트북악세서리',  s:'all'},    {k:'조명',          s:'all'},
+  {k:'인테리어소품',    s:'all'},    {k:'문구',          s:'all'},
+  {k:'사무용품',        s:'all'},    {k:'공구',          s:'all'},
+  {k:'홈트레이닝',      s:'all'},    {k:'요가용품',      s:'all'},
+  {k:'자전거용품',      s:'spring,summer,fall'},
+  {k:'낚시용품',        s:'spring,summer,fall'},
+  {k:'골프용품',        s:'spring,summer,fall'},
+  {k:'유아용품',        s:'all'},    {k:'수유용품',      s:'all'},
+  {k:'미용소품',        s:'all'},    {k:'네일아트',      s:'all'},
+  {k:'헤어악세서리',    s:'all'},    {k:'메이크업브러시', s:'all'},
+  {k:'여행용품',        s:'all'},    {k:'캐리어용품',    s:'all'},
+  {k:'주방수납',        s:'all'},    {k:'냉장고정리',    s:'all'},
+  {k:'옷걸이',          s:'all'},    {k:'신발정리',      s:'all'},
+  {k:'책상정리',        s:'all'},    {k:'케이블정리',    s:'all'},
+  {k:'거치대',          s:'all'},    {k:'충전기',        s:'all'},
+  {k:'블루투스이어폰',  s:'all'},    {k:'스마트워치밴드', s:'all'},
+  {k:'키보드',          s:'all'},    {k:'마우스패드',    s:'all'},
+  {k:'게임악세서리',    s:'all'},    {k:'베이킹도구',    s:'all'},
+  {k:'커피용품',        s:'all'},    {k:'텀블러',        s:'all'},
+  {k:'도시락',          s:'all'},    {k:'파티용품',      s:'all'},
+  {k:'선물포장',        s:'all'},    {k:'목베개',        s:'all'},
+  {k:'자세교정',        s:'all'},    {k:'발마사지',      s:'all'},
+  {k:'손목보호대',      s:'all'},    {k:'안마기',        s:'all'},
+  {k:'정원용품',        s:'spring,summer'},
+  {k:'피크닉용품',      s:'spring,summer,fall'},
+  {k:'캠핑용품',        s:'spring,summer,fall'},
+  {k:'등산용품',        s:'spring,fall'},
+  {k:'우산',            s:'spring,summer'},
+  {k:'방수용품',        s:'summer'},
+  {k:'제습',            s:'summer'},
+  {k:'모기퇴치',        s:'summer'},
+  {k:'물놀이용품',      s:'summer'},
+  {k:'냉방용품',        s:'summer'},
+  {k:'황사마스크',      s:'spring'},
+  {k:'방한용품',        s:'winter'},
+  {k:'난방용품',        s:'winter'},
+  {k:'가습',            s:'winter'},
+  {k:'수면용품',        s:'fall,winter'},
+  {k:'실내정리',        s:'fall,winter'},
+  {k:'홈카페',          s:'fall,winter'}
+];
+
+/* 결과 키워드에 철이 드러나는 말이 섞이면 그 철의 상품으로 본다 */
+var SEASON_WORDS = {
+  summer:['여름','하절기','선풍기','냉풍기','서큘레이터','쿨','냉감','아이스','제빙','모기','벌레',
+          '제습','수영','물놀이','튜브','해변','비치','자외선','썬','양산','우비','장화','레인','장마','에어컨'],
+  winter:['겨울','동절기','난방','히터','난로','온열','발열','전기장판','온수매트','목도리','장갑','귀마개',
+          '방한','한파','가습','핫팩','극세사','담요','기모','패딩','스키','보드','제설','성에','눈삽'],
+  spring:['봄','춘절기','황사','미세먼지','꽃가루','벚꽃','나들이','소풍','원예','모종','씨앗'],
+  fall:  ['가을','추절기','단풍','환절기','추석','할로윈','수확']
+};
+var SEASON_LABEL = {spring:'봄', summer:'여름', fall:'가을', winter:'겨울'};
+
+function seasonOfMonth(m){
+  if(m >= 3 && m <= 5) return 'spring';
+  if(m >= 6 && m <= 8) return 'summer';
+  if(m >= 9 && m <= 11) return 'fall';
+  return 'winter';
+}
+/* 지금 주문하면 언제 도착하고, 도착 후 어느 철에 팔게 되는지 */
+function seasonWindow(){
+  var lead = num(App.kw.leadWeeks) || 6;
+  var arrive = new Date();
+  arrive.setDate(arrive.getDate() + lead * 7);
+  var months = [];
+  var seasons = {};
+  for(var i = 0; i < 3; i++){
+    var d = new Date(arrive.getFullYear(), arrive.getMonth() + i, 1);
+    var m = d.getMonth() + 1;
+    months.push(m);
+    seasons[seasonOfMonth(m)] = true;
+  }
+  return {lead:lead, arrive:arrive, months:months, seasons:Object.keys(seasons)};
+}
+/* 키워드에서 철을 읽는다. 아무 말도 안 걸리면 연중 상품으로 본다. */
+function seasonOfKeyword(keyword){
+  var kwd = String(keyword||'');
+  var hits = [];
+  Object.keys(SEASON_WORDS).forEach(function(season){
+    if(SEASON_WORDS[season].some(function(w){ return kwd.indexOf(w) >= 0; })) hits.push(season);
+  });
+  return hits;
+}
+function seasonFits(keyword){
+  var hits = seasonOfKeyword(keyword);
+  if(!hits.length) return {fit:true, season:''};
+  var win = seasonWindow();
+  var ok = hits.some(function(s){ return win.seasons.indexOf(s) >= 0; });
+  return {fit:ok, season:hits[0]};
+}
+function seedFits(entry){
+  if(entry.s === 'all') return true;
+  var win = seasonWindow();
+  return entry.s.split(',').some(function(s){ return win.seasons.indexOf(s) >= 0; });
+}
+function seasonSentence(){
+  var w = seasonWindow();
+  var p = function(n){ return (n<10?'0':'')+n; };
+  var today = new Date();
+  var arriveTxt = (w.arrive.getMonth()+1) + '월 ' +
+    (w.arrive.getDate() <= 10 ? '상순' : (w.arrive.getDate() <= 20 ? '중순' : '하순'));
+  var names = w.seasons.map(function(s){ return SEASON_LABEL[s]; }).join('·');
+  return {
+    today: today.getFullYear()+'.'+p(today.getMonth()+1)+'.'+p(today.getDate()),
+    arrive: arriveTxt,
+    months: w.months.join('월, ')+'월',
+    names: names,
+    lead: w.lead
+  };
+}
+
+function pickSeeds(n){
+  var pool = SEED_POOL.filter(function(e){
+    return App.kw.season ? seedFits(e) : true;
+  });
+  if(!pool.length) pool = SEED_POOL.slice();
+  var copy = pool.slice();
+  var out = [];
+  while(out.length < n && copy.length){
+    out.push(copy.splice(Math.floor(Math.random()*copy.length), 1)[0].k);
+  }
+  return out;
+}
+async function autoRecommend(){
+  var seeds = pickSeeds(3);
+  App.kw.seed = seeds.join(', ');
+  var el = $('#kwSeed');
+  if(el) el.value = App.kw.seed;
+  var s = seasonSentence();
+  toast(App.kw.season
+    ? s.names+' 상품 기준으로 '+seeds.join(', ')+' 를 골랐습니다'
+    : seeds.join(', ') + ' 로 시작합니다');
+  await recommend();
+}
+
+async function runKeywords(){
+  var seed = $('#kwSeed').value.trim();
+  if(!seed){ toast('키워드를 입력해주세요.','err'); return; }
+  App.kw.seed = seed;
+  App.kw.error = '';
+  App.busy.kw = true; render();
+  var res = await Ext.keywords(seed);
+  App.busy.kw = false;
+  App.kw.ran = true;
+  App.kw.scored = false;
+  if(!res.ok){
+    App.kw.rows = [];
+    App.kw.error = res.error || '검색량을 가져오지 못했습니다.';
+    render();
+    if(res.needsKey) toast('확장프로그램 아이콘을 눌러 검색광고 API 키를 먼저 등록해주세요.','err');
+    return false;
+  }
+  App.kw.rows = ((res.data && res.data.list) || []).map(function(r){
+    return Object.assign({shopCount:0}, r);
+  });
+  render();
+  return true;
+}
+
+/* 씨앗 하나로 연관 키워드를 받아 상위 후보의 상품 수까지 자동으로 확인한 뒤 순위를 매긴다 */
+var RECO_DEPTH = 15;
+async function recommend(){
+  var seed = $('#kwSeed').value.trim();
+  if(!seed){ toast('어떤 분야인지 한 단어만 넣어주세요.','err'); return; }
+  var ok = await runKeywords();
+  if(!ok || !App.kw.rows.length) return;
+
+  var cands = App.kw.rows
+    .filter(function(r){
+      if(r.total < 100) return false;
+      if(kwExcluded(r.keyword)) return false;
+      if(App.kw.season && !seasonFits(r.keyword).fit) return false;
+      return true;
+    })
+    .slice(0, RECO_DEPTH);
+  if(!cands.length){
+    toast('조건에 맞는 키워드가 없습니다. 시즌 필터를 끄거나 더 넓은 단어로 시도해보세요.','err');
+    return;
+  }
+
+  App.kw.stop = false;
+  for(var i = 0; i < cands.length; i++){
+    if(App.kw.stop) break;
+    App.kw.progress = {done:i, total:cands.length, label:cands[i].keyword};
+    render();
+    var res = await Ext.shopCount(cands[i].keyword);
+    if(res.ok) cands[i].shopCount = num(res.data && res.data.count);
+    /* 네이버쪽에 부담을 주지 않도록 간격을 둔다 */
+    if(i < cands.length - 1) await wait(1400);
+  }
+  var stopped = App.kw.stop;
+  App.kw.progress = null;
+  App.kw.stop = false;
+  App.kw.scored = true;
+  App.kw.sort = 'score';
+  render();
+  toast(stopped ? '확인을 멈췄습니다. 지금까지 결과로 순위를 매겼습니다.' : '추천 키워드를 뽑았습니다');
+}
+
+async function checkShop(keyword){
+  App.busy['shop_'+keyword] = true; render();
+  var res = await Ext.shopCount(keyword);
+  App.busy['shop_'+keyword] = false;
+  if(!res.ok){ render(); toast(res.error || '상품 수를 확인하지 못했습니다.','err'); return; }
+  var row = App.kw.rows.find(function(r){ return r.keyword === keyword; });
+  if(row) row.shopCount = num(res.data && res.data.count);
+  render();
+}
+
+async function startFromKeyword(keyword){
+  App.busy['top_'+keyword] = true; render();
+  var res = await Ext.coupangTop(keyword);
+  App.busy['top_'+keyword] = false;
+  if(!res.ok){ render(); toast(res.error || '쿠팡 상위 상품을 가져오지 못했습니다.','err'); return; }
+  var top = ((res.data && res.data.items) || [])[0];
+  if(!top){ render(); toast('검색 결과에서 상품을 찾지 못했습니다.','err'); return; }
+
+  var rec = blankRecord(Auth.user);
+  rec.title = keyword;
+  rec.coupang.url = top.url || '';
+  rec.coupang.name = top.name || '';
+  rec.coupang.price = num(top.price);
+  rec.coupang.rating = top.rating || '';
+  rec.coupang.reviews = num(top.reviews);
+  rec.memo = '키워드 발굴에서 시작 · ' + keyword;
+  App.record = rec;
+  go('compare');
+  toast('“'+top.name.slice(0,20)+'” 으로 비교 분석을 시작합니다. 썸네일이 필요하면 수집을 누르세요.');
+}
+
+function bindKeywords(){
+  var go1 = $('#kwGo');
+  if(go1) go1.onclick = runKeywords;
+  var rec = $('#kwReco');
+  if(rec) rec.onclick = recommend;
+  ['#kwAuto','#kwAuto2'].forEach(function(sel){
+    var b = $(sel);
+    if(b) b.onclick = autoRecommend;
+  });
+  var stop = $('#kwStop');
+  if(stop) stop.onclick = function(){ App.kw.stop = true; toast('현재 확인이 끝나면 멈춥니다'); };
+
+  var seed = $('#kwSeed');
+  if(seed){
+    seed.addEventListener('input', function(){ App.kw.seed = this.value; });
+    seed.addEventListener('keydown', function(e){ if(e.key === 'Enter') recommend(); });
+    if(!App.kw.progress && !App.busy.kw){
+      seed.focus();
+      seed.setSelectionRange(seed.value.length, seed.value.length);
+    }
+  }
+  var exc = $('#kwExclude');
+  if(exc){
+    exc.addEventListener('input', debounce(function(){
+      App.kw.exclude = exc.value;
+      render();
+      var again = $('#kwExclude');
+      if(again){ again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+    }, 320));
+  }
+  var sort = $('#kwSort');
+  if(sort) sort.onchange = function(){ App.kw.sort = sort.value; render(); };
+  var season = $('#kwSeason');
+  if(season) season.onchange = function(){
+    App.kw.season = season.checked;
+    render();
+    toast(season.checked ? '도착 시점 기준으로 철 지난 키워드를 뺍니다' : '시즌 필터를 껐습니다');
+  };
+  var lead = $('#kwLead');
+  if(lead) lead.onchange = function(){ App.kw.leadWeeks = num(lead.value); render(); };
+  var clr = $('#kwClear');
+  if(clr) clr.onclick = function(){
+    App.kw = Object.assign({}, App.kw, {seed:'', rows:[], sort:'score', ran:false,
+      error:'', exclude:'', progress:null, scored:false, stop:false});
+    render();
+  };
+  $$('[data-shop]').forEach(function(b){
+    b.onclick = function(){ checkShop(b.getAttribute('data-shop')); };
+  });
+  $$('[data-rank]').forEach(function(b){
+    b.onclick = function(){ openRanking(b.getAttribute('data-rank')); };
+  });
+  $$('[data-top]').forEach(function(b){
+    b.onclick = function(){ startFromKeyword(b.getAttribute('data-top')); };
+  });
+}
+
+/* =======================================================================
+   9-c. coupang ranking for one keyword
+   ======================================================================= */
+var RANK_LIMIT = 20;
+
+async function openRanking(keyword){
+  App.busy['rank_'+keyword] = true; render();
+  var res = await Ext.coupangTop(keyword, RANK_LIMIT, true);
+  App.busy['rank_'+keyword] = false;
+  if(!res.ok){ render(); toast(res.error || '쿠팡 검색 결과를 가져오지 못했습니다.','err'); return; }
+  var items = (res.data && res.data.items) || [];
+  if(!items.length){ render(); toast('광고를 뺀 상품을 찾지 못했습니다.','err'); return; }
+  App.rank = {keyword:keyword, items:items, at:nowIso()};
+  go('rank');
+  toast('“'+keyword+'” 노출 순위 '+nf(items.length)+'개를 수집했습니다');
+}
+
+function rankStats(items){
+  var prices = items.map(function(x){ return num(x.price); }).filter(function(p){ return p > 0; });
+  var sorted = prices.slice().sort(function(a,b){ return a-b; });
+  var mid = sorted.length
+    ? (sorted.length % 2 ? sorted[(sorted.length-1)/2]
+       : (sorted[sorted.length/2-1] + sorted[sorted.length/2]) / 2)
+    : 0;
+  return {
+    count: items.length,
+    avg: prices.length ? prices.reduce(function(s,p){ return s+p; },0) / prices.length : 0,
+    median: mid,
+    min: sorted.length ? sorted[0] : 0,
+    max: sorted.length ? sorted[sorted.length-1] : 0,
+    reviews: items.reduce(function(s,x){ return s + num(x.reviews); }, 0),
+    rocket: items.filter(function(x){ return x.rocket; }).length
+  };
+}
+
+function viewRank(){
+  var r = App.rank;
+  var items = r.items;
+  var st = rankStats(items);
+  var maxReview = Math.max.apply(null, items.map(function(x){ return num(x.reviews) || 0; }).concat([1]));
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>“'+esc(r.keyword)+'” 쿠팡 노출 순위</h2>'+
+      '<p>광고를 뺀 상위 '+nf(items.length)+'개입니다. '+esc(fmtDate(r.at))+' 기준이며, 순위는 검색할 때마다 바뀝니다.</p></div>'+
+    '<div class="actions">'+
+      '<button class="act" data-nav="keywords"><svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>키워드로 돌아가기</button>'+
+      '<button class="act" id="rankAgain"'+(App.busy['rank_'+r.keyword]?' disabled':'')+'>'+
+        (App.busy['rank_'+r.keyword] ? '수집 중' : '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 4v5h-5"/></svg>다시 수집')+'</button>'+
+      '<button class="act" id="rankCopy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>표 복사</button>'+
+    '</div>'+
+  '</div>';
+
+  var kpis =
+  '<div class="kpis">'+
+    '<div class="kpi"><div class="k">평균 판매가</div><div class="v num">'+won(st.avg)+'</div>'+
+      '<div class="s num">중앙값 '+won(st.median)+'</div></div>'+
+    '<div class="kpi"><div class="k">가격 범위</div><div class="v num">'+won(st.min)+'</div>'+
+      '<div class="s num">최고 '+won(st.max)+'</div></div>'+
+    '<div class="kpi"><div class="k">로켓배송 비중</div><div class="v num">'+
+      Math.round(st.rocket / Math.max(1, st.count) * 100)+'%</div>'+
+      '<div class="s num">'+nf(st.rocket)+' / '+nf(st.count)+'개</div></div>'+
+    '<div class="kpi hero"><div class="k">상위 노출 리뷰 합계</div><div class="v num">'+nf(st.reviews)+'</div>'+
+      '<div class="s">리뷰가 적을수록 비집고 들어갈 틈이 있습니다</div></div>'+
+  '</div>';
+
+  var table =
+  '<div class="card">'+
+    '<div class="sec-head"><h3>노출 순위</h3>'+
+      '<span style="font-size:11.5px;color:var(--sub2);">가져오기를 누르면 그 상품으로 1688 비교 분석을 시작합니다</span></div>'+
+    '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th style="width:52px;">순위</th><th>상품</th><th class="r">판매가</th>'+
+      '<th class="r">별점</th><th class="r">리뷰</th><th>배송</th><th></th></tr></thead>'+
+      '<tbody>'+items.map(function(it){
+        var rv = num(it.reviews);
+        return '<tr>'+
+          '<td><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
+          '<td><div class="cell-prod">'+
+            '<span class="cell-thumb">'+imgOr(it.image)+'</span>'+
+            '<span style="min-width:0;"><div class="nm" style="max-width:420px;white-space:normal;">'+
+              esc(it.name || '이름 없음')+'</div>'+
+            (it.unitPrice ? '<div class="sm">'+esc(it.unitPrice)+'</div>' : '')+
+            '</span></div></td>'+
+          '<td class="r num" style="font-weight:700;">'+(num(it.price) ? won(it.price) : '-')+'</td>'+
+          '<td class="r num">'+(it.rating ? '<span style="color:var(--amber);">★</span> '+esc(it.rating) : '-')+'</td>'+
+          '<td class="r"><div class="revcell">'+
+            '<span class="num">'+nf(rv)+'</span>'+
+            '<span class="bar-track" style="width:56px;height:5px;"><span class="bar-fill" style="width:'+
+              Math.max(2, Math.round(rv/maxReview*100))+'%"></span></span>'+
+          '</div></td>'+
+          '<td>'+(it.rocket ? '<span class="pill good">로켓</span>'
+                  : (it.freeShip ? '<span class="pill gray">무료</span>' : '-'))+'</td>'+
+          '<td><div class="row-btns">'+
+            '<button class="tiny" data-rank-open="'+esc(it.url)+'">쿠팡</button>'+
+            '<button class="tiny" data-rank-use="'+esc(String(it.rank))+'"'+
+              (App.busy['use_'+it.rank]?' disabled':'')+'>'+
+              (App.busy['use_'+it.rank] ? '가져오는 중' : '가져오기')+'</button>'+
+          '</div></td>'+
+        '</tr>';
+      }).join('')+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+
+  return head + kpis + table;
+}
+
+async function useRankItem(rank){
+  var it = App.rank.items.find(function(x){ return String(x.rank) === String(rank); });
+  if(!it) return;
+  App.busy['use_'+rank] = true; render();
+
+  var rec = blankRecord(Auth.user);
+  rec.title = App.rank.keyword + ' · ' + rank + '위';
+  rec.coupang.url = it.url || '';
+  rec.coupang.name = it.name || '';
+  rec.coupang.price = num(it.price);
+  rec.coupang.rating = it.rating || '';
+  rec.coupang.reviews = num(it.reviews);
+  rec.memo = '키워드 “'+App.rank.keyword+'” 쿠팡 '+rank+'위 상품';
+  if(it.image){
+    if(it.image.indexOf('data:') === 0 && it.url) App.imgData[it.url] = it.image;
+    rec.coupang.image = await Assets.store(it.image);
+  }
+
+  App.busy['use_'+rank] = false;
+  App.record = rec;
+  go('compare');
+  toast(rank+'위 상품으로 비교 분석을 시작합니다. 1688 링크를 넣어보세요.');
+}
+
+function bindRank(){
+  var again = $('#rankAgain');
+  if(again) again.onclick = function(){ openRanking(App.rank.keyword); };
+  $$('[data-rank-open]').forEach(function(b){
+    b.onclick = function(){ window.open(b.getAttribute('data-rank-open'), '_blank', 'noopener'); };
+  });
+  $$('[data-rank-use]').forEach(function(b){
+    b.onclick = function(){ useRankItem(b.getAttribute('data-rank-use')); };
+  });
+  var copy = $('#rankCopy');
+  if(copy) copy.onclick = function(){
+    var text = ['순위\t상품명\t판매가\t별점\t리뷰\t배송\t링크'].concat(
+      App.rank.items.map(function(it){
+        return [it.rank, it.name, num(it.price), it.rating || '', num(it.reviews),
+                it.rocket ? '로켓' : (it.freeShip ? '무료' : ''), it.url].join('\t');
+      })
+    ).join('\n');
+    navigator.clipboard.writeText(text).then(
+      function(){ toast('표를 복사했습니다. 엑셀에 붙여넣으세요'); },
+      function(){ toast('복사하지 못했습니다.','err'); }
+    );
+  };
+}
+
+/* =======================================================================
+   10. list / admin
+   ======================================================================= */
+function recordRow(r, showOwner){
+  var c = calc(r);
+  var cls = c.sell && c.cny ? (c.margin>=30?'good':(c.margin>=10?'mid':'bad')) : 'gray';
+  var label = c.sell && c.cny ? c.margin.toFixed(1)+'%' : '미완성';
+  return '<tr data-open-rec="'+esc(r.id)+'">'+
+    '<td><div class="cell-prod">'+
+      '<span class="cell-thumb">'+imgOr(r.coupang.image)+'</span>'+
+      '<span><div class="nm">'+esc(r.coupang.name || r.title || '제목 없음')+'</div>'+
+      '<div class="sm">'+esc(r.title || '-')+'</div></span></div></td>'+
+    (showOwner ? '<td>'+esc(r.ownerName||r.ownerId||'-')+'</td>' : '')+
+    '<td class="r num">'+(c.sell?won(c.sell):'-')+'</td>'+
+    '<td class="r num">'+(c.cny?'¥'+c.cny.toFixed(2):'-')+'</td>'+
+    '<td class="r num">'+(c.sell&&c.cny?won(c.profit):'-')+'</td>'+
+    '<td class="r"><span class="pill '+cls+'">'+label+'</span></td>'+
+    '<td class="r num">'+(c.sell&&c.cny?won(c.monthly):'-')+'</td>'+
+    '<td class="num" style="color:var(--sub2);font-size:11.5px;white-space:nowrap;">'+fmtDate(r.updatedAt)+'</td>'+
+    '<td><div class="row-btns">'+
+      '<button class="tiny" data-open-rec="'+esc(r.id)+'">열기</button>'+
+      '<button class="tiny danger" data-del-rec="'+esc(r.id)+'">삭제</button>'+
+    '</div></td>'+
+  '</tr>';
+}
+
+function viewList(){
+  var q = App.query.trim().toLowerCase();
+  var recs = App.records.filter(function(r){
+    if(!q) return true;
+    return ((r.coupang.name||'')+' '+(r.title||'')+' '+(r.memo||'')).toLowerCase().indexOf(q) >= 0;
+  });
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>상품 보관함</h2><p>저장한 비교 분석 '+nf(App.records.length)+'건입니다. 행을 누르면 그 기록을 이어서 편집합니다.</p></div>'+
+    '<div class="actions">'+
+      '<button class="act" id="reload"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 4v5h-5"/></svg>새로고침</button>'+
+      '<button class="act primary" id="newRec"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 비교 분석</button>'+
+    '</div>'+
+  '</div>';
+  return head +
+  '<div class="card">'+
+    '<div class="toolbar">'+
+      '<span class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
+        '<input id="q" value="'+esc(App.query)+'" placeholder="상품명, 제목, 메모로 검색"></span>'+
+    '</div>'+
+    (recs.length ? '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th>상품</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
+      '<th class="r">이익률</th><th class="r">월 예상이익</th><th>수정일</th><th></th></tr></thead>'+
+      '<tbody>'+recs.map(function(r){ return recordRow(r,false); }).join('')+'</tbody></table></div>'
+      : '<div class="empty-state"><div class="ic">🗂️</div><h4>'+(App.query?'검색 결과가 없습니다':'보관함이 비어 있습니다')+'</h4>'+
+        '<p>'+(App.query?'다른 검색어로 찾아보세요.':'쿠팡 링크와 1688 링크를 넣어 첫 비교 분석을 저장해보세요.')+'</p>'+
+        (App.query?'':'<button class="act primary" id="newRec2" style="margin:16px auto 0;">새 비교 분석</button>')+'</div>')+
+  '</div>';
+}
+
+function viewAdmin(){
+  var users = App.users;
+  var all = App.allRecords || [];
+  var filtered = App.filterUser ? all.filter(function(r){ return r.ownerId===App.filterUser; }) : all;
+  var q = App.query.trim().toLowerCase();
+  if(q) filtered = filtered.filter(function(r){
+    return ((r.coupang.name||'')+' '+(r.title||'')+' '+(r.ownerName||'')+' '+(r.ownerId||'')).toLowerCase().indexOf(q)>=0;
+  });
+  var byUser = {};
+  all.forEach(function(r){ byUser[r.ownerId] = (byUser[r.ownerId]||0)+1; });
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>어드민 콘솔</h2><p>사용자 '+nf(users.length)+'명, 전체 기록 '+nf(all.length)+'건을 관리합니다.</p></div>'+
+    '<div class="actions">'+
+      '<button class="act" id="reload"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 4v5h-5"/></svg>새로고침</button>'+
+      '<button class="act" id="exportAll"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>JSON 내보내기</button>'+
+    '</div>'+
+  '</div>';
+
+  var userTbl =
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="sec-head"><h3>사용자</h3><span style="font-size:11.5px;color:var(--sub2);">권한 변경과 사용 중지는 즉시 반영됩니다</span></div>'+
+    '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>상태</th><th class="r">기록 수</th><th>가입일</th><th>최근 로그인</th><th></th></tr></thead>'+
+      '<tbody>'+users.map(function(u){
+        var me = u.uid === Auth.user.uid;
+        return '<tr>'+
+          '<td style="font-weight:700;color:#242c38;">'+esc(u.uid)+(me?' <span class="pill gray">나</span>':'')+'</td>'+
+          '<td>'+esc(u.name)+'</td>'+
+          '<td><span class="pill '+(u.role==='admin'?'good':'gray')+'">'+(u.role==='admin'?'관리자':'일반')+'</span></td>'+
+          '<td><span class="pill '+(u.disabled?'bad':'gray')+'">'+(u.disabled?'중지':'정상')+'</span></td>'+
+          '<td class="r num">'+nf(byUser[u.uid]||0)+'</td>'+
+          '<td class="num" style="color:var(--sub2);font-size:11.5px;">'+fmtDate(u.createdAt)+'</td>'+
+          '<td class="num" style="color:var(--sub2);font-size:11.5px;">'+fmtDate(u.lastLoginAt)+'</td>'+
+          '<td><div class="row-btns">'+
+            '<button class="tiny" data-filter-user="'+esc(u.uid)+'">기록 보기</button>'+
+            (me ? '' :
+              '<button class="tiny" data-role="'+esc(u.uid)+'">'+(u.role==='admin'?'관리자 해제':'관리자 지정')+'</button>'+
+              '<button class="tiny '+(u.disabled?'':'danger')+'" data-toggle="'+esc(u.uid)+'">'+(u.disabled?'사용 재개':'사용 중지')+'</button>')+
+          '</div></td>'+
+        '</tr>';
+      }).join('')+'</tbody></table></div>'+
+  '</div>';
+
+  var recTbl =
+  '<div class="card">'+
+    '<div class="toolbar">'+
+      '<span class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
+        '<input id="q" value="'+esc(App.query)+'" placeholder="상품명, 사용자로 검색"></span>'+
+      '<select class="sel-box" id="userFilter">'+
+        '<option value="">모든 사용자</option>'+
+        users.map(function(u){
+          return '<option value="'+esc(u.uid)+'"'+(App.filterUser===u.uid?' selected':'')+'>'+esc(u.name)+' ('+esc(u.uid)+')</option>';
+        }).join('')+
+      '</select>'+
+      '<span style="margin-left:auto;font-size:11.5px;color:var(--sub2);">'+nf(filtered.length)+'건 표시</span>'+
+    '</div>'+
+    (filtered.length ? '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th>상품</th><th>사용자</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
+      '<th class="r">이익률</th><th class="r">월 예상이익</th><th>수정일</th><th></th></tr></thead>'+
+      '<tbody>'+filtered.map(function(r){ return recordRow(r,true); }).join('')+'</tbody></table></div>'
+      : '<div class="empty-state"><div class="ic">🔍</div><h4>표시할 기록이 없습니다</h4><p>필터를 바꾸거나 검색어를 지워보세요.</p></div>')+
+  '</div>';
+
+  return head + userTbl + recTbl;
+}
+
+/* =======================================================================
+   11. guide / settings
+   ======================================================================= */
+function viewGuide(){
+  var origin = location.origin;
+  return ''+
+  '<div class="page-head"><div><h2>이용 가이드</h2>'+
+    '<p>링크 자동 수집은 크롬 확장프로그램이 담당합니다. 한 번만 설치하면 됩니다.</p></div>'+
+    '<div class="actions"><button class="act primary" id="newRec">'+
+    '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>바로 시작하기</button></div></div>'+
+  '<div class="guide">'+
+    '<div class="card gd">'+
+      '<h3>확장프로그램 설치</h3>'+
+      '<p class="lead">개발자 모드로 압축 해제된 확장프로그램을 불러오는 방식입니다. 스토어 심사 없이 바로 씁니다.</p>'+
+      '<div class="steps">'+
+        '<div class="step"><span class="n">1</span><div><h4>폴더 준비</h4>'+
+          '<p>전달받은 <code class="k">sourcing-pro-extension</code> 폴더의 압축을 풀어 원하는 위치에 둡니다. 폴더를 옮기면 확장프로그램이 해제되므로 고정된 경로에 두세요.</p></div></div>'+
+        '<div class="step"><span class="n">2</span><div><h4>크롬 확장 프로그램 페이지 열기</h4>'+
+          '<p>주소창에 <code class="k">chrome://extensions</code> 를 입력해 연 뒤, 오른쪽 위 <b>개발자 모드</b>를 켭니다.</p></div></div>'+
+        '<div class="step"><span class="n">3</span><div><h4>압축해제된 확장 프로그램을 로드</h4>'+
+          '<p>왼쪽 위 <b>압축해제된 확장 프로그램을 로드합니다</b>를 누르고 1단계의 폴더를 선택합니다.</p></div></div>'+
+        '<div class="step"><span class="n">4</span><div><h4>이 페이지를 연결</h4>'+
+          '<p>이 화면을 열어둔 채 크롬 툴바의 <b>Sourcing Pro 수집기</b> 아이콘을 누르고, 맨 위에 뜨는 주소 옆 <b>연결</b> 버튼을 누릅니다. 권한을 허용하면 바로 붙습니다. 주소를 직접 옮겨 적을 필요는 없습니다.</p></div></div>'+
+        '<div class="step"><span class="n">5</span><div><h4>연결 확인</h4>'+
+          '<p>왼쪽 아래 표시가 <b>수집기 연결됨</b>으로 바뀌면 준비가 끝난 것입니다. 현재 상태는 '+
+          '<b style="color:'+(Ext.present?'var(--green)':'var(--red)')+'">'+(Ext.present?'연결됨':'미연결')+'</b> 입니다. 바뀌지 않으면 이 페이지를 새로고침하세요.</p></div></div>'+
+      '</div>'+
+      '<div class="callout"><b>연결이 안 되나요?</b> 확장프로그램 팝업의 목록에 이 페이지 주소가 보이지 않으면, 아래 주소를 확인해 크롬 확장 프로그램 설정에서 사이트 접근을 허용해주세요.'+
+        '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;">'+
+          '<code class="k" id="originLine" style="flex:1;min-width:0;padding:7px 9px;overflow:auto;white-space:nowrap;">'+esc(origin)+'</code>'+
+          '<button class="tiny" id="copyOrigin">복사</button>'+
+        '</div></div>'+
+    '</div>'+
+    '<div class="card gd">'+
+      '<h3>수집과 계산</h3>'+
+      '<p class="lead">수집은 백그라운드 탭에서 실제 페이지를 열어 읽는 방식입니다. 로그인이 필요한 페이지는 크롬에 먼저 로그인해 두세요.</p>'+
+      '<div class="steps">'+
+        '<div class="step"><span class="n">1</span><div><h4>쿠팡 링크 수집</h4>'+
+          '<p>상품 URL을 넣고 <b>수집</b>을 누르면 썸네일, 상품명, 카테고리, 판매가, 별점, 리뷰 수가 채워집니다. 값이 비면 직접 입력해도 계산은 그대로 동작합니다.</p></div></div>'+
+        '<div class="step"><span class="n">2</span><div><h4>1688 후보 수집</h4>'+
+          '<p>최대 5개까지 링크를 넣고 각각 수집합니다. 단가는 구간별 최저가를 가져오므로 실제 주문 수량 기준으로 확인 후 수정하세요.</p></div></div>'+
+        '<div class="step"><span class="n">3</span><div><h4>계산 설정</h4>'+
+          '<p>환율, 도착 부대비용, 쿠팡 수수료율, 입출고배송비, 관세율, 부가세 포함 여부를 조정합니다. 설정 화면에서 기본값을 바꾸면 새로 만드는 분석에 적용됩니다.</p></div></div>'+
+        '<div class="step"><span class="n">4</span><div><h4>저장과 공유</h4>'+
+          '<p>저장한 기록은 보관함에 쌓이고, 관리자는 어드민 콘솔에서 전체 사용자의 기록과 이익률을 함께 봅니다.</p></div></div>'+
+      '</div>'+
+      '<div class="callout"><b>계산식</b> 도착가 = 단가×환율 + 관세 + 부가세 + 부대비용. 총지출 = 도착가 + 판매가×수수료율 + 입출고배송비. 이익금 = 판매가 − 총지출.</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function viewSettings(){
+  var s = Object.assign({}, DEFAULTS, Auth.user.settings||{});
+  return ''+
+  '<div class="page-head"><div><h2>설정</h2><p>새 비교 분석을 만들 때 사용할 기본 계산값과 계정 정보입니다.</p></div>'+
+    '<div class="actions"><button class="act primary" id="saveDefaults">'+
+    '<svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>기본값 저장</button></div></div>'+
+  '<div class="guide">'+
+    '<div class="card gd">'+
+      '<h3>키워드 조회 연동</h3>'+
+      '<p class="lead">키워드 검색량은 네이버 검색광고 API에서 받아옵니다. 키는 확장프로그램이 이 브라우저 안에만 보관하며, 앱이나 공유 저장소로는 넘어가지 않습니다.</p>'+
+      apiKeyPanel()+
+      '<div class="steps" style="margin-top:20px;">'+
+        '<div class="step"><span class="n">1</span><div><h4>검색광고에서 키 발급</h4>'+
+          '<p><a href="https://searchad.naver.com" target="_blank" rel="noopener" style="color:var(--teal);font-weight:700;">searchad.naver.com</a> 로그인 후 오른쪽 위 <b>도구</b> &gt; <b>API 사용 관리</b> 에서 발급합니다. 액세스라이선스, 비밀키, CUSTOMER_ID 세 가지가 필요합니다.</p></div></div>'+
+        '<div class="step"><span class="n">2</span><div><h4>확장프로그램에 등록</h4>'+
+          '<p>위 버튼을 누르면 등록 화면이 새 탭에서 열립니다. 크롬 툴바의 확장프로그램 아이콘을 눌러 <b>검색광고 API 키 설정</b> 으로 들어가도 같습니다.</p></div></div>'+
+        '<div class="step"><span class="n">3</span><div><h4>연결 테스트</h4>'+
+          '<p>등록 화면의 연결 테스트를 누르면 실제로 키워드를 하나 조회해 봅니다. 실패하면 원본 응답을 그대로 보여줍니다.</p></div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card gd">'+
+      '<h3>환율</h3>'+
+      '<p class="lead">로그인할 때마다 네이버 금융에서 위안화 환율을 받아옵니다. 저장된 모든 기록이 이 환율로 다시 계산되며, 개별 분석에서 고정해 둔 경우만 예외입니다.</p>'+
+      (App.fx
+        ? '<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:14px;">'+
+            '<div class="kpi"><div class="k">'+esc(App.fx.source+' '+App.fx.label)+'</div>'+
+              '<div class="v num">'+num(App.fx.rate).toFixed(2)+'원</div>'+
+              '<div class="s">'+esc(fmtDate(App.fx.fetchedAt))+' 기준</div></div>'+
+            '<div class="kpi"><div class="k">매매기준율</div>'+
+              '<div class="v num">'+(num(App.fx.base)?num(App.fx.base).toFixed(2)+'원':'-')+'</div>'+
+              '<div class="s">참고용으로만 표시합니다</div></div>'+
+          '</div>'
+        : '<div class="callout" style="margin-top:0;margin-bottom:14px;"><b>아직 환율을 받아오지 못했습니다.</b> 확장프로그램이 연결되어 있어야 네이버에서 환율을 읽어올 수 있습니다. 그때까지는 아래 기본 환율이 쓰입니다.</div>')+
+      '<button class="act'+(App.busy.fx?'':' primary')+'" id="fxNow"'+(App.busy.fx?' disabled':'')+'>'+
+        (App.busy.fx ? '환율 확인 중' : '지금 환율 받아오기')+'</button>'+
+      '<div class="mfield" style="margin-top:18px;"><label for="dRate">기본 환율 (1 CNY)</label>'+
+        '<input id="dRate" value="'+esc(s.rate)+'"><div class="hintx">환율을 받아오지 못했을 때 쓰는 값입니다</div></div>'+
+    '</div>'+
+    '<div class="card gd">'+
+      '<h3>기본 계산값</h3>'+
+      '<p class="lead">여기서 바꾼 값은 앞으로 만드는 분석에 적용됩니다. 이미 저장한 기록은 각 화면의 계산 설정에서 바꾸세요.</p>'+
+      '<div class="mrow">'+
+        '<div class="mfield"><label for="dMul">한국도착까지 모든비용 배수</label><input id="dMul" value="'+esc(s.multiplier)+'">'+
+          '<div class="hintx">중국→한국 배송비, 관세, 부가세, 한국 물류비, 구매대행비, 서류비 합산</div></div>'+
+        '<div class="mfield"><label for="dFee">쿠팡 수수료율 (%)</label><input id="dFee" value="'+esc(s.feeRate)+'"><div class="hintx">부가세 포함 기준</div></div>'+
+        '<div class="mfield"><label for="dLog">입출고배송비 (개당)</label><input id="dLog" value="'+esc(s.logistics)+'"></div>'+
+      '</div>'+
+      '<div class="callout">'+
+        (FEE_TABLE.length || SHIP_TABLE.length
+          ? '수수료율표 '+nf(FEE_TABLE.length)+'건, 배송 규격표 '+nf(SHIP_TABLE.length)+'건이 등록되어 있습니다.'
+          : '<b>수수료율표와 배송 규격표가 아직 없습니다.</b> 목록을 주시면 등록해 드립니다. 등록되면 비교 화면에서 카테고리와 규격을 골라 자동으로 채워집니다.')+
+      '</div>'+
+    '</div>'+
+    '<div class="card gd">'+
+      '<h3>계정</h3>'+
+      '<p class="lead">아이디는 바꿀 수 없습니다. 이름과 비밀번호는 여기서 변경합니다.</p>'+
+      '<div class="mfield"><label>아이디</label><input value="'+esc(Auth.user.uid)+'" disabled></div>'+
+      '<div class="mfield"><label for="sName">이름</label><input id="sName" value="'+esc(Auth.user.name)+'"></div>'+
+      '<div class="mrow">'+
+        '<div class="mfield"><label for="pwOld">현재 비밀번호</label><input id="pwOld" type="password" placeholder="변경 시에만 입력"></div>'+
+        '<div class="mfield"><label for="pwNew">새 비밀번호</label><input id="pwNew" type="password" placeholder="6자 이상"></div>'+
+      '</div>'+
+      '<button class="act" id="saveAccount" style="margin-top:4px;">계정 정보 저장</button>'+
+      '<div class="callout" style="margin-top:20px;"><b>저장 위치</b> '+
+        (Store.mode==='db'
+          ? '이 페이지의 아티팩트 데이터베이스에 저장됩니다. 같은 조직 구성원이 페이지를 열면 저장된 원본 데이터를 읽을 수 있으니, 실제 인증용 비밀번호는 쓰지 마세요.'
+          : '데이터베이스에 연결되지 않아 이 브라우저에만 저장됩니다. 다른 기기에서는 보이지 않습니다.')+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+/* =======================================================================
+   12. modal
+   ======================================================================= */
+function closeModal(){ var s = $('.scrim'); if(s) s.remove(); }
+
+/* 이미지 검색에 쓸 썸네일. 없으면 쿠팡 상품 페이지에서 다시 받아온다. */
+async function coupangThumbData(){
+  var r = App.record;
+  var cached = App.imgData[r.coupang.url || r.id];
+  if(cached) return cached;
+  if(!r.coupang.url){ return ''; }
+  App.busy.img = true; render();
+  var res = await Ext.collect(r.coupang.url);
+  App.busy.img = false;
+  if(!res.ok || !res.data || !res.data.image) return '';
+  App.imgData[r.coupang.url] = res.data.image;
+  return res.data.image;
+}
+
+/* 쿠팡 썸네일로 1688을 뒤져 같은 물건 중 싼 것부터 5개를 채운다 */
+async function findOn1688(){
+  var r = App.record;
+  if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
+  if(!r.coupang.url && !r.coupang.name){
+    toast('먼저 쿠팡 상품을 수집해주세요.','err'); return;
+  }
+
+  var data = await coupangThumbData();
+  if(!data){
+    toast('썸네일을 구하지 못했습니다. 상품명으로 찾아보겠습니다.','err');
+    return findByKeyword();
+  }
+
+  App.assisted = false;
+  App.busy.cn = true;
+  App.busy.cnMode = '1688 탭에서 이미지 검색 중';
+  render();
+  var res = await Ext.image1688(data, 20);
+  App.busy.cn = false;
+  App.busy.cnMode = '';
+
+  if(res.assisted){
+    App.assisted = true;
+    render();
+    toast(res.error || '1688 탭을 열어두었습니다. 사진을 올려 검색해주세요.','err');
+    return;
+  }
+  if(!res.ok){
+    render();
+    toast(res.error || '이미지 검색에 실패했습니다.','err');
+    return;
+  }
+  App.assisted = false;
+  applyCandidates((res.data && res.data.items) || [], '이미지 검색');
+}
+
+/* 열어둔 1688 탭에서 사용자가 직접 검색한 결과를 가져온다 */
+async function grabOpen1688(){
+  App.busy.cn = true;
+  App.busy.cnMode = '열린 1688 탭 읽는 중';
+  render();
+  var res = await Ext.grab1688Tab(20);
+  App.busy.cn = false;
+  App.busy.cnMode = '';
+  if(!res.ok){ render(); toast(res.error || '1688 탭에서 결과를 읽지 못했습니다.','err'); return; }
+  App.assisted = false;
+  var d = res.data || {};
+  applyCandidates(d.items || [], d.title ? ('1688 탭 “'+String(d.title).slice(0,18)+'”') : '1688 탭');
+}
+
+/* 이미지 검색이 막혔을 때 쓰는 이름 검색 */
+async function findByKeyword(){
+  var name = (App.record.coupang.name || '').trim();
+  if(!name){ toast('상품명이 없어 검색할 수 없습니다.','err'); return; }
+  var suggested = {keyword:'', alt:[], ko:''};
+  var ns = await Sampler.get();
+  if(ns){
+    App.busy.tr = true; render();
+    var got = await Sampler.chinese(name);
+    App.busy.tr = false;
+    if(got) suggested = got;
+  }
+  openSearch1688Modal(name, suggested);
+}
+
+/* 값이 있는 것 중 싼 순으로 5개를 고른다 */
+function applyCandidates(items, how){
+  /* 링크가 없는 결과도 받는다. 단가와 이름만 있어도 이익 계산은 된다. */
+  var usable = items.filter(function(it){ return num(it.price) > 0; });
+  if(!usable.length){
+    render();
+    toast('가격을 읽을 수 있는 결과가 없습니다.','err');
+    return;
+  }
+  usable.sort(function(a,b){ return num(a.price) - num(b.price); });
+  var picked = usable.slice(0, 5);
+  App.pending = {items:picked, how:how, total:usable.length};
+  fillCandidates(picked, how, usable.length);
+}
+
+async function fillCandidates(picked, how, total){
+  var r = App.record;
+  App.busy.cn = true;
+  App.busy.cnMode = '후보 채우는 중';
+  render();
+  for(var i = 0; i < 5; i++){
+    var it = picked[i];
+    if(!it){ r.candidates[i] = blankCandidate(); continue; }
+    var image = it.image ? await Assets.store(it.image) : '';
+    r.candidates[i] = {
+      url: it.url || '',
+      name: it.name || '',
+      price: it.price ? String(it.price) : '',
+      moq: it.moq || '',
+      opt: it.sold ? ('판매 '+it.sold) : '',
+      image: image
+    };
+  }
+  r.selected = 0;
+  App.busy.cn = false;
+  App.busy.cnMode = '';
+  render();
+  saveRecord(true);
+  toast(how+'으로 '+nf(total)+'개 중 가장 싼 '+nf(picked.length)+'개를 채웠습니다');
+}
+
+function openSearch1688Modal(name, sug){
+  var wrap = document.createElement('div');
+  wrap.className = 'scrim';
+  wrap.innerHTML =
+  '<div class="modal" style="max-width:470px;" role="dialog" aria-modal="true" aria-label="1688에서 찾기">'+
+    '<div class="modal-head"><h3>1688에서 같은 물건 찾기</h3>'+
+      '<p>중국어 검색어로 1688을 검색해 후보 5개를 채웁니다. 검색어를 고쳐도 됩니다.</p></div>'+
+    '<div class="modal-body">'+
+      '<div class="mfield"><label>쿠팡 상품명</label>'+
+        '<div class="srcname">'+esc(name)+'</div></div>'+
+      '<div class="mfield"><label for="cnKw">1688 검색어 (중국어)</label>'+
+        '<input id="cnKw" value="'+esc(sug.keyword)+'" placeholder="예: 发夹">'+
+        (sug.ko ? '<div class="hintx">'+esc(sug.ko)+' 로 이해했습니다.</div>'
+                : (sug.keyword ? '' : '<div class="hintx">자동 번역을 쓸 수 없어 직접 넣으셔야 합니다.</div>'))+
+      '</div>'+
+      (sug.alt && sug.alt.length
+        ? '<div class="mfield"><label>다른 검색어로 바꾸기</label><div class="chips">'+
+            sug.alt.map(function(a){
+              return '<button type="button" class="chip" data-alt="'+esc(a)+'">'+esc(a)+'</button>';
+            }).join('')+'</div></div>'
+        : '')+
+      '<div class="callout" style="margin-top:6px;">1688 검색 페이지를 한 번 열어 위에서부터 5개를 가져옵니다. 로그인이 필요하면 크롬에서 1688에 먼저 접속해두세요.</div>'+
+    '</div>'+
+    '<div class="modal-foot">'+
+      '<button class="act" id="cnCancel">취소</button>'+
+      '<button class="act primary" id="cnGo">5개 찾아서 채우기</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click', function(e){ if(e.target === wrap) closeModal(); });
+  $('#cnCancel', wrap).onclick = closeModal;
+  $$('[data-alt]', wrap).forEach(function(b){
+    b.onclick = function(){ $('#cnKw', wrap).value = b.getAttribute('data-alt'); };
+  });
+  $('#cnGo', wrap).onclick = function(){
+    var kw = $('#cnKw', wrap).value.trim();
+    if(!kw){ toast('검색어를 넣어주세요.','err'); return; }
+    closeModal();
+    fill1688(kw);
+  };
+  var f = $('#cnKw', wrap);
+  f.focus();
+  f.setSelectionRange(f.value.length, f.value.length);
+}
+
+async function fill1688(keyword){
+  App.busy.cn = true;
+  App.busy.cnMode = '이름으로 1688 검색 중';
+  render();
+  var res = await Ext.search1688(keyword, 20);
+  App.busy.cn = false;
+  App.busy.cnMode = '';
+  if(!res.ok){ render(); toast(res.error || '1688 검색에 실패했습니다.','err'); return; }
+  var items = (res.data && res.data.items) || [];
+  if(!items.length){ render(); toast('검색 결과가 없습니다. 다른 검색어로 시도해보세요.','err'); return; }
+  App.record.memo = App.record.memo || ('1688 검색어: ' + keyword);
+  applyCandidates(items, '이름 검색 “'+keyword+'”');
+}
+function openSettingsModal(){
+  var r = App.record, s = Object.assign({}, DEFAULTS, r.settings||{});
+  var wrap = document.createElement('div');
+  wrap.className = 'scrim';
+  wrap.innerHTML =
+  '<div class="modal" role="dialog" aria-modal="true" aria-label="계산 설정">'+
+    '<div class="modal-head"><h3>계산 설정</h3><p>이 분석에만 적용됩니다. 모든 후보 카드의 이익 계산이 함께 바뀝니다.</p></div>'+
+    '<div class="modal-body">'+
+      '<div class="mfield">'+
+        '<label class="chk"><input type="checkbox" id="mLock"'+(s.rateLocked?' checked':'')+'>이 분석은 아래 환율로 고정</label>'+
+        '<div class="hintx">'+(App.fx
+          ? '고정하지 않으면 '+esc(fxCaption())+' 기준 '+num(App.fx.rate).toFixed(2)+'원이 항상 적용됩니다.'
+          : '고정하지 않으면 최신 환율을 받아오는 대로 적용됩니다.')+'</div>'+
+      '</div>'+
+      '<div class="mrow">'+
+        '<div class="mfield"><label for="mRate">고정 환율 (1 CNY)</label><input id="mRate" value="'+esc(num(effRate(r)).toFixed(2))+'"></div>'+
+        '<div class="mfield"><label for="mMul">한국도착까지 모든비용 배수</label><input id="mMul" value="'+esc(s.multiplier)+'">'+
+          '<div class="hintx">중국→한국 배송비, 관세, 부가세, 한국 물류비, 구매대행비, 서류비를 합친 고정 배수입니다.</div></div>'+
+      '</div>'+
+      '<div class="callout" style="margin-top:4px;">'+
+        '한국도착까지 모든비용 = 환율 적용 상품가격 × '+esc(s.multiplier)+'<br>'+
+        '한국 도착 상품 원가 = 환율 적용 상품가격 + 모든비용<br>'+
+        '이익금 = 판매가 − 상품 원가 − 판매수수료 − 입출고배송비'+
+      '</div>'+
+      '<div class="hintx" style="margin-top:12px;font-size:11px;color:var(--sub2);line-height:1.6;">'+
+        '쿠팡 판매 수수료율과 입출고배송비는 왼쪽 쿠팡 판매 상품 칸에서 바로 바꿉니다.</div>'+
+    '</div>'+
+    '<div class="modal-foot">'+
+      '<button class="act" id="mCancel">취소</button>'+
+      '<button class="act primary" id="mSave">적용</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click', function(e){ if(e.target===wrap) closeModal(); });
+  $('#mCancel').onclick = closeModal;
+  $('#mSave').onclick = function(){
+    App.record.settings = Object.assign({}, DEFAULTS, App.record.settings, {
+      rate: num($('#mRate').value),
+      rateLocked: $('#mLock').checked,
+      multiplier: num($('#mMul').value) || DEFAULTS.multiplier
+    });
+    closeModal();
+    render();
+    autosave();
+    toast('계산 설정을 적용했습니다');
+  };
+  $('#mRate').focus();
+}
+function confirmModal(title, body, danger){
+  return new Promise(function(resolve){
+    var wrap = document.createElement('div');
+    wrap.className = 'scrim';
+    wrap.innerHTML =
+    '<div class="modal" style="max-width:380px;" role="dialog" aria-modal="true">'+
+      '<div class="modal-head"><h3>'+esc(title)+'</h3><p>'+esc(body)+'</p></div>'+
+      '<div class="modal-body" style="padding-top:4px;"></div>'+
+      '<div class="modal-foot"><button class="act" id="cNo">취소</button>'+
+      '<button class="act '+(danger?'danger':'primary')+'" id="cYes">'+(danger?'삭제':'확인')+'</button></div>'+
+    '</div>';
+    document.body.appendChild(wrap);
+    var fin = function(v){ wrap.remove(); resolve(v); };
+    wrap.addEventListener('click', function(e){ if(e.target===wrap) fin(false); });
+    $('#cNo',wrap).onclick = function(){ fin(false); };
+    $('#cYes',wrap).onclick = function(){ fin(true); };
+    $('#cYes',wrap).focus();
+  });
+}
+
+/* =======================================================================
+   13. actions
+   ======================================================================= */
+var autosave = debounce(function(){ saveRecord(true); }, 1200);
+
+async function saveRecord(silent){
+  var r = App.record;
+  if(!r) return;
+  r.updatedAt = nowIso();
+  if(!r.title) r.title = r.coupang.name ? r.coupang.name.slice(0,40) : '새 비교 분석';
+  try {
+    await Store.set('records/'+r.id, stripId(r));
+    [App.records, App.allRecords || []].forEach(function(arr){
+      var i = arr.findIndex(function(x){ return x.id === r.id; });
+      if(i >= 0) arr[i] = r; else arr.unshift(r);
+    });
+    if(!silent) toast('저장했습니다');
+  } catch(e){
+    toast('저장하지 못했습니다: '+(e && e.message ? e.message : '알 수 없는 오류'),'err');
+  }
+}
+
+async function grabCoupang(){
+  var field = $('#cpUrl');
+  var url = validUrl(cleanUrl(field.value));
+  if(!url){ toast('쿠팡 상품 링크가 올바르지 않습니다. 칸을 비우고 다시 붙여넣어 주세요.','err'); return; }
+  if(siteOf(url) !== 'coupang'){ toast('쿠팡 상품 주소가 아닙니다.','err'); return; }
+  field.value = url;
+  App.record.coupang.url = url;
+  App.busy.cp = true; render();
+  var res = await Ext.collect(url);
+  App.busy.cp = false;
+  if(!res.ok){ render(); toast(res.error || '수집에 실패했습니다.','err'); return; }
+  var d = res.data || {};
+  var cp = App.record.coupang;
+  cp.url = url;
+  if(d.name) cp.name = d.name;
+  if(d.category) cp.category = d.category;
+  if(d.price) cp.price = num(d.price);
+  if(d.rating) cp.rating = d.rating;
+  if(d.reviews) cp.reviews = num(d.reviews);
+  if(d.image){
+    App.imgData[url] = d.image;   /* 1688 이미지 검색에 쓸 원본 */
+    cp.image = await Assets.store(d.image);
+  }
+  if(!App.record.title || App.record.title === '새 비교 분석'){
+    App.record.title = (cp.name || '새 비교 분석').slice(0,40);
+  }
+  render();
+  autosave();
+  toast('쿠팡 상품 정보를 가져왔습니다');
+}
+
+async function grabCandidate(i){
+  var input = $('[data-url="'+i+'"]');
+  var url = validUrl(cleanUrl(input ? input.value : ''));
+  if(!url){ toast('1688 상품 링크가 올바르지 않습니다. 칸을 비우고 다시 붙여넣어 주세요.','err'); return; }
+  if(siteOf(url) !== '1688'){ toast('1688 상품 주소가 아닙니다.','err'); return; }
+  if(input) input.value = url;
+  App.record.candidates[i].url = url;
+  App.busy['c'+i] = true; render();
+  var res = await Ext.collect(url);
+  App.busy['c'+i] = false;
+  if(!res.ok){ render(); toast(res.error || '수집에 실패했습니다.','err'); return; }
+  var d = res.data || {};
+  var cd = App.record.candidates[i];
+  cd.url = url;
+  if(d.name) cd.name = d.name;
+  if(d.price) cd.price = String(num(d.price));
+  if(d.moq) cd.moq = d.moq;
+  if(d.opt) cd.opt = d.opt;
+  if(d.image) cd.image = await Assets.store(d.image);
+  render();
+  autosave();
+  toast((i+1)+'번 후보 정보를 가져왔습니다');
+}
+
+async function loadRecords(){
+  var all = await Store.list('records');
+  all = all.map(normalizeRecord);
+  all.sort(function(a,b){ return String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')); });
+  App.allRecords = all;
+  App.records = all.filter(function(r){ return r.ownerId === Auth.user.uid; });
+}
+async function loadUsers(){
+  if(Auth.user.role !== 'admin'){ App.users = []; return; }
+  var us = await Store.list('users');
+  us.sort(function(a,b){ return String(a.createdAt||'').localeCompare(String(b.createdAt||'')); });
+  App.users = us;
+}
+
+/* =======================================================================
+   14. wiring
+   ======================================================================= */
+function bindCommon(){
+  $$('[data-nav]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      go(el.getAttribute('data-nav'));
+    });
+  });
+  var lo = $('#logout');
+  if(lo) lo.onclick = async function(){
+    var ok = await confirmModal('로그아웃', '현재 계정에서 로그아웃합니다.');
+    if(!ok) return;
+    Auth.logout(); App.record=null; App.records=[]; App.users=[];
+    authMode='login'; authErr=''; renderAuth();
+  };
+  var rl = $('#reload');
+  if(rl) rl.onclick = async function(){
+    await loadRecords(); await loadUsers(); render(); toast('최신 데이터를 불러왔습니다');
+  };
+  ['#newRec','#newRec2'].forEach(function(sel){
+    var b = $(sel);
+    if(b) b.onclick = function(){
+      App.record = blankRecord(Auth.user);
+      go('compare');
+    };
+  });
+}
+
+function bindCompare(){
+  var r = App.record;
+  var reRender = function(){ render(); };
+
+  $('#cpGrab').onclick = grabCoupang;
+  $('#cpOpen').onclick = function(){
+    var u = validUrl(cleanUrl($('#cpUrl').value));
+    if(u) window.open(u,'_blank','noopener');
+    else toast('먼저 쿠팡 링크를 입력해주세요.','err');
+  };
+  $('#openList').onclick = function(){ go('list'); };
+  $('#saveRec').onclick = function(){ saveRecord(false); };
+  $('#dupRec').onclick = function(){
+    var copy = normalizeRecord(JSON.parse(JSON.stringify(r)));
+    copy.id = rid('rec_');
+    copy.title = (r.title||'분석')+' 사본';
+    copy.createdAt = copy.updatedAt = nowIso();
+    App.record = copy;
+    render();
+    saveRecord(false);
+  };
+  $('#openSettings').onclick = openSettingsModal;
+  var f1688 = $('#find1688');
+  if(f1688) f1688.onclick = findOn1688;
+  var gTab = $('#grabTab');
+  if(gTab) gTab.onclick = grabOpen1688;
+  $('#fxReload').onclick = async function(){
+    App.busy.fx = true; render();
+    var ok = await refreshFx(true, false);
+    render();
+    if(ok) toast('환율을 '+num(App.fx.rate).toFixed(2)+'원으로 갱신했습니다');
+  };
+
+  $('#cpUrl').addEventListener('input', function(){ r.coupang.url = this.value; autosave(); });
+  $('#cpUrl').addEventListener('blur', function(){
+    var fixed = cleanUrl(this.value);
+    if(fixed !== this.value){ this.value = fixed; r.coupang.url = fixed; autosave(); }
+  });
+  $('#cpPrice').addEventListener('input', function(){ r.coupang.price = num(this.value); refreshCalc(); autosave(); });
+  $('#qty').addEventListener('input', function(){ r.monthlyQty = num(this.value); refreshCalc(); autosave(); });
+  $('#recTitle').addEventListener('input', function(){ r.title = this.value; autosave(); });
+  $('#feeRate').addEventListener('input', function(){
+    r.settings = Object.assign({}, DEFAULTS, r.settings, {feeRate:num(this.value), feeCategory:''});
+    var sel = $('#feeCat'); if(sel) sel.value = '';
+    refreshCalc(); autosave();
+  });
+  $('#logistics').addEventListener('input', function(){
+    r.settings = Object.assign({}, DEFAULTS, r.settings, {logistics:num(this.value), shipSize:''});
+    var sel = $('#shipSize'); if(sel) sel.value = '';
+    refreshCalc(); autosave();
+  });
+  var feeCat = $('#feeCat');
+  if(feeCat) feeCat.onchange = function(){
+    var hit = FEE_TABLE.find(function(f){ return f.name === feeCat.value; });
+    if(!hit) return;
+    r.settings = Object.assign({}, DEFAULTS, r.settings, {feeRate:num(hit.rate), feeCategory:hit.name});
+    $('#feeRate').value = num(hit.rate).toFixed(2);
+    refreshCalc(); autosave();
+  };
+  var shipSize = $('#shipSize');
+  if(shipSize) shipSize.onchange = function(){
+    var hit = SHIP_TABLE.find(function(t){ return t.name === shipSize.value; });
+    if(!hit) return;
+    r.settings = Object.assign({}, DEFAULTS, r.settings, {logistics:num(hit.fee), shipSize:hit.name});
+    $('#logistics').value = nf(hit.fee);
+    refreshCalc(); autosave();
+  };
+  var memo = $('#memo');
+  memo.addEventListener('input', function(){
+    r.memo = this.value;
+    $('#memoCount').textContent = this.value.length + ' / 500';
+    autosave();
+  });
+
+  var wrap = $('#items');
+  wrap.addEventListener('click', function(e){
+    var g = e.target.closest('[data-grab]');
+    if(g){ grabCandidate(num(g.getAttribute('data-grab'))); return; }
+    var o = e.target.closest('[data-open]');
+    if(o){
+      var i = num(o.getAttribute('data-open'));
+      var u = validUrl(cleanUrl((($('[data-url="'+i+'"]')||{}).value) || ''));
+      if(u) window.open(u,'_blank','noopener');
+      else toast('먼저 1688 링크를 입력해주세요.','err');
+      return;
+    }
+    var cl = e.target.closest('[data-clear]');
+    if(cl){
+      var ci = num(cl.getAttribute('data-clear'));
+      r.candidates[ci] = blankCandidate();
+      reRender(); autosave();
+      return;
+    }
+    /* 입력칸을 누른 것은 선택이 아니다 — 여기서 다시 그리면 포커스가 날아가 글자가 안 들어간다 */
+    if(e.target.closest('input, textarea, select, a')) return;
+    var card = e.target.closest('.item');
+    if(card){
+      applySelect(num(card.getAttribute('data-i')));
+      autosave();
+    }
+  });
+  wrap.addEventListener('focusout', function(e){
+    var t = e.target;
+    if(!t.hasAttribute || !t.hasAttribute('data-url')) return;
+    var fixed = cleanUrl(t.value);
+    if(fixed !== t.value){
+      t.value = fixed;
+      r.candidates[num(t.getAttribute('data-url'))].url = fixed;
+      autosave();
+    }
+  });
+  wrap.addEventListener('input', function(e){
+    var t = e.target;
+    if(t.hasAttribute('data-url')){
+      r.candidates[num(t.getAttribute('data-url'))].url = t.value;
+      autosave(); return;
+    }
+    if(t.hasAttribute('data-f')){
+      var i = num(t.getAttribute('data-i'));
+      r.candidates[i][t.getAttribute('data-f')] = t.value;
+      refreshCalc(); autosave();
+    }
+  });
+}
+
+/* 선택은 화면을 다시 그리지 않고 표시만 바꾼다 — 입력 중인 칸을 건드리지 않기 위해서다 */
+function applySelect(i){
+  var r = App.record;
+  r.selected = i;
+  $$('.item').forEach(function(el){
+    el.classList.toggle('sel', num(el.getAttribute('data-i')) === i);
+  });
+  var desc = $('.calc-head .desc');
+  if(desc) desc.textContent = (i+1)+'번 후보 기준 · 환율, 관세, 수수료, 배송비가 반영됩니다.';
+  refreshCalc();
+}
+
+/* update numbers in place so typing does not lose focus */
+function refreshCalc(){
+  var r = App.record, c = calc(r);
+  var set = function(sel, txt){ var el = $(sel); if(el) el.textContent = txt; };
+  var tiles = $$('.tiles .tile');
+  if(tiles.length === 5){
+    $('.t1 .v').textContent = won(c.goods);
+    $('.t1 .s').textContent = '¥'+c.cny.toFixed(2)+' × '+num(c.s.rate).toFixed(2)+'원';
+    $('.t2 .v').textContent = won(c.arrival);
+    $('.t2 .s').textContent = '상품가격 + 모든비용 '+won(c.extra);
+    $('.t3 .v').textContent = won(c.total);
+    $('.t3 .s').textContent = '원가 + 수수료 '+won(c.fee)+' + 배송 '+won(c.logistics);
+    $('.t4 .v').textContent = won(c.sell);
+    var t5 = $('.t5');
+    t5.classList.toggle('loss', c.profit < 0);
+    $('.t5 .k').textContent = c.profit < 0 ? '1개 팔면 나는 손실' : '1개 팔면 남는 이익금';
+    $('.t5 .v').textContent = won(c.profit);
+    $('.t5 .s').textContent = '이익률 '+c.margin.toFixed(1)+'% · 월 '+won(c.monthly);
+  }
+  var sum = $('#calcSummary');
+  if(sum) sum.innerHTML = summaryRows(c);
+  var stats = $$('.stats .stat .v');
+  if(stats.length === 4){
+    stats[0].textContent = num(c.s.feeRate).toFixed(2)+'%';
+    stats[1].textContent = won(c.fee);
+    stats[2].textContent = won(c.logistics);
+    stats[3].textContent = nf(c.qty)+'개';
+  }
+  var best = -1, bestP = -Infinity;
+  r.candidates.forEach(function(cd,i){
+    if(!num(cd.price)) return;
+    var p = calcFor(r,i).profit;
+    if(p > bestP){ bestP = p; best = i; }
+  });
+  $$('.item').forEach(function(el){
+    var i = num(el.getAttribute('data-i'));
+    var cd = r.candidates[i];
+    var ci = calcFor(r,i);
+    var has = num(cd.price) > 0;
+    var v = $('.mini-profit .v', el);
+    if(v){
+      v.textContent = has ? won(ci.profit) : '-';
+      v.classList.toggle('neg', has && ci.profit < 0);
+    }
+    var badge = $('.best', el);
+    if(i === best && has){
+      if(!badge){
+        badge = document.createElement('span');
+        badge.className = 'best';
+        badge.textContent = '최고 이익';
+        el.insertBefore(badge, el.firstChild);
+      }
+    } else if(badge){
+      badge.remove();
+    }
+  });
+}
+
+function bindList(){
+  var q = $('#q');
+  if(q){
+    q.addEventListener('input', debounce(function(){
+      App.query = q.value; render();
+      var nq = $('#q'); if(nq){ nq.focus(); nq.setSelectionRange(nq.value.length,nq.value.length); }
+    }, 260));
+  }
+  document.addEventListener('click', listClick);
+}
+function listClick(e){
+  var op = e.target.closest('[data-open-rec]');
+  if(op){
+    var id = op.getAttribute('data-open-rec');
+    if(e.target.closest('[data-del-rec]')) return;
+    var rec = (App.allRecords||[]).find(function(x){ return x.id === id; });
+    if(rec){ App.record = normalizeRecord(rec); go('compare'); }
+    return;
+  }
+}
+function bindRowActions(){
+  $$('[data-del-rec]').forEach(function(b){
+    b.addEventListener('click', async function(e){
+      e.stopPropagation();
+      var id = b.getAttribute('data-del-rec');
+      var rec = (App.allRecords||[]).find(function(x){ return x.id === id; });
+      var ok = await confirmModal('기록 삭제', '“'+((rec&&(rec.coupang.name||rec.title))||'이 기록')+'”을 삭제합니다. 되돌릴 수 없습니다.', true);
+      if(!ok) return;
+      await Store.del('records/'+id);
+      if(App.record && App.record.id === id) App.record = null;
+      await loadRecords();
+      render();
+      toast('삭제했습니다');
+    });
+  });
+}
+
+function bindAdmin(){
+  var sel = $('#userFilter');
+  if(sel) sel.onchange = function(){ App.filterUser = sel.value; render(); };
+  $$('[data-filter-user]').forEach(function(b){
+    b.onclick = function(){ App.filterUser = b.getAttribute('data-filter-user'); App.query=''; render(); };
+  });
+  $$('[data-role]').forEach(function(b){
+    b.onclick = async function(){
+      var uid = b.getAttribute('data-role');
+      var u = App.users.find(function(x){ return x.uid===uid; });
+      if(!u) return;
+      var mk = u.role !== 'admin';
+      var ok = await confirmModal(mk?'관리자 지정':'관리자 해제',
+        u.name+'('+uid+') 계정의 권한을 '+(mk?'관리자로 올립니다.':'일반으로 내립니다.'));
+      if(!ok) return;
+      u.role = mk ? 'admin' : 'user';
+      await Store.set('users/'+uid, stripId(u));
+      await loadUsers(); render();
+      toast('권한을 변경했습니다');
+    };
+  });
+  $$('[data-toggle]').forEach(function(b){
+    b.onclick = async function(){
+      var uid = b.getAttribute('data-toggle');
+      var u = App.users.find(function(x){ return x.uid===uid; });
+      if(!u) return;
+      var stop = !u.disabled;
+      var ok = await confirmModal(stop?'사용 중지':'사용 재개',
+        u.name+'('+uid+') 계정을 '+(stop?'중지하면 로그인할 수 없습니다.':'다시 사용할 수 있게 합니다.'), stop);
+      if(!ok) return;
+      u.disabled = stop;
+      await Store.set('users/'+uid, stripId(u));
+      await loadUsers(); render();
+      toast(stop?'계정을 중지했습니다':'계정을 다시 활성화했습니다');
+    };
+  });
+  var ex = $('#exportAll');
+  if(ex) ex.onclick = async function(){
+    var payload = {
+      exportedAt: nowIso(),
+      users: App.users.map(function(u){
+        return {uid:u.uid,name:u.name,role:u.role,disabled:!!u.disabled,createdAt:u.createdAt,lastLoginAt:u.lastLoginAt};
+      }),
+      records: (App.allRecords||[]).map(function(r){
+        var c = calc(r);
+        return {
+          id:r.id, owner:r.ownerId, ownerName:r.ownerName, title:r.title,
+          coupangUrl:r.coupang.url, coupangName:r.coupang.name, sellPrice:num(r.coupang.price),
+          selectedCny:c.cny, arrival:Math.round(c.arrival), totalCost:Math.round(c.total),
+          profit:Math.round(c.profit), margin:Number(c.margin.toFixed(2)),
+          monthlyQty:c.qty, monthlyProfit:Math.round(c.monthly),
+          memo:r.memo, updatedAt:r.updatedAt
+        };
+      })
+    };
+    var text = JSON.stringify(payload, null, 2);
+    var dl = null;
+    try { dl = await window.claude.use('downloads'); } catch(e){ dl = null; }
+    if(dl){
+      try {
+        await dl.save({filename:'sourcing-pro-export.json', data:text});
+        toast('내보내기 파일을 저장했습니다');
+        return;
+      } catch(e){}
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('클립보드에 JSON을 복사했습니다');
+    } catch(e){
+      toast('내보내기를 사용할 수 없습니다.','err');
+    }
+  };
+}
+
+function stripId(o){ var c = Object.assign({}, o); delete c._id; return c; }
+
+function bindSettings(){
+  var fxNow = $('#fxNow');
+  if(fxNow) fxNow.onclick = async function(){
+    App.busy.fx = true; render();
+    var ok = await refreshFx(true, false);
+    render();
+    if(ok) toast('환율을 '+num(App.fx.rate).toFixed(2)+'원으로 갱신했습니다');
+  };
+  $('#saveDefaults').onclick = async function(){
+    var s = Object.assign({}, DEFAULTS, {
+      rate:num($('#dRate').value),
+      multiplier:num($('#dMul').value) || DEFAULTS.multiplier,
+      feeRate:num($('#dFee').value),
+      logistics:num($('#dLog').value)
+    });
+    Auth.user.settings = s;
+    await Store.set('users/'+Auth.user.uid, stripId(Auth.user));
+    toast('기본 계산값을 저장했습니다');
+  };
+  $('#saveAccount').onclick = async function(){
+    var name = $('#sName').value.trim();
+    var oldPw = $('#pwOld').value, newPw = $('#pwNew').value;
+    if(!name){ toast('이름을 입력해주세요.','err'); return; }
+    if(newPw){
+      if(newPw.length < 6){ toast('새 비밀번호는 6자 이상이어야 합니다.','err'); return; }
+      var h = await sha256(Auth.user.salt+':'+oldPw);
+      if(h !== Auth.user.hash){ toast('현재 비밀번호가 올바르지 않습니다.','err'); return; }
+      Auth.user.salt = rid('s');
+      Auth.user.hash = await sha256(Auth.user.salt+':'+newPw);
+    }
+    Auth.user.name = name;
+    await Store.set('users/'+Auth.user.uid, stripId(Auth.user));
+    render();
+    toast(newPw ? '이름과 비밀번호를 변경했습니다' : '이름을 변경했습니다');
+  };
+}
+
+/* =======================================================================
+   15. render
+   ======================================================================= */
+function render(){
+  if(!Auth.user){ renderAuth(); return; }
+  if(App.route === 'compare' && !App.record) App.record = blankRecord(Auth.user);
+  if(App.route === 'admin' && Auth.user.role !== 'admin') App.route = 'dash';
+  if(App.route === 'rank' && !App.rank.items.length) App.route = 'keywords';
+
+  var inner =
+    App.route === 'compare'  ? viewCompare()  :
+    App.route === 'keywords' ? viewKeywords() :
+    App.route === 'rank'     ? viewRank()     :
+    App.route === 'list'     ? viewList()     :
+    App.route === 'admin'    ? viewAdmin()    :
+    App.route === 'guide'    ? viewGuide()    :
+    App.route === 'settings' ? viewSettings() : viewDash();
+
+  $('#root').innerHTML = shell(inner);
+  document.removeEventListener('click', listClick);
+  bindCommon();
+  if(App.route === 'compare') bindCompare();
+  if(App.route === 'keywords') bindKeywords();
+  if(App.route === 'rank') bindRank();
+  if(App.route === 'list' || App.route === 'admin'){ bindList(); bindRowActions(); }
+  if(App.route === 'admin') bindAdmin();
+  if(App.route === 'settings') bindSettings();
+  var apiBtn = $('#apiOpen');
+  if(apiBtn) apiBtn.onclick = openApiSettings;
+  if(App.route === 'guide'){
+    var co = $('#copyOrigin');
+    if(co) co.onclick = function(){
+      var line = $('#originLine').textContent;
+      navigator.clipboard.writeText(line).then(
+        function(){ toast('허용 주소를 복사했습니다'); },
+        function(){ toast('복사하지 못했습니다. 직접 선택해 복사해주세요.','err'); }
+      );
+    };
+  }
+}
+
+async function boot(){
+  await loadFx();
+  await loadRecords();
+  await loadUsers();
+  if(!App.record) App.record = App.records[0] ? normalizeRecord(App.records[0]) : blankRecord(Auth.user);
+  var h = (location.hash||'').replace('#/','');
+  if(ROUTES.indexOf(h) >= 0) App.route = h;
+  render();
+
+  checkApiKey().then(render);
+
+  /* 로그인할 때마다 최신 환율을 받아온다. 화면을 막지 않고 뒤에서 진행한다. */
+  var before = App.fx ? num(App.fx.rate) : 0;
+  refreshFx(false, true).then(function(ok){
+    if(!ok) return;
+    render();
+    var now = num(App.fx.rate);
+    if(before && Math.abs(now - before) > 0.004){
+      toast('환율이 '+before.toFixed(2)+'원에서 '+now.toFixed(2)+'원으로 바뀌어 모든 기록에 반영했습니다');
+    }
+  });
+}
+
+window.addEventListener('hashchange', function(){
+  var h = (location.hash||'').replace('#/','');
+  if(!Auth.user) return;
+  if(ROUTES.indexOf(h) >= 0 && h !== App.route){
+    App.route = h; render();
+  }
+});
+
+Ext.onChange = function(){
+  if(!Auth.user) return;
+  render();
+  /* 확장프로그램이 뒤늦게 붙었다면 그때 환율과 키 상태를 확인한다 */
+  if(!App.fx) refreshFx(false, true).then(function(ok){ if(ok) render(); });
+  if(App.apiKey === null) checkApiKey().then(render);
+};
+Ext.init();
+
+/* first paint: the login screen, then resume a session if there is one */
+renderAuth();
+(async function(){
+  await Store.init();
+  var u = await Auth.resume();
+  if(u) await boot();
+})();
+
+})();
+</script>

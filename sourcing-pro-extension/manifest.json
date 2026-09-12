@@ -1,0 +1,67 @@
+﻿{
+  "manifest_version": 3,
+  "name": "Sourcing Pro 수집기",
+  "version": "3.6.0",
+  "description": "쿠팡과 1688 상품 정보, 네이버 환율, 네이버 검색광고 키워드 검색량을 Sourcing Pro 화면으로 가져옵니다.",
+  "permissions": ["tabs", "scripting", "storage", "webNavigation", "clipboardWrite"],
+  "host_permissions": [
+    "*://*.coupang.com/*",
+    "*://*.coupangcdn.com/*",
+    "*://*.1688.com/*",
+    "*://*.alicdn.com/*",
+    "*://*.aliimg.com/*",
+    "https://finance.naver.com/*",
+    "https://search.shopping.naver.com/*",
+    "https://api.searchad.naver.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Sourcing Pro 수집기"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.coupang.com/*",
+        "*://*.1688.com/*"
+      ],
+      "js": ["scrape.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://finance.naver.com/marketindex/*"],
+      "js": ["fxscrape.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://search.shopping.naver.com/*"],
+      "js": ["shopcount.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://*.claude.ai/*",
+        "https://*.claudeusercontent.com/*",
+        "https://*.claude.site/*",
+        "https://*.artifacts.claude.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["bridge.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

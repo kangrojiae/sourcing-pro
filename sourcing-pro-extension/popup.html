@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Sourcing Pro 수집기</title>
+<style>
+  :root{
+    --line:#e8ebee; --line2:#eef1f4; --text:#1f2937; --sub:#8a93a0; --sub2:#a3abb6;
+    --teal:#12a58c; --orange:#f5642d; --red:#e5484d; --green:#16a34a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;width:320px;background:#fff;color:var(--text);
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",-apple-system,"Segoe UI",sans-serif;
+    font-size:13px;
+  }
+  header{padding:15px 16px 12px;border-bottom:1px solid var(--line);}
+  h1{margin:0;font-size:14px;font-weight:800;letter-spacing:-.4px;color:#242c38;}
+  h1 span{color:var(--orange);}
+  header p{margin:5px 0 0;font-size:10.5px;color:var(--sub);letter-spacing:-.2px;}
+  section{padding:14px 16px;border-bottom:1px solid var(--line2);}
+  section:last-of-type{border-bottom:none;}
+  h2{
+    margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:.7px;color:var(--sub2);
+    text-transform:uppercase;
+  }
+  .status{
+    display:flex;align-items:center;gap:8px;background:#f7f9fa;border:1px solid #edf0f3;border-radius:10px;
+    padding:10px 12px;font-size:11.5px;font-weight:700;color:#3f4753;letter-spacing:-.2px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:#cbd2d9;flex:0 0 7px;}
+  .dot.on{background:var(--green);}
+  button{
+    border:none;border-radius:9px;cursor:pointer;font-family:inherit;
+    font-size:12px;font-weight:700;letter-spacing:-.2px;
+  }
+  .wide{width:100%;margin-top:9px;padding:10px 0;}
+  .primary{background:var(--teal);color:#fff;}
+  .primary:disabled{background:#c3d3d0;cursor:not-allowed;}
+  .dark{background:#2b3542;color:#fff;}
+  .ghost{background:#fff;border:1px solid var(--line);color:#5b6472;}
+  .msg{margin-top:10px;font-size:11px;line-height:1.6;color:var(--sub);letter-spacing:-.2px;}
+  .msg.err{color:var(--red);}
+  .msg.ok{color:#0f8f78;}
+  .out{
+    margin-top:10px;background:#f7f9fa;border:1px solid #edf0f3;border-radius:9px;padding:10px 11px;
+    font-size:11px;line-height:1.7;color:#3f4753;word-break:break-all;max-height:140px;overflow:auto;
+  }
+  .out b{color:var(--sub);font-weight:600;}
+  .site{
+    display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2);
+  }
+  .site:last-child{border-bottom:none;}
+  .site .u{
+    flex:1;min-width:0;font-size:11px;color:#3f4753;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .site button{padding:5px 10px;font-size:10.5px;}
+  .badge{
+    font-size:9.5px;font-weight:800;border-radius:5px;padding:2px 5px;background:#e9f9ef;color:#128c4a;flex-shrink:0;
+  }
+  .none{font-size:11px;color:var(--sub2);letter-spacing:-.2px;line-height:1.6;}
+  footer{padding:12px 16px 14px;font-size:10px;color:#b6bec7;line-height:1.6;letter-spacing:-.2px;background:#fcfdfd;border-top:1px solid var(--line2);}
+</style>
+</head>
+<body>
+  <header>
+    <h1>SOURCING <span>PRO</span> 수집기</h1>
+    <p>쿠팡 · 1688 상품 정보를 읽어옵니다</p>
+  </header>
+
+  <section>
+    <button class="primary wide" id="openApp" style="margin-top:0;">Sourcing Pro 열기</button>
+    <button class="ghost wide" id="openOptions">검색광고 API 키 설정</button>
+    <button class="ghost wide" id="sweepTabs">수집하며 열린 탭 정리</button>
+  </section>
+
+  <section>
+    <h2>Sourcing Pro 연결</h2>
+    <div id="connectArea"><div class="none">현재 탭을 확인하는 중입니다.</div></div>
+    <div class="msg" id="connMsg"></div>
+  </section>
+
+  <section>
+    <h2>현재 탭 수집</h2>
+    <div class="status"><span class="dot" id="dot"></span><span id="site">확인 중</span></div>
+    <button class="primary wide" id="grab" disabled>이 페이지 수집하기</button>
+    <button class="ghost wide" id="copy" hidden>결과 JSON 복사</button>
+    <div class="msg" id="msg">쿠팡 또는 1688 상품 페이지에서 눌러주세요.</div>
+    <div class="out" id="out" hidden></div>
+  </section>
+
+  <footer>Sourcing Pro 페이지를 연 상태에서 위쪽 연결 버튼을 한 번 누르면, 이후로는 앱에서 링크만 넣어도 자동으로 수집됩니다.</footer>
+  <script src="popup.js"></script>
+</body>
+</html>
