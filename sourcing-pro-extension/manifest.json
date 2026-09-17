@@ -1,18 +1,22 @@
-﻿{
+{
   "manifest_version": 3,
   "name": "Sourcing Pro 수집기",
-  "version": "3.6.0",
+  "version": "3.60.0",
   "description": "쿠팡과 1688 상품 정보, 네이버 환율, 네이버 검색광고 키워드 검색량을 Sourcing Pro 화면으로 가져옵니다.",
-  "permissions": ["tabs", "scripting", "storage", "webNavigation", "clipboardWrite"],
+  "permissions": ["tabs", "scripting", "storage", "webNavigation", "clipboardWrite", "cookies", "downloads"],
   "host_permissions": [
     "*://*.coupang.com/*",
     "*://*.coupangcdn.com/*",
     "*://*.1688.com/*",
+    "*://*.taobao.com/*",
+    "*://*.tmall.com/*",
+    "*://*.temu.com/*",
+    "*://*.kwcdn.com/*",
     "*://*.alicdn.com/*",
     "*://*.aliimg.com/*",
     "https://finance.naver.com/*",
-    "https://search.shopping.naver.com/*",
-    "https://api.searchad.naver.com/*"
+    "https://api.searchad.naver.com/*",
+    "https://api-gateway.coupang.com/*"
   ],
   "optional_host_permissions": [
     "https://*/*",
@@ -31,21 +35,36 @@
     {
       "matches": [
         "*://*.coupang.com/*",
-        "*://*.1688.com/*"
+        "*://*.1688.com/*",
+        "*://*.taobao.com/*",
+        "*://*.tmall.com/*",
+        "*://*.temu.com/*"
       ],
       "js": ["scrape.js"],
       "run_at": "document_idle",
       "all_frames": false
     },
     {
-      "matches": ["https://finance.naver.com/marketindex/*"],
-      "js": ["fxscrape.js"],
+      "matches": [
+        "*://www.coupang.com/*",
+        "*://m.coupang.com/*"
+      ],
+      "js": ["overlay.js"],
       "run_at": "document_idle",
       "all_frames": false
     },
     {
-      "matches": ["https://search.shopping.naver.com/*"],
-      "js": ["shopcount.js"],
+      "matches": [
+        "*://detail.1688.com/offer/*",
+        "*://*.1688.com/offer/*"
+      ],
+      "js": ["offer1688.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://finance.naver.com/marketindex/*"],
+      "js": ["fxscrape.js"],
       "run_at": "document_idle",
       "all_frames": false
     },

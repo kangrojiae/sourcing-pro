@@ -73,4 +73,73 @@
       }).join("\n");
     });
   });
+
+  /* ---------- 쿠팡 파트너스 ---------- */
+  var pMsg = $("pMsg");
+  var pRaw = $("pRaw");
+  function pSay(text, kind) {
+    pMsg.textContent = text || "";
+    pMsg.className = "msg" + (kind ? " " + kind : "");
+  }
+
+  chrome.storage.local.get("sp.partners", function (o) {
+    var c = o["sp.partners"] || {};
+    $("pAccess").value = c.accessKey || "";
+    if (c.secret) $("pSecret").placeholder = "저장되어 있습니다. 바꿀 때만 입력하세요.";
+  });
+
+  $("pSave").addEventListener("click", function () {
+    chrome.storage.local.get("sp.partners", function (o) {
+      var prev = o["sp.partners"] || {};
+      var next = {
+        accessKey: $("pAccess").value.trim(),
+        secret: $("pSecret").value.trim() || prev.secret || ""
+      };
+      if (!next.accessKey || !next.secret) {
+        pSay("두 칸을 모두 채워주세요. 시크릿 키는 처음 한 번은 반드시 입력해야 합니다.", "err");
+        return;
+      }
+      chrome.storage.local.set({ "sp.partners": next }, function () {
+        $("pSecret").value = "";
+        $("pSecret").placeholder = "저장되어 있습니다. 바꿀 때만 입력하세요.";
+        pSay("저장했습니다. 연결 테스트로 확인해보세요.", "ok");
+      });
+    });
+  });
+
+  $("pClear").addEventListener("click", function () {
+    chrome.storage.local.remove("sp.partners", function () {
+      $("pAccess").value = "";
+      $("pSecret").value = "";
+      $("pSecret").placeholder = "저장 후에는 보이지 않습니다";
+      pRaw.hidden = true;
+      pSay("저장된 파트너스 키를 지웠습니다.");
+    });
+  });
+
+  $("pTest").addEventListener("click", function () {
+    var btn = $("pTest");
+    btn.disabled = true;
+    pRaw.hidden = true;
+    pSay("쿠팡 파트너스에 요청 중입니다.");
+    chrome.runtime.sendMessage({ type: "partnerSearch", keyword: "텀블러", limit: 5 }, function (res) {
+      btn.disabled = false;
+      if (chrome.runtime.lastError || !res) {
+        pSay("확장프로그램과 통신하지 못했습니다.", "err");
+        return;
+      }
+      if (!res.ok) {
+        pSay(res.error || "요청이 실패했습니다.", "err");
+        if (res.raw) { pRaw.hidden = false; pRaw.textContent = String(res.raw).slice(0, 4000); }
+        return;
+      }
+      var list = (res.data && res.data.items) || [];
+      pSay("연결되었습니다. 상품 " + list.length + "개를 받았습니다.", "ok");
+      pRaw.hidden = false;
+      pRaw.textContent = list.map(function (p) {
+        return p.name + "  " + (p.price || 0).toLocaleString("ko-KR") + "원";
+      }).join("\n");
+    });
+  });
+
 })();

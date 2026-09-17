@@ -3,8 +3,10 @@
    실패하면 JSON-LD → og 메타 → 본문 텍스트 순으로 내려간다. */
 (function () {
   "use strict";
-  if (window.__spScrapeReady) return;
-  window.__spScrapeReady = true;
+  /* 수집기를 새로고침해도 페이지에는 이전 버전의 표시가 남는다.
+     표시만 보고 멈추면 새 버전이 아무 일도 안 하므로, 이전 것이 아직 살아 있을 때만 건너뛴다. */
+  if (typeof window.__spScrapeReady === "function" && window.__spScrapeReady()) return;
+  window.__spScrapeReady = function () { try { return !!(chrome.runtime && chrome.runtime.id); } catch (e) { return false; } };
 
   /* ---------- 공통 도우미 ---------- */
   function txt(el) {
@@ -123,6 +125,104 @@
     return null;
   }
 
+  /* 줄이 그어졌거나 정가 자리에 있는 값인지 본다 */
+  function isStruckPrice(el) {
+    var n = el;
+    for (var i = 0; i < 5 && n; i++) {
+      var tag = String(n.tagName || "").toLowerCase();
+      if (tag === "del" || tag === "s") return true;
+      var cls = n.className;
+      if (cls && cls.baseVal !== undefined) cls = cls.baseVal;
+      if (typeof cls !== "string") cls = "";
+      if (/origin|base-price|strike|through|before|discount-rate/i.test(cls)) return true;
+      try {
+        var st = window.getComputedStyle(n);
+        var td = st && (st.textDecorationLine || st.textDecoration || "");
+        if (String(td).indexOf("line-through") >= 0) return true;
+      } catch (e) {}
+      n = n.parentElement;
+    }
+    return false;
+  }
+
+  /* 쿠팡 상품 화면의 금액 후보를 모은다.
+     클래스 이름은 자주 바뀌므로 사람이 보는 방식으로 고른다.
+     구매 영역에서 줄이 그어지지 않은 금액 중 글자가 가장 큰 것이 판매가다.
+     정가는 늘 작게 표시된다. */
+  function coupangPriceCandidates() {
+    var scope = document.querySelector(".prod-atf, .prod-buy, #contents") || document.body;
+    var nodes = scope.querySelectorAll("strong, em, b, span, div");
+    var out = [];
+    for (var i = 0; i < nodes.length && i < 4000; i++) {
+      var el = nodes[i];
+      if (el.children && el.children.length > 2) continue;   /* 묶음 상자는 건너뛴다 */
+      var t = txt(el);
+      if (!t || t.length > 24) continue;
+      if (!/[0-9][0-9,]{2,}/.test(t)) continue;
+      if (/쿠폰|적립|배송|리뷰|상품평|%|당\s*[\d,]+\s*원/.test(t)) continue;
+      if (isStruckPrice(el)) continue;
+      var v = toNum(t);
+      if (v < 100 || v > 50000000) continue;
+      var size = 0;
+      try { size = parseFloat(window.getComputedStyle(el).fontSize) || 0; } catch (e) {}
+      out.push({ value: v, size: size });
+    }
+    out.sort(function (a, b) {
+      if (b.size !== a.size) return b.size - a.size;   /* 큰 글자 먼저 */
+      return a.value - b.value;                        /* 같으면 싼 쪽 */
+    });
+    return out;
+  }
+
+  /* 예전 방식 — 클래스 이름으로 찾는다. 위 방식이 빈손일 때만 쓴다. */
+  /* 화면 글에서 곧바로 읽는 규칙들. 마크업이 어떻든 글자만 맞으면 통한다.
+     쿠팡 상세 화면은 "46% 39,600원  21,300원 (1개당 21,300원)" 처럼 적는다. */
+  function coupangPriceFromText() {
+    var box = document.querySelector(".prod-atf, .prod-buy, #contents") || document.body;
+    var body = String(box.innerText || box.textContent || "").replace(/\s+/g, " ");
+
+    /* 1) "21,300원 (1개당" — 괄호 앞의 값이 실제 결제 금액이다.
+          할인이 있든 없든, 정가가 위에 있든 아래에 있든 이 자리는 늘 판매가다. */
+    var m = body.match(/([0-9][0-9,]{2,})\s*원\s*[(\uFF08]\s*1\s*개당/);
+    if (m) return toNum(m[1]);
+
+    /* 2) 할인율 뒤 좁은 구간만 본다. 그 안에서 가장 싼 금액이 판매가다.
+          쿠팡은 화면 너비에 따라 정가를 위에 두기도 하고 아래에 두기도 해서
+          순서로 판단하면 틀린다. 판매가는 늘 정가보다 싸다는 점만 믿는다. */
+    var i = body.search(/[0-9]{1,2}\s*%\s*[0-9]/);
+    if (i < 0) return 0;
+    var win = body.slice(i, i + 160).split(/적립|무료배송|배송비|다른 판매자|쿠폰/)[0];
+    var vals = (win.match(/[0-9][0-9,]{2,}\s*원/g) || [])
+      .map(function (t) { return toNum(t); })
+      .filter(function (v) { return v >= 500 && v < 50000000; });
+    return vals.length ? Math.min.apply(null, vals) : 0;
+  }
+
+  function coupangSalePrice() {
+    var sels = [
+      ".prod-sale-price .total-price strong",
+      ".prod-sale-price .total-price",
+      "span.total-price > strong",
+      ".total-price strong",
+      ".prod-price .total-price",
+      ".price-amount.final-price-amount",
+      '[class*="final-price"] [class*="amount"]',
+      '[class*="prod-price"] strong'
+    ];
+    for (var i = 0; i < sels.length; i++) {
+      var els = document.querySelectorAll(sels[i]);
+      for (var j = 0; j < els.length; j++) {
+        var el = els[j];
+        if (isStruckPrice(el)) continue;
+        var t = txt(el);
+        if (/쿠폰|적립|당\s*[\d,]+\s*원/.test(t)) continue;
+        var v = toNum(t);
+        if (v >= 100 && v < 50000000) return v;
+      }
+    }
+    return 0;
+  }
+
   /* ---------- 쿠팡 ---------- */
   function scrapeCoupang() {
     var ld = ldProduct() || {};
@@ -137,28 +237,31 @@
       'h1[class*="title"]'
     ]) || ld.name || meta("og:title") || document.title.replace(/\s*[-|]\s*쿠팡.*$/, "").trim();
 
-    var priceText = pick([
-      ".prod-sale-price .total-price strong",
-      ".total-price strong",
-      "span.total-price > strong",
-      ".prod-price .total-price",
-      ".price-amount.final-price-amount",
-      '[class*="final-price"] [class*="amount"]',
-      ".prod-coupon-price .total-price strong"
-    ]);
-    var price = toNum(priceText);
-    if (!price && offer) price = toNum(offer.price);
-    if (!price) price = toNum(meta("product:price:amount"));
+    /* 정가에 줄이 그어진 화면에서 정가를 읽어오면 안 된다.
+       판매가는 정가를 넘지 않으므로, 얻은 값 중 가장 싼 것이 실제 결제 금액이다. */
+    /* 글자에서 곧바로 읽히면 그게 가장 확실하다 */
+    var textPrice = coupangPriceFromText();
+    var cands = coupangPriceCandidates();
+    var price = textPrice || (cands.length ? cands[0].value : 0);
+    if (!price) price = coupangSalePrice();
+    var ldPrice = offer ? toNum(offer.price) : 0;
+    var metaPrice = toNum(meta("product:price:amount"));
+    [ldPrice, metaPrice].forEach(function (v) {
+      if (v >= 100 && v < 50000000 && (!price || v < price)) price = v;
+    });
+    /* 어느 숫자들이 보였는지 남겨 둔다. 값이 틀리면 이걸 보고 고친다. */
+    var priceSeen = (textPrice ? "글자 " + textPrice + " · " : "") +
+      cands.slice(0, 5).map(function (c) {
+        return c.value + "(" + Math.round(c.size) + "px)";
+      }).join(" ");
 
-    var rating = "";
-    var starEl = document.querySelector(".rating-star-num, .product-rating .rating-star-num");
-    if (starEl) {
-      var w = toNum(starEl.style && starEl.style.width);
-      if (w) rating = (w / 20).toFixed(1);
+    /* 별점 — 구매 영역을 먼저 보고, 없으면 화면 전체에서 찾는다 */
+    var ratingBox = document.querySelector(".prod-atf, .prod-buy, #contents") || document.body;
+    var rating = ratingIn(ratingBox) || ratingIn(document.body);
+    if (!rating && ld.aggregateRating) {
+      var lv = Math.round(parseFloat(ld.aggregateRating.ratingValue) * 2) / 2;
+      if (lv > 0 && lv <= 5) rating = lv.toFixed(1);
     }
-    if (!rating) rating = pick([".rating-star-num-text", '[class*="rating"] [class*="num"]']);
-    if (!rating && ld.aggregateRating) rating = String(ld.aggregateRating.ratingValue || "");
-    rating = rating ? String(toNum(rating).toFixed(1)) : "";
 
     var reviews = toNum(pick([
       "#prodDetailReviewCount",
@@ -193,6 +296,7 @@
       site: "coupang",
       name: name,
       price: price,
+      priceSeen: priceSeen,
       rating: rating,
       reviews: reviews,
       category: category,
@@ -366,10 +470,10 @@
      detail.1688.com/offer/123.html 도 있고, air.1688.com 처럼 offerId=123 을 붙이기도 한다. */
   function offerIdOf(href) {
     var h = String(href || "");
+    /* 상품 번호는 offer/ 뒤나 offerId= 뒤에만 있다. 주소 안의 다른 숫자는 믿지 않는다. */
     var m = h.match(/\/offer\/(\d{6,})/) ||
             h.match(/[?&]offerId=(\d{6,})/i) ||
-            h.match(/[?&]offer_id=(\d{6,})/i) ||
-            h.match(/[?&]id=(\d{9,})/i);
+            h.match(/[?&]offer_id=(\d{6,})/i);
     return m ? m[1] : "";
   }
   function offerAnchors(root) {
@@ -389,41 +493,134 @@
     return only ? toNum(only[1]) : 0;
   }
 
-  /* 판매가를 고른다. 취소선이 그어진 정가, 단위가격, 쿠폰 금액은 뺀다. */
+  /* 금액으로 볼 수 없는 글자를 걸러낸다 */
+  function notAPrice(t) {
+    return /쿠폰|적립|할인|배송|리뷰|후기|상품평|별점|%|당\s*[\d,]+\s*원|^\s*[\d,]+\s*개\s*$/.test(t);
+  }
+
+  /* 카드 안의 판매가를 고른다.
+     쿠팡은 판매가를 가장 크게 보여준다. 정가에는 줄을 긋는다.
+     예전에는 카드 안에서 가장 작은 금액을 골랐는데, 그러면 적립금이나
+     단위가격 같은 엉뚱한 숫자가 판매가로 들어왔다. */
   function priceIn(host) {
-    var nodes = host.querySelectorAll('[class*="price"], [class*="Price"], strong, em');
-    for (var i = 0; i < nodes.length; i++) {
+    var nodes = host.querySelectorAll("strong, em, b, span, div");
+    var best = null;
+    for (var i = 0; i < nodes.length && i < 600; i++) {
       var el = nodes[i];
+      if (el.children && el.children.length > 2) continue;
+      var t = txt(el);
+      if (!t || t.length > 20) continue;
+      if (!/[0-9]/.test(t)) continue;
+      if (notAPrice(t)) continue;
+      if (!/원/.test(t) && !/^[0-9][0-9,]*$/.test(t)) continue;
       var cls = el.className;
       if (cls && cls.baseVal !== undefined) cls = cls.baseVal;
       if (typeof cls !== "string") cls = "";
       if (/base|origin|Origin|Base|unit|Unit|coupon|Coupon|discount|Discount/.test(cls)) continue;
       if (el.closest && el.closest("del")) continue;
-      var t = txt(el);
-      if (/당\s*[\d,]+\s*원/.test(t)) continue;   // 100g당 같은 단위가격
-      if (/쿠폰|할인|적립/.test(t)) continue;
+      if (isStruckPrice(el)) continue;
       var v = wonIn(t);
-      if (v >= 100 && v < 50000000) return v;
+      if (v < 500 || v > 50000000) continue;
+      var size = 0;
+      try { size = parseFloat(window.getComputedStyle(el).fontSize) || 0; } catch (e) {}
+      if (!best || size > best.size || (size === best.size && v < best.v)) {
+        best = { v: v, size: size };
+      }
     }
-    /* 클래스로 못 찾으면 카드 안의 원 표시 금액 중 가장 작은 값을 판매가로 본다 */
+    if (best) return best.v;
+
+    /* 그래도 못 찾으면 카드 글에서 첫 번째로 나오는 금액을 쓴다 */
     var body = txt(host)
       .replace(/\([^)]*당[^)]*\)/g, "")
-      .replace(/[^\s]*쿠폰[^\s]*/g, "");
-    var all = body.match(/[0-9][0-9,]*\s*원/g) || [];
-    var vals = all.map(function (s) { return wonIn(s); })
-                  .filter(function (v) { return v >= 100 && v < 50000000; });
-    return vals.length ? Math.min.apply(null, vals) : 0;
+      .replace(/[^\s]*쿠폰[^\s]*/g, "")
+      .replace(/[^\s]*적립[^\s]*/g, "");
+    var m = body.match(/([0-9][0-9,]{2,})\s*원/);
+    var v2 = m ? toNum(m[1]) : 0;
+    return (v2 >= 500 && v2 < 50000000) ? v2 : 0;
   }
 
   /* 별점은 별 그림의 너비로 표시되는 경우가 많다 */
+  /* 별점을 읽는다. 쿠팡은 별 다섯 개를 그려놓고 채워진 정도로 점수를 보인다.
+     화면마다 만드는 방식이 달라 여러 겹으로 시도한다.
+     0.5점 단위이므로 마지막에 반올림해 맞춘다. */
   function ratingIn(host) {
-    var els = host.querySelectorAll('[class*="rating"], [class*="Rating"], [class*="star"], [class*="Star"]');
-    for (var i = 0; i < els.length; i++) {
-      var w = els[i].style && els[i].style.width ? parseFloat(els[i].style.width) : 0;
-      if (w > 0 && w <= 100) return (w / 20).toFixed(1);
-      var t = txt(els[i]);
-      var m = t.match(/^(\d(?:\.\d)?)$/);
-      if (m && parseFloat(m[1]) > 0 && parseFloat(m[1]) <= 5) return parseFloat(m[1]).toFixed(1);
+    var half = function (n) {
+      var v = Math.round(parseFloat(n) * 2) / 2;
+      return (v > 0 && v <= 5) ? v.toFixed(1) : "";
+    };
+    var starish = function (el) {
+      var c = el.className;
+      if (c && c.baseVal !== undefined) c = c.baseVal;
+      return /rating|star/i.test(String(c || ""));
+    };
+
+    /* 1) 채운 부분의 너비가 퍼센트로 적힌 경우 — 100% 가 5점 */
+    var all = host.querySelectorAll("*");
+    for (var i = 0; i < all.length && i < 1200; i++) {
+      if (!starish(all[i])) continue;
+      var st = all[i].getAttribute("style") || "";
+      var wm = st.match(/width\s*:\s*([\d.]+)\s*%/);
+      if (wm) {
+        var r = half(parseFloat(wm[1]) / 20);
+        if (r) return r;
+      }
+    }
+
+    /* 2) 별 글자를 세는 경우 — ★★★★☆ */
+    var body = txt(host);
+    var full = (body.match(/★/g) || []).length;
+    var empty = (body.match(/☆/g) || []).length;
+    if (full && full + empty >= 4 && full + empty <= 6) {
+      var r2 = half(full);
+      if (r2) return r2;
+    }
+
+    /* 3) 별 하나하나가 따로 있고 채워진 것에 표시가 붙는 경우 */
+    for (var j = 0; j < all.length && j < 1200; j++) {
+      if (!starish(all[j])) continue;
+      var kids = all[j].children || [];
+      if (kids.length < 4 || kids.length > 6) continue;
+      var score = 0;
+      for (var k = 0; k < kids.length; k++) {
+        var kc = String(kids[k].className || "") + " " +
+                 (kids[k].getAttribute ? (kids[k].getAttribute("src") || "") : "");
+        if (/half|반/i.test(kc)) score += 0.5;
+        else if (/on\b|full|active|fill|selected/i.test(kc)) score += 1;
+      }
+      var r3 = half(score);
+      if (r3) return r3;
+    }
+
+    /* 4) 숫자로 적힌 경우 */
+    for (var m = 0; m < all.length && m < 1200; m++) {
+      if (!starish(all[m])) continue;
+      var t = txt(all[m]);
+      var nm = t.match(/^([0-5](?:\.\d)?)$/) || t.match(/평점\s*([0-5](?:\.\d)?)/);
+      if (nm) {
+        var r4 = half(nm[1]);
+        if (r4) return r4;
+      }
+    }
+
+    /* 5) 그림 설명이나 제목에 적힌 경우 */
+    var tagged = host.querySelectorAll("img[alt], [title], [aria-label]");
+    for (var n = 0; n < tagged.length && n < 400; n++) {
+      var s2 = (tagged[n].getAttribute("alt") || "") + " " +
+               (tagged[n].getAttribute("title") || "") + " " +
+               (tagged[n].getAttribute("aria-label") || "");
+      var m2 = s2.match(/([0-5](?:\.\d)?)\s*점/) || s2.match(/별점\s*([0-5](?:\.\d)?)/) ||
+               s2.match(/(?:rating|star)[^0-9]{0,6}([0-5](?:\.\d)?)/i);
+      if (m2) {
+        var r5 = half(m2[1]);
+        if (r5) return r5;
+      }
+    }
+
+    /* 6) "4.5 (1,402)" 처럼 리뷰 수 앞에 붙은 숫자 */
+    var m3 = body.match(/\b([0-5](?:\.\d)?)\s*[(（]\s*[\d,]+\s*[)）]/);
+    if (m3) {
+      var r6 = half(m3[1]);
+      if (r6) return r6;
     }
     return "";
   }
@@ -471,14 +668,113 @@
     return "";
   }
 
+  /* 검색 결과 목록을 찾는다.
+     쿠팡 화면에는 "함께 본 상품", "최근 본 상품" 같은 추천 목록이 여럿 붙어 있다.
+     그쪽을 읽으면 검색어와 아무 상관 없는 물건이 나오므로, 본 목록만 골라야 한다. */
+  function searchListRoot() {
+    var named = ["#productList", "#product-list", "ul.search-product-list",
+                 '[class*="search-product-list"]', '[class*="SearchProductList"]'];
+    for (var i = 0; i < named.length; i++) {
+      var el = document.querySelector(named[i]);
+      if (el && el.querySelectorAll('a[href*="/vp/products/"]').length >= 3) return el;
+    }
+    /* 이름으로 못 찾으면 상품 링크가 가장 많은 목록을 본 목록으로 본다 */
+    var best = null, bestN = 0;
+    var lists = document.querySelectorAll("ul, ol");
+    for (var j = 0; j < lists.length; j++) {
+      var n = lists[j].querySelectorAll('a[href*="/vp/products/"]').length;
+      if (n > bestN) { bestN = n; best = lists[j]; }
+    }
+    return bestN >= 5 ? best : null;
+  }
+
+  /* 추천 묶음 안에 있는 상품인지 본다 */
+  function inSuggestBox(el) {
+    var node = el;
+    for (var i = 0; i < 7 && node; i++) {
+      var cls = String(node.className || "");
+      if (/recommend|related|similar|viewed|history|carousel|banner|ad-?list/i.test(cls)) return true;
+      var head = node.querySelector ? node.querySelector("h2, h3, strong") : null;
+      var ht = head ? (head.textContent || "") : "";
+      if (/함께 본|최근 본|추천|이런 상품|같이 구매|인기 급상승/.test(ht)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  /* 다른 확장프로그램이 쿠팡 카드 위에 덧씌운 매출·판매량 딱지를 그대로 읽는다.
+     클래스 이름이 아니라 글자를 보고 찾으므로, 그쪽이 모양을 바꿔도 계속 읽힌다.
+     딱지에 적힌 ID 가 쿠팡 상품번호라서 그 번호로 상품과 짝을 맞춘다. */
+  function overlayRoots() {
+    var roots = [document];
+    try {
+      var all = document.querySelectorAll("*");
+      for (var i = 0; i < all.length && roots.length < 40; i++) {
+        if (all[i].shadowRoot) roots.push(all[i].shadowRoot);
+      }
+    } catch (e) { /* 그림자 영역을 못 보면 본문만 본다 */ }
+    return roots;
+  }
+
+  function overlayStats() {
+    var map = {};
+    var digits = function (v) { return toNum(String(v || "").replace(/[^0-9]/g, "")); };
+    var roots = overlayRoots();
+
+    for (var r = 0; r < roots.length; r++) {
+      var walker;
+      try {
+        walker = document.createTreeWalker(roots[r], NodeFilter.SHOW_TEXT, null);
+      } catch (e) { continue; }
+      var node;
+      while ((node = walker.nextNode())) {
+        var raw = String(node.nodeValue || "");
+        if (raw.indexOf("ID") < 0) continue;
+        var idm = raw.match(/ID\s*[:\uFF1A]\s*(\d{6,})/);
+        if (!idm) continue;
+
+        /* 딱지 한 장을 통째로 담고 있는 가장 가까운 상자를 찾는다 */
+        var box = node.parentElement;
+        for (var up = 0; up < 6 && box; up++) {
+          var t0 = box.textContent || "";
+          if (t0.indexOf("\uD310\uB9E4\uB7C9") >= 0 || t0.indexOf("\uB9E4\uCD9C") >= 0) break;
+          box = box.parentElement;
+        }
+        if (!box) continue;
+        var t = String(box.textContent || "").slice(0, 400);
+        if (t.indexOf("\uD310\uB9E4\uB7C9") < 0 && t.indexOf("\uB9E4\uCD9C") < 0) continue;
+
+        var pid = idm[1];
+        if (map[pid]) continue;
+
+        var rev  = t.match(/\uB9E4\uCD9C\s*[:\uFF1A]\s*[^0-9\-]{0,3}([0-9][0-9,]*)/);
+        var sold = t.match(/\uD310\uB9E4\uB7C9\s*[:\uFF1A]\s*[^0-9\-]{0,3}([0-9][0-9,]*)/);
+        var view = t.match(/\uC870\uD68C\uC218\s*[:\uFF1A]\s*[^0-9\-]{0,3}([0-9][0-9,]*)/);
+        var cvr  = t.match(/\uC804\uD658\uC728\s*[:\uFF1A]\s*[^0-9\-]{0,3}([0-9]+(?:\.[0-9]+)?)\s*%/);
+
+        map[pid] = {
+          sold: sold ? digits(sold[1]) : 0,
+          revenue: rev ? digits(rev[1]) : 0,
+          views: view ? digits(view[1]) : 0,
+          cvr: cvr ? parseFloat(cvr[1]) : 0
+        };
+      }
+    }
+    return map;
+  }
+
   /* 쿠팡 검색 결과에서 광고를 뺀 노출 순위를 뽑는다 */
   function searchTop(limit) {
     var want = limit || 5;
     var out = [];
     var seen = [];
-    /* 본 목록은 리스트 안에 있다. 그쪽을 먼저 보고, 없으면 전체에서 찾는다. */
-    var anchors = document.querySelectorAll('ul li a[href*="/vp/products/"]');
-    if (anchors.length < 3) anchors = document.querySelectorAll('a[href*="/vp/products/"]');
+    var root = searchListRoot();
+    var anchors = root
+      ? root.querySelectorAll('a[href*="/vp/products/"]')
+      : document.querySelectorAll('ul li a[href*="/vp/products/"]');
+
+    var stats = {};
+    try { stats = overlayStats(); } catch (e) { stats = {}; }
 
     for (var i = 0; i < anchors.length && out.length < want; i++) {
       var a = anchors[i];
@@ -492,6 +788,7 @@
         return el.querySelectorAll('a[href*="/vp/products/"]').length;
       }, /[0-9][0-9,]*\s*원/);
       if (isAd(host, url)) { seen.push(pid); continue; }
+      if (!root && inSuggestBox(a)) { seen.push(pid); continue; }
 
       var name = nameIn(host, a);
       var price = priceIn(host);
@@ -513,7 +810,314 @@
         reviews: rvm ? toNum(rvm[1]) : 0,
         rocket: isRocket(host),
         freeShip: /무료배송/.test(hostText),
-        image: imageIn(host)
+        image: imageIn(host),
+        sold: (stats[pid] && stats[pid].sold) || 0,
+        revenue: (stats[pid] && stats[pid].revenue) || 0,
+        views: (stats[pid] && stats[pid].views) || 0,
+        cvr: (stats[pid] && stats[pid].cvr) || 0
+      });
+    }
+    return out;
+  }
+
+  /* 쿠팡 첫 화면의 카테고리 차림표를 통째로 읽어 나무 모양으로 만든다.
+     차림표는 마우스를 올려야 보이지만, 글자는 처음부터 문서에 들어 있다.
+     번호를 우리가 외워 두면 쿠팡이 개편할 때 어긋난다. 그래서 그때그때 읽는다. */
+  function coupangCatTree() {
+    var root = document;
+    var links = root.querySelectorAll('a[href*="/np/categories/"]');
+    var idOf = function (h) {
+      var m = String(h || "").match(/\/np\/categories\/(\d+)/);
+      return m ? m[1] : "";
+    };
+
+    /* 각 링크가 몇 겹의 목록 안에 들어 있는지로 층을 가린다 */
+    var rows = [];
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i];
+      var id = idOf(a.getAttribute("href"));
+      var name = txt(a).replace(/\s+/g, " ").trim();
+      if (!id || !name || name.length > 24) continue;
+
+      var chain = [];
+      var el = a.parentElement;
+      for (var d = 0; d < 12 && el && el !== document.body; d++) {
+        if (el.tagName === "LI") chain.unshift(el);
+        el = el.parentElement;
+      }
+      rows.push({ a: a, id: id, name: name, chain: chain });
+    }
+
+    /* 목록칸 하나가 어느 이름을 달고 있는지 정해 둔다 */
+    var owner = [];
+    var ownerOf = function (li) {
+      for (var k = 0; k < owner.length; k++) if (owner[k].li === li) return owner[k].row;
+      return null;
+    };
+    for (var j = 0; j < rows.length; j++) {
+      var own = rows[j].chain[rows[j].chain.length - 1];
+      if (own && !ownerOf(own)) owner.push({ li: own, row: rows[j] });
+    }
+
+    /* 위에서부터 붙여 나간다 */
+    var tree = [];
+    var seen = {};
+    var find = function (list, id) {
+      for (var k = 0; k < list.length; k++) if (list[k].id === id) return list[k];
+      return null;
+    };
+
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      var lvl = row.chain.length;
+      var url = row.a.href || ("https://www.coupang.com/np/categories/" + row.id);
+
+      if (lvl <= 1) {
+        if (!find(tree, row.id)) tree.push({ id: row.id, name: row.name, url: url, kids: [] });
+        continue;
+      }
+      var p1 = ownerOf(row.chain[0]);
+      if (!p1) continue;
+      var top = find(tree, p1.id);
+      if (!top) {
+        top = { id: p1.id, name: p1.name,
+                url: p1.a.href || ("https://www.coupang.com/np/categories/" + p1.id), kids: [] };
+        tree.push(top);
+      }
+      if (lvl === 2) {
+        if (!find(top.kids, row.id)) top.kids.push({ id: row.id, name: row.name, url: url, kids: [] });
+        continue;
+      }
+      var p2 = ownerOf(row.chain[1]);
+      if (!p2) continue;
+      var mid = find(top.kids, p2.id);
+      if (!mid) {
+        mid = { id: p2.id, name: p2.name,
+                url: p2.a.href || ("https://www.coupang.com/np/categories/" + p2.id), kids: [] };
+        top.kids.push(mid);
+      }
+      if (!find(mid.kids, row.id)) mid.kids.push({ id: row.id, name: row.name, url: url, kids: [] });
+      seen[row.id] = true;
+    }
+
+    /* 아무것도 못 만들면, 층을 못 가린 것이니 평평한 목록이라도 돌려준다 */
+    if (!tree.length && rows.length) {
+      for (var q = 0; q < rows.length && q < 200; q++) {
+        if (!find(tree, rows[q].id)) {
+          tree.push({ id: rows[q].id, name: rows[q].name,
+                      url: rows[q].a.href || "", kids: [] });
+        }
+      }
+    }
+
+    var deep = 0;
+    tree.forEach(function (t) {
+      t.kids.forEach(function (m) { if (m.kids.length) deep += m.kids.length; });
+    });
+    return { tree: tree, links: links.length, tops: tree.length, leaves: deep };
+  }
+
+  /* 테무 채널 화면에서 상품을 뽑는다.
+     테무는 클래스 이름이 뒤섞인 해시라 믿을 수 없다. 대신 화면에 보이는 한국어 글자를 읽는다.
+     상품 주소는 .../<이름>-g-<상품번호>.html 꼴이라 여기서 상품번호를 얻는다. */
+  function temuCards() {
+    var all = document.querySelectorAll('a[href*="-g-"]');
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      if (/-g-\d{6,}\.html/.test(all[i].getAttribute("href") || "")) out.push(all[i]);
+    }
+    return out;
+  }
+  function temuHost(a) {
+    var el = a;
+    for (var i = 0; i < 8 && el; i++) {
+      if (el.querySelector && el.querySelector("img")) {
+        var b = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+        if (b && b.width > 110 && b.height > 150) return el;
+      }
+      el = el.parentElement;
+    }
+    return a;
+  }
+  /* 카드 글자는 innerText 로 읽는다. textContent 는 칸 사이 공백이 없어 숫자가 붙어버린다. */
+  function temuText(el) {
+    return String((el && el.innerText) || "").replace(/\s+/g, " ").trim();
+  }
+  function temuBig(v, unit) {
+    var n = parseFloat(String(v).replace(/,/g, "")) || 0;
+    if (unit === "\uB9CC") n *= 10000;
+    if (unit === "\uCC9C") n *= 1000;
+    return Math.round(n);
+  }
+
+  /* 고른 갈래 딱지를 누른다. 테무는 주소가 바뀌지 않고 화면만 갈아끼운다. */
+  function temuPickCategory(name) {
+    var want = String(name || "").replace(/\s+/g, "");
+    if (!want) return false;
+    var lis = document.querySelectorAll("li");
+    for (var i = 0; i < lis.length; i++) {
+      var t = String(lis[i].innerText || "").replace(/\s+/g, "");
+      /* 글자가 두 번 겹쳐 나오는 구조라 반으로 접힌 경우도 본다 */
+      var half = t.length % 2 === 0 ? t.slice(0, t.length / 2) : "";
+      if (t === want || half === want) {
+        try { lis[i].click(); return true; } catch (e) { return false; }
+      }
+    }
+    return false;
+  }
+
+  /* 왜 못 읽었는지 화면에 남길 말을 만든다. 짐작으로 고치지 않기 위해서다. */
+  function temuDiag() {
+    var body = String(document.body ? (document.body.innerText || "") : "");
+    var anchors = document.querySelectorAll('a[href]').length;
+    var goods = temuCards().length;
+    var imgs = document.querySelectorAll("img").length;
+    var lis = document.querySelectorAll("li").length;
+    var why = [];
+    why.push("주소 " + String(location.pathname));
+    why.push("링크 " + anchors + "개");
+    why.push("상품링크 " + goods + "개");
+    why.push("그림 " + imgs + "개");
+    why.push("딱지 " + lis + "개");
+    why.push("글자 " + body.length + "자");
+    if (/\uB85C\uADF8\uC778|sign in|log in/i.test(body.slice(0, 400))) why.push("로그인 화면으로 보임");
+    if (document.visibilityState !== "visible") why.push("탭이 화면에 없음");
+    return why.join(" · ");
+  }
+
+  function searchTemu(limit) {
+    var want = limit || 20;
+    var out = [];
+    var seen = [];
+    var cards = temuCards();
+
+    for (var i = 0; i < cards.length && out.length < want; i++) {
+      var a = cards[i];
+      var href = String(a.getAttribute("href") || "");
+      var idm = href.match(/-g-(\d{6,})\.html/);
+      if (!idm || seen.indexOf(idm[1]) >= 0) continue;
+
+      var host = temuHost(a);
+      var t = temuText(host);
+      if (!t) continue;
+
+      var im = host.querySelector("img");
+      var alt = im ? String(im.getAttribute("alt") || "") : "";
+      /* alt 는 "품목 사진 <상품명>" 꼴이다 */
+      var name = alt.replace(/^\s*\uD488\uBAA9\s*\uC0AC\uC9C4\s*/, "").trim();
+      if (!name) {
+        var nm = t.split(/\uC0C8 \uD0ED\uC5D0\uC11C \uC5F4\uAE30\./)[0] || "";
+        name = nm.replace(/^(\uBE60\uB974\uAC8C \uBCF4\uAE30|\uC778\uAE30 \uCD94\uCC9C|\uAD6D\uB0B4\uBC1C\uC1A1|\uC120\uD0DD|\uD61C\uD0DD)\s*/g, "").trim();
+      }
+
+      /* 할인 상품은 판매가와 정가가 나란히 나온다. 실제로 내는 돈은 둘 중 싼 값이다. */
+      var wons = (t.match(/[0-9][0-9,]{2,}\uC6D0/g) || [])
+        .map(function (x) { return parseInt(String(x).replace(/[^0-9]/g, ""), 10) || 0; })
+        .filter(function (v) { return v >= 100; });
+      var price = wons.length ? Math.min.apply(null, wons) : 0;
+
+      var sm = t.match(/([0-9][0-9,.]*)\s*([\uB9CC\uCC9C])?\s*\+?\s*\uD310\uB9E4\uB428/);
+      var rt = t.match(/\uBCC4\uC810\s*5\uC810\s*\uC911\s*([0-9.]+)\uAC1C/);
+      var rv = t.match(/\uB9AC\uBDF0\s*([0-9,]+)\uAC74/);
+      var bd = t.match(/#(\d+)\s*(\uBCA0\uC2A4\uD2B8\uC140\uB7EC \uC0C1\uD488|\uCD5C\uACE0 \uD3C9\uC810)\s*-\s*([^#]{1,24}?)\s*(?=#|\uC138\uBD80|\uBCC4\uC810|\uBE0C\uB79C\uB4DC|$)/);
+      var yr = t.match(/TEMU \uD310\uB9E4\s*(\d+)\uB144\uCC28/);
+
+      if (!name && !price) continue;
+      seen.push(idm[1]);
+
+      out.push({
+        rank: out.length + 1,
+        productId: idm[1],
+        url: a.href || ("https://www.temu.com" + href),
+        name: name,
+        price: price,                                  /* 원 */
+        sold: sm ? temuBig(sm[1], sm[2]) : 0,
+        rating: rt ? parseFloat(rt[1]) : 0,
+        reviews: rv ? (parseInt(rv[1].replace(/,/g, ""), 10) || 0) : 0,
+        boardRank: bd ? parseInt(bd[1], 10) : 0,
+        boardKind: bd ? bd[2] : "",
+        category: bd ? String(bd[3]).trim() : "",
+        domestic: /\uAD6D\uB0B4\uBC1C\uC1A1/.test(t),
+        topSeller: /\uC6B0\uC218 \uD310\uB9E4\uC790/.test(t),
+        years: yr ? parseInt(yr[1], 10) : 0,
+        image: im ? (im.getAttribute("src") || "") : ""
+      });
+    }
+    return out;
+  }
+
+  /* 타오바오 판매량 순 검색 결과에서 인기 상품을 뽑는다.
+     카드마다 a#item_id_<상품번호> 가 붙어 있어 상품번호를 그대로 얻는다.
+     click.simba.taobao.com 으로 가는 카드는 광고라서 뺀다. */
+  function tbPick(host, key) {
+    var el = host.querySelector('[class*="' + key + '--"]');
+    return el ? txt(el) : "";
+  }
+  /* 결제 인원은 반드시 전용 칸에서 읽는다.
+     카드 전체 글자를 쓰면 "\u00A517.81000+\u4eba\u4ed8\u6b3e" 처럼 가격과 붙어 숫자가 섞인다. */
+  function tbSold(host) {
+    var el = host.querySelector('[class*="realSales--"]');
+    var t = el ? txt(el) : "";
+    if (!t) t = String(host.innerText || "").replace(/\s+/g, " ");
+    var m = t.match(/([0-9]+(?:\.[0-9]+)?)\s*([\u4e07\u5343])?\s*\+?\s*\u4eba\u4ed8\u6b3e/);
+    if (!m) return 0;
+    var v = parseFloat(m[1]) || 0;
+    if (m[2] === "\u4e07") v *= 10000;
+    if (m[2] === "\u5343") v *= 1000;
+    return Math.round(v);
+  }
+  function tbPrice(host) {
+    var i = tbPick(host, "priceInt");
+    var f = tbPick(host, "priceFloat");
+    if (i) return parseFloat(String(i).replace(/[^0-9.]/g, "") + (f ? String(f).replace(/[^0-9.]/g, "") : "")) || 0;
+    var m = txt(host).match(/[\u00A5\uFFE5]\s*([0-9][0-9,]*)\s*(\.[0-9]{1,2})?/);
+    if (!m) return 0;
+    return parseFloat(String(m[1]).replace(/,/g, "") + (m[2] || "")) || 0;
+  }
+
+  function searchTaobao(limit) {
+    var want = limit || 20;
+    var out = [];
+    var seen = [];
+    var cards = document.querySelectorAll('a[id^="item_id_"]');
+
+    for (var i = 0; i < cards.length && out.length < want; i++) {
+      var a = cards[i];
+      var href = String(a.getAttribute("href") || "");
+      var ad = /click\.simba\.taobao\.com/i.test(href);
+      if (ad) continue;
+
+      var pid = String(a.id || "").replace(/^item_id_/, "");
+      if (!/^\d{6,}$/.test(pid) || seen.indexOf(pid) >= 0) continue;
+      seen.push(pid);
+
+      var t = txt(a);
+      var name = tbPick(a, "title") || String(a.getAttribute("title") || "");
+      if (!name) {
+        var im0 = a.querySelector("img[alt]");
+        name = im0 ? String(im0.getAttribute("alt") || "").trim() : "";
+      }
+      var price = tbPrice(a);
+      if (!name && !price) continue;
+
+      var im = a.querySelector('img[class*="mainImg--"]') || a.querySelector("img");
+      var src = im ? (im.getAttribute("src") || im.getAttribute("data-src") || "") : "";
+      if (src.indexOf("//") === 0) src = "https:" + src;
+
+      var bm = String(a.innerText || t).match(/\u699c\u00b7\u7b2c(\d+)\u540d/);
+
+      out.push({
+        rank: out.length + 1,
+        productId: pid,
+        url: "https://item.taobao.com/item.htm?id=" + pid,
+        name: name,
+        price: price,                       /* 위안 */
+        sold: tbSold(a),                    /* 결제 인원 */
+        shop: tbPick(a, "shopNameText"),
+        area: tbPick(a, "procity"),
+        boardRank: bm ? parseInt(bm[1], 10) : 0,
+        tmall: /detail\.tmall\.com/i.test(href),
+        image: src
       });
     }
     return out;
@@ -532,7 +1136,8 @@
       var raw = a.getAttribute("href") || "";
       var pid = offerIdOf(raw);
       if (!pid || seen.indexOf(pid) >= 0) continue;
-      var href = absUrl(raw);
+      /* 상품 번호로 표준 주소를 만든다. 광고 추적 주소나 air 주소는 열면 404 가 난다. */
+      var href = "https://detail.1688.com/offer/" + pid + ".html";
 
       var host = hostOf(a, countLinks, /[¥￥]\s*[0-9]/);
       var hostText = txt(host);
@@ -623,6 +1228,68 @@
         }
         if (waited1 > 2500) nudgeLazyImages();
         setTimeout(tick, 700);
+      })();
+      return true;
+    }
+    if (msg && msg.type === "catTree") {
+      var t0c = Date.now();
+      (function tick() {
+        var got = null;
+        try { got = coupangCatTree(); } catch (e) { got = null; }
+        var waited = Date.now() - t0c;
+        if ((got && got.tops) || waited > 9000) {
+          if (!got || !got.tops) {
+            respond({ ok: false, error: "쿠팡 카테고리 차림표를 찾지 못했습니다." });
+          } else {
+            respond({ ok: true, data: got });
+          }
+          return;
+        }
+        setTimeout(tick, 700);
+      })();
+      return true;
+    }
+    if (msg && msg.type === "temuTop") {
+      var wantTm = msg.limit || 20;
+      var picked = false;
+      try { picked = temuPickCategory(msg.category); } catch (e) { picked = false; }
+      var m0 = Date.now();
+      var settle = picked ? 2600 : 0;   /* 갈래를 눌렀으면 화면이 갈릴 때까지 기다린다 */
+      setTimeout(function () {
+        (function tick() {
+          var rows = [];
+          try { rows = searchTemu(wantTm); } catch (e) { rows = []; }
+          var waited = Date.now() - m0;
+          if (rows.length >= wantTm || waited > 20000 || (rows.length && waited > 9000)) {
+            if (!rows.length) {
+              var d = "";
+              try { d = temuDiag(); } catch (e) { d = "진단 실패"; }
+              respond({ ok: false, error: "테무 화면에서 상품을 찾지 못했습니다. (" + d + ")" });
+            } else {
+              respond({ ok: true, data: { items: rows, picked: picked } });
+            }
+            return;
+          }
+          try { window.scrollBy(0, 1000); } catch (e) {}
+          setTimeout(tick, 800);
+        })();
+      }, settle);
+      return true;
+    }
+    if (msg && msg.type === "taobaoTop") {
+      var wantTb = msg.limit || 20;
+      var t0 = Date.now();
+      (function tick() {
+        var rows = [];
+        try { rows = searchTaobao(wantTb); } catch (e) { rows = []; }
+        var waited = Date.now() - t0;
+        if (rows.length >= wantTb || waited > 14000 || (rows.length && waited > 7000)) {
+          if (!rows.length) respond({ ok: false, error: "타오바오 상품을 찾지 못했습니다. 로그인이 풀렸을 수 있습니다." });
+          else respond({ ok: true, data: { items: rows } });
+          return;
+        }
+        try { window.scrollBy(0, 900); } catch (e) {}
+        setTimeout(tick, 800);
       })();
       return true;
     }

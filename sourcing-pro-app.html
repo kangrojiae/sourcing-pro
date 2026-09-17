@@ -32,8 +32,14 @@
     -webkit-font-smoothing:antialiased;
   }
   input,select,textarea{font-family:inherit;}
-  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  button{
+    font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;
+    transition:transform .07s ease, filter .07s ease;
+  }
+  button:active:not(:disabled){transform:scale(.97);filter:brightness(.94);}
   button:disabled{cursor:not-allowed;opacity:.55;}
+  /* 누른 직후, 화면이 다시 그려지기 전까지 잠깐 보여주는 표시 */
+  button.pressing{transform:scale(.97);filter:brightness(.94);}
   a{color:inherit;}
   :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
   .num{font-variant-numeric:tabular-nums;}
@@ -161,6 +167,14 @@
   .cp-head{display:flex;align-items:center;gap:11px;padding:16px 18px;background:#fff6f2;border-bottom:1px solid #ffe6da;}
   .cp-logo{width:34px;height:34px;border-radius:9px;background:#f13d2c;color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:0 0 34px;}
   .cp-head h3{margin:0;font-size:15px;font-weight:800;color:#e14a22;letter-spacing:-.3px;}
+  .src-chip{
+    margin-left:auto;flex-shrink:0;color:#fff;border-radius:20px;padding:4px 10px;
+    font-size:10.5px;font-weight:800;letter-spacing:-.2px;
+  }
+  .src-tag{
+    display:inline-block;color:#fff;border-radius:5px;padding:1px 5px;
+    font-size:9.5px;font-weight:800;letter-spacing:-.2px;vertical-align:1px;
+  }
   .cp-head p{margin:3px 0 0;font-size:11.5px;color:#b58a78;letter-spacing:-.2px;}
   .cp-body{padding:18px;}
   .prod{display:flex;gap:14px;}
@@ -281,6 +295,13 @@
   .item-img img{width:100%;height:100%;object-fit:cover;}
   .item-name{font-size:12px;font-weight:700;line-height:1.45;letter-spacing:-.3px;color:#2a323d;min-height:34px;word-break:break-word;}
   .item-name.empty{color:var(--sub2);font-weight:500;}
+  .src-chip{
+    display:inline-flex;align-items:center;font-size:9.5px;font-weight:800;border-radius:5px;
+    padding:2px 6px;margin-bottom:6px;letter-spacing:-.2px;
+  }
+  .src-chip.img{background:#eef4ff;color:#3b82f6;}
+  .src-chip.nm{background:#fff3ec;color:#e8622c;}
+  .src-chip.warn{background:#fff1f1;color:#c53236;margin-left:5px;}
   .best{
     position:absolute;top:-9px;left:12px;background:var(--green);color:#fff;font-size:9.5px;font-weight:800;
     border-radius:6px;padding:3px 7px;letter-spacing:-.2px;box-shadow:0 2px 6px rgba(22,163,74,.3);
@@ -365,9 +386,58 @@
     display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;
     background:#f1f3f6;color:#6b7480;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;
   }
-  .rankno.top{background:#123c34;color:#fff;}
+  .rankno.top{background:linear-gradient(135deg,#16b89c,#0d6d5d);color:#fff;box-shadow:0 2px 7px rgba(18,165,140,.32);}
   .revcell{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
   .revcell .bar-track{flex:0 0 56px;}
+
+  /* 노출 순위 표 — 넓은 화면에서 칸이 흩어지지 않게 왼쪽으로 모은다 */
+  .tbl-rank{table-layout:fixed;min-width:960px;}
+  .tbl-rank th,.tbl-rank td{padding-left:14px;padding-right:14px;}
+  .tbl-rank th:first-child,.tbl-rank td:first-child{padding-left:18px;}
+  .tbl-rank th:nth-last-child(2),.tbl-rank td:nth-last-child(2),
+  .tbl-rank th.pad,.tbl-rank td.pad{border-right:none;}
+  .tbl-rank thead th{padding-top:12px;padding-bottom:12px;font-size:11px;letter-spacing:.2px;}
+  .tbl-rank tbody td{padding-top:11px;padding-bottom:11px;}
+  .tbl-rank tbody tr{transition:background .12s ease;}
+  .tbl-rank tbody tr:hover{background:var(--teal-l);}
+  .tbl-rank tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--teal);}
+  .tbl-rank .rankno{width:30px;height:30px;border-radius:9px;font-size:12.5px;}
+  .tbl-rank .cell-prod{gap:12px;}
+  .tbl-rank .cell-thumb{width:46px;height:46px;flex:0 0 46px;border:1px solid var(--line2);background:#fff;border-radius:10px;}
+  .tbl-rank .cell-prod .nm{
+    max-width:none;white-space:normal;line-height:1.42;font-size:12.5px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .tbl-rank .price-cell{font-size:14px;font-weight:800;color:#1b222c;letter-spacing:-.5px;font-variant-numeric:tabular-nums;}
+  .tbl-rank .rev-cell{font-weight:600;color:#5b6472;font-variant-numeric:tabular-nums;}
+  .tbl-rank .rev-cell.thin{color:var(--sub2);font-weight:500;}
+  .tbl-rank .sold-cell{font-size:13px;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;}
+  .tbl-rank .rev-money{font-size:13px;font-weight:800;color:#0e8f79;font-variant-numeric:tabular-nums;}
+  .tbl-rank .sold-cell.thin,.tbl-rank .rev-money.thin{color:var(--sub2);font-weight:500;font-size:12.5px;}
+  .tbl-rank .row-btns{justify-content:flex-start;}
+  .est-note{
+    padding:10px 17px;background:#fffaeb;border-bottom:1px solid #f4e7c4;
+    font-size:11.5px;color:#8a6d29;letter-spacing:-.2px;line-height:1.6;
+  }
+  .est-note b{font-weight:800;color:#7a5d1a;}
+  .tm-tabs{display:flex;gap:6px;background:#f4f6f8;border-radius:10px;padding:4px;}
+  .tm-tab{
+    border:none;background:transparent;border-radius:8px;padding:7px 14px;cursor:pointer;
+    font-family:inherit;font-size:12.5px;font-weight:700;color:#6b7480;letter-spacing:-.2px;
+  }
+  .tm-tab:hover{color:#3f4753;}
+  .tm-tab.on{background:#fff;color:var(--teal);box-shadow:0 1px 3px rgba(16,24,40,.10);}
+  .est-note.ok{background:#e9f9f4;border-bottom-color:#c7ece1;color:#0e7a66;}
+  .est-note.ok b{color:#0b6353;}
+  .est-note .tiny{padding:3px 8px;font-size:10.5px;margin:0 2px;}
+  .est-mark{
+    display:inline-block;margin-left:5px;font-style:normal;font-size:9.5px;font-weight:700;
+    color:#9a7b3a;background:#fffaeb;border:1px solid #f0e0bd;border-radius:5px;padding:1px 4px;
+    vertical-align:1px;
+  }
+  .tiny.go{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700;}
+  .tiny.go:hover{background:var(--teal-d);}
+  .tiny.go:disabled{background:#c3d3d0;border-color:#c3d3d0;color:#fff;}
 
   /* ---------- season banner ---------- */
   .season{
@@ -439,6 +509,11 @@
     background:#fff;outline:none;letter-spacing:-.2px;
   }
   .tbl-wrap{overflow-x:auto;}
+  /* 칸이 많은 표는 세로선을 넣어 눈이 줄을 놓치지 않게 한다 */
+  table.lined th, table.lined td{border-right:1px solid var(--line2);}
+  table.lined th:last-child, table.lined td:last-child{border-right:none;}
+  th[data-sort],th[data-kwsort]{cursor:pointer;user-select:none;}
+  th[data-sort]:hover,th[data-kwsort]:hover{color:var(--teal);}
   table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px;}
   thead th{
     text-align:left;font-size:11px;font-weight:700;color:#8a93a0;letter-spacing:-.2px;
@@ -448,9 +523,11 @@
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:#fbfcfd;}
   td.r,th.r{text-align:right;}
+  td.c,th.c{text-align:center;}
   .cell-prod{display:flex;align-items:center;gap:11px;min-width:0;}
   .cell-thumb{width:40px;height:40px;flex:0 0 40px;border-radius:9px;background:#f5f6f8;overflow:hidden;display:flex;align-items:center;justify-content:center;}
   .cell-thumb img{width:100%;height:100%;object-fit:cover;}
+  .cell-thumb.noimg{background:#f1f3f6;}
   .cell-prod .nm{font-weight:700;color:#242c38;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;}
   .cell-prod .sm{font-size:10.5px;color:var(--sub2);margin-top:3px;}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;border-radius:20px;padding:4px 9px;letter-spacing:-.2px;}
@@ -507,6 +584,40 @@
     background:#f1f3f6;border:1px solid var(--line);border-radius:5px;padding:1px 5px;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;color:#3f4753;
   }
+  .ri-modal{max-width:680px!important;}
+  .ri-wait{display:flex;align-items:center;gap:10px;padding:26px 4px;font-size:13px;color:var(--sub);}
+  .ri-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 1.6fr;gap:8px;align-items:stretch;}
+  .ri-kpi{background:#f7f9fa;border:1px solid var(--line2);border-radius:10px;padding:9px 10px;}
+  .ri-kpi b{display:block;font-size:17px;font-weight:800;color:#1b222c;letter-spacing:-.4px;}
+  .ri-kpi span{font-size:10.5px;color:var(--sub);}
+  .ri-dist{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 2px;}
+  .ri-bar{display:grid;grid-template-columns:26px 1fr 34px;align-items:center;gap:6px;font-size:10px;color:var(--sub);}
+  .ri-bar i{height:6px;background:#eef1f4;border-radius:4px;overflow:hidden;display:block;}
+  .ri-bar i b{display:block;height:100%;background:var(--amber);}
+  .ri-bar em{font-style:normal;text-align:right;}
+  .ri-sum{margin-top:12px;background:#f4faf8;border:1px solid #d5eee6;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.65;color:#1f4f45;}
+  .ri-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .ri-col h4{margin:0 0 7px;font-size:12.5px;font-weight:800;}
+  .ri-col h4.good{color:#12805f;} .ri-col h4.bad{color:#c53236;}
+  .ri-item{border:1px solid var(--line2);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:#fff;}
+  .ri-item.good{border-left:3px solid #16a34a;} .ri-item.bad{border-left:3px solid #e5484d;}
+  .ri-pt{font-size:12.5px;font-weight:700;color:#242c38;display:flex;justify-content:space-between;gap:8px;}
+  .ri-cnt{flex-shrink:0;font-size:10.5px;font-weight:700;color:var(--sub);background:#f1f3f6;border-radius:10px;padding:1px 7px;}
+  .ri-q{margin-top:4px;font-size:11.5px;color:#6b7480;line-height:1.5;}
+  .ri-none{font-size:11.5px;color:var(--sub2);}
+  .ri-chance{margin-top:12px;background:#fffaeb;border:1px solid #f4e7c4;border-radius:10px;padding:10px 13px;}
+  .ri-chance h4{margin:0 0 5px;font-size:12.5px;font-weight:800;color:#7a5d1a;}
+  .ri-chance ul{margin:0;padding-left:18px;font-size:12px;line-height:1.7;color:#5e4a1c;}
+  .ri-meta{margin-top:10px;font-size:11.5px;color:#5b6472;line-height:1.7;}
+  .ri-meta b{color:#3f4753;margin-right:4px;}
+  .ri-box{margin-top:14px;border:1px solid var(--line2);border-radius:12px;padding:11px 12px;background:#fcfdfd;}
+  .ri-box-head{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#242c38;}
+  .ri-mini{margin-top:7px;font-size:11.5px;line-height:1.65;color:#3f4753;}
+  .ri-mini p{margin:0 0 5px;}
+  .ri-hint{margin:6px 0 0;font-size:11.5px;color:var(--sub);}
+  .ri-tag{display:inline-block;font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px;color:#fff;}
+  .ri-tag.good{background:#16a34a;} .ri-tag.bad{background:#e5484d;}
+  @media (max-width:720px){ .ri-top{grid-template-columns:repeat(2,1fr);} .ri-grid{grid-template-columns:1fr;} }
   .callout{
     margin-top:18px;background:#fffaeb;border:1px solid #fceec4;border-radius:11px;padding:13px 15px;
     font-size:11.5px;color:#9a7b3a;line-height:1.65;letter-spacing:-.2px;
@@ -535,6 +646,7 @@
   .modal-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line2);background:#fcfdfd;}
   .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#4f5866;font-weight:600;letter-spacing:-.2px;cursor:pointer;}
   .chk input{width:15px;height:15px;accent-color:var(--teal);}
+  .pickbox{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;}
 
   /* ================= TOAST ================= */
   .toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:80;}
@@ -592,6 +704,14 @@ var esc = function(s){
 };
 var nf = function(n){ return Math.round(Number(n)||0).toLocaleString('ko-KR'); };
 var won = function(n){ return nf(n)+'원'; };
+/* 매출처럼 큰 돈은 만 단위로 줄여 읽기 쉽게 보여준다 */
+var manwon = function(n){
+  var v = Math.round(Number(n)||0);
+  if(!v) return '-';
+  if(v >= 100000000) return (Math.round(v/10000000)/10).toLocaleString('ko-KR')+'억';
+  if(v >= 10000) return Math.round(v/10000).toLocaleString('ko-KR')+'만';
+  return nf(v);
+};
 var num = function(v){
   var x = parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));
   return isFinite(x) ? x : 0;
@@ -610,6 +730,13 @@ var rid = function(p){
 var debounce = function(fn,ms){
   var t; return function(){ var a=arguments,s=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(s,a); },ms); };
 };
+/* 누르자마자 눈에 보이게 바꾼다. 뒤에 오는 작업이 길어도 눌린 것은 바로 안다. */
+function pressBtn(el, label){
+  if(!el) return;
+  el.classList.add('pressing');
+  el.disabled = true;
+  el.innerHTML = '<span class="spin"></span>' + esc(label);
+}
 function toast(msg,kind){
   var box = $('#toasts');
   var el = document.createElement('div');
@@ -636,8 +763,22 @@ function phSvg(tone){
     '<path d="M78 54h32" fill="none"/>'+
     '</g></svg>';
 }
+/* 그림 주소가 이 화면에서 안 열리는 것이면, 깨진 아이콘 대신 빈 칸을 보여준다.
+   쿠팡과 1688 의 그림 서버는 바깥에서 부르면 막는다. 수집기를 거친 것만 뜬다. */
+function showableImg(src){
+  var t = String(src || '');
+  if(!t) return '';
+  if(t.indexOf('data:') === 0) return t;
+  if(t.indexOf('blob:') === 0) return t;
+  if(/^https?:\/\/[^/]*(coupangcdn|alicdn|aliimg|kwcdn|taobao|tmall)\./i.test(t)) return '';
+  return t;
+}
+
 function imgOr(src,tone){
-  return src ? '<img src="'+esc(src)+'" alt="">' : phSvg(tone);
+  var ok = showableImg(src);
+  return ok ? '<img src="'+esc(ok)+'" alt="" loading="lazy" '+
+    'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'noimg\');">'
+    : phSvg(tone);
 }
 
 /* =======================================================================
@@ -756,6 +897,16 @@ var Ext = {
       if(d.type === 'result'){
         var w = self.waiters[d.reqId];
         if(w){ delete self.waiters[d.reqId]; w(d); }
+        return;
+      }
+      /* 쿠팡 화면에서 리뷰 정리를 부탁해 온 경우. 이 화면만 언어 모델을 쓸 수 있다. */
+      if(d.type === 'analyze'){
+        (async function(){
+          var out = null;
+          try { out = await Sampler.reviewInsight(d.name, d.reviews || []); } catch(e){ out = null; }
+          window.postMessage({__sp:'page', type:'analyzeResult', reqId:d.reqId, ok:!!out, data:out,
+            error: out ? '' : '리뷰를 문장으로 정리하지 못했습니다.'}, '*');
+        })();
       }
     });
     window.postMessage({__sp:'page', type:'ping'}, '*');
@@ -772,7 +923,8 @@ var Ext = {
       var done = false;
       self.waiters[reqId] = function(d){
         if(done) return; done = true;
-        resolve({ok:!!d.ok, data:d.data, error:d.error, needsKey:!!d.needsKey, assisted:!!d.assisted});
+        resolve({ok:!!d.ok, data:d.data, error:d.error, needsKey:!!d.needsKey,
+                 assisted:!!d.assisted, blocked:!!d.blocked});
       };
       window.postMessage(Object.assign({__sp:'page', reqId:reqId}, payload), '*');
       setTimeout(function(){
@@ -794,12 +946,26 @@ var Ext = {
     return this.ask({type:'keywords', seed:seed}, 30000,
       '검색광고 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.');
   },
-  shopCount(keyword){
-    return this.ask({type:'shopCount', keyword:keyword}, 40000,
-      '네이버쇼핑 확인이 시간 초과되었습니다.');
+  backToApp(closeLogin){
+    return this.ask({type:'backToApp', closeLogin:!!closeLogin}, 8000,
+      '소싱 프로 탭으로 돌아오지 못했습니다.');
   },
-  image1688(dataUrl, limit){
-    return this.ask({type:'image1688', dataUrl:dataUrl, limit:limit||20, withImages:true}, 180000,
+  close1688Tabs(keepAssisted){
+    return this.ask({type:'close1688Tabs', keepAssisted:!!keepAssisted}, 15000,
+      '1688 탭을 닫지 못했습니다.');
+  },
+  focus1688Tab(){
+    return this.ask({type:'focus1688Tab'}, 8000, '1688 탭을 열지 못했습니다.');
+  },
+  login1688Status(){
+    return this.ask({type:'login1688Status'}, 8000, '1688 로그인 상태를 확인하지 못했습니다.');
+  },
+  login1688Open(){
+    return this.ask({type:'login1688Open'}, 8000, '1688 로그인 화면을 열지 못했습니다.');
+  },
+  image1688(dataUrl, limit, assist){
+    return this.ask({type:'image1688', dataUrl:dataUrl, limit:limit||20, withImages:true,
+      assist: assist !== false}, 70000,
       '1688 이미지 검색이 시간 초과되었습니다.');
   },
   grab1688Tab(limit){
@@ -810,11 +976,82 @@ var Ext = {
     return this.ask({type:'search1688', keyword:keyword, limit:limit||5, withImages:true}, 90000,
       '1688 검색이 시간 초과되었습니다.');
   },
+  coupangReviews(productId, count){
+    return this.ask({type:'coupangReviews', productId:productId, count:count||100}, 120000,
+      '쿠팡 리뷰를 받는 데 시간이 너무 걸렸습니다.');
+  },
+  catTree(force){
+    return this.ask({type:'catTree', force:!!force}, 90000, '카테고리 목록을 가져오지 못했습니다.');
+  },
+  coupangOpenUrl(url){
+    return this.ask({type:'coupangOpenUrl', url:url}, 60000, '쿠팡 화면을 열지 못했습니다.');
+  },
+  coupangNextPage(){
+    return this.ask({type:'coupangNextPage'}, 60000, '다음 쪽으로 넘기지 못했습니다.');
+  },
+  temuTop(channel, limit, category){
+    return this.ask({type:'temuTop', channel:channel, limit:limit||20,
+                     category:category||'', withImages:true}, 120000,
+      '테무 수집이 시간 초과되었습니다.');
+  },
+  temuOpen(channel){
+    return this.ask({type:'temuOpen', channel:channel}, 10000, '테무를 열지 못했습니다.');
+  },
+  taobaoTop(keyword, limit){
+    return this.ask({type:'taobaoTop', keyword:keyword, limit:limit||20, withImages:true}, 120000,
+      '타오바오 수집이 시간 초과되었습니다.');
+  },
+  taobaoOpen(keyword){
+    return this.ask({type:'taobaoOpen', keyword:keyword}, 10000, '타오바오를 열지 못했습니다.');
+  },
+  shopLogin(site){
+    return this.ask({type:'shopLogin', site:site}, 8000, '로그인 상태를 확인하지 못했습니다.');
+  },
+  shopLoginOpen(site){
+    return this.ask({type:'shopLoginOpen', site:site}, 10000, '로그인 화면을 열지 못했습니다.');
+  },
+  wing28Batch(ids){
+    return this.ask({type:'wing28Batch', ids:ids}, 90000,
+      '쿠팡 윙에서 28일 실적을 받아오지 못했습니다.');
+  },
+  wingStatus(){
+    return this.ask({type:'wingStatus'}, 8000, '윙 상태를 확인하지 못했습니다.');
+  },
+  wingOpen(){
+    return this.ask({type:'wingOpen'}, 10000, '윙을 열지 못했습니다.');
+  },
   keyStatus(){
     return this.ask({type:'keyStatus'}, 8000, '확장프로그램이 응답하지 않습니다.');
   },
   openOptions(){
     return this.ask({type:'openOptions'}, 8000, '설정 화면을 열지 못했습니다.');
+  },
+  partnerStatus(){
+    return this.ask({type:'partnerStatus'}, 8000, '파트너스 상태를 확인하지 못했습니다.');
+  },
+  searchCache(clear){
+    return this.ask({type:'searchCache', clear:!!clear}, 15000,
+      '저장된 검색 기록을 다루지 못했습니다.');
+  },
+  readActiveCoupang(limit){
+    return this.ask({type:'readActiveCoupang', limit:limit||20}, 20000,
+      '열린 쿠팡 화면을 읽지 못했습니다.');
+  },
+  openCoupangSearch(keyword){
+    return this.ask({type:'openCoupangSearch', keyword:keyword}, 10000,
+      '쿠팡 검색 화면을 열지 못했습니다.');
+  },
+  coupangSession(open){
+    return this.ask({type:'coupangSession', open:!!open}, 15000,
+      '쿠팡 작업 탭을 정리하지 못했습니다.');
+  },
+  coupangCooldown(clear){
+    return this.ask({type:'coupangCooldown', clear:!!clear}, 8000,
+      '쿠팡 대기 상태를 확인하지 못했습니다.');
+  },
+  thumbs(urls, size){
+    return this.ask({type:'thumbs', urls:urls, size:size||240}, 90000,
+      '썸네일을 받는 데 시간이 너무 걸렸습니다.');
   },
   coupangTop(keyword, limit, withImages){
     return this.ask({type:'coupangTop', keyword:keyword, limit:limit||5, withImages:!!withImages},
@@ -832,15 +1069,85 @@ var Sampler = {
     try { this.ns = await window.claude.use('sample'); } catch(e){ this.ns = null; }
     return this.ns;
   },
+  /* 검색어를 중국어로 바꾼다. 상품명이 아니라 짧은 검색어에 맞춘 규칙이다. */
+  async searchTerm(term){
+    var ns = await this.get();
+    if(!ns) return null;
+    var prompt =
+      '아래는 한국어 쇼핑 검색어다. 중국 타오바오에서 같은 물건을 찾을 때 쓸 검색어로 바꿔라.\n' +
+      '규칙\n' +
+      '- 중국어 간체로만 답한다.\n' +
+      '- 중국 쇼핑몰에서 실제로 쓰는 말로 쓴다. 직역하지 않는다.\n' +
+      '  예: 핸드폰거치대 → 手机支架, 수저통 → 筷子筒, 귀마개 → 耳塞\n' +
+      '- 보통 2~6자다. 군더더기를 붙이지 않는다.\n' +
+      '- alt 에는 같은 물건을 가리키는 다른 흔한 말을 한두 개 넣는다.\n' +
+      '검색어: ' + term + '\n' +
+      'JSON으로만 답한다: {"keyword":"주 검색어","alt":["다른 말"],"ko":"한국어로 무엇인지"}';
+    try {
+      var r = await ns.json(prompt, {modelTier:'quick', cache:true});
+      if(!r || !r.keyword) return null;
+      return {
+        keyword: String(r.keyword).trim(),
+        alt: Array.isArray(r.alt) ? r.alt.map(String).slice(0,3) : [],
+        ko: r.ko ? String(r.ko) : ''
+      };
+    } catch(e){ return null; }
+  },
+  /* 최근 리뷰를 읽고 좋은 점, 나쁜 점, 수입해서 팔 때 노릴 점을 뽑는다 */
+  async reviewInsight(name, reviews){
+    var ns = await this.get();
+    if(!ns) return null;
+    var lines = reviews.slice(0, 100).map(function(r, i){
+      var t = String(r.text || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+      return (i+1)+'. [별'+(r.stars||0)+']'+(r.option ? '['+String(r.option).slice(0,30)+']' : '')+' '+t;
+    }).join('\n');
+    var prompt =
+      '아래는 한국 쿠팡 상품의 최근 리뷰 '+reviews.length+'개다. 이 상품을 중국에서 수입해 파려는 셀러를 위해 분석하라.\n'+
+      '규칙\n'+
+      '- 한국어로 쓴다. 짧고 분명하게 쓴다.\n'+
+      '- 리뷰에 없는 내용은 지어내지 않는다.\n'+
+      '- good 과 bad 는 각각 많이 나온 순서로 최대 5개다.\n'+
+      '- count 는 그 내용을 말한 리뷰가 몇 개인지 센 값이다.\n'+
+      '- quote 는 그 내용을 보여주는 리뷰 원문 한 구절을 그대로 옮긴다. 30자 안쪽이다.\n'+
+      '- chance 는 나쁜 점을 바탕으로, 수입해서 팔 때 고치거나 내세울 점이다. 최대 4개다.\n'+
+      '- options 는 옵션(색상, 크기 등)에 관한 말이 있으면 한 문장, 없으면 빈 글자다.\n'+
+      '상품명: '+String(name || '').slice(0, 80)+'\n'+
+      '리뷰\n'+lines+'\n'+
+      'JSON으로만 답한다: {"summary":"한두 문장 총평","good":[{"point":"","count":0,"quote":""}],'+
+      '"bad":[{"point":"","count":0,"quote":""}],"chance":[""],"buyers":"주로 누가 무엇에 쓰는지","options":""}';
+    try {
+      var r = await ns.json(prompt, {cache:true});
+      if(!r) return null;
+      var clean = function(list, n){
+        return (Array.isArray(list) ? list : []).slice(0, n).map(function(x){
+          return { point: String((x && x.point) || '').trim(), count: num(x && x.count),
+                   quote: String((x && x.quote) || '').trim() };
+        }).filter(function(x){ return x.point; });
+      };
+      return {
+        summary: String(r.summary || '').trim(),
+        good: clean(r.good, 5),
+        bad: clean(r.bad, 5),
+        chance: (Array.isArray(r.chance) ? r.chance : []).map(String).filter(Boolean).slice(0, 4),
+        buyers: String(r.buyers || '').trim(),
+        options: String(r.options || '').trim()
+      };
+    } catch(e){ return null; }
+  },
   async chinese(name){
     var ns = await this.get();
     if(!ns) return null;
     var prompt =
       '아래는 한국 쿠팡의 상품명이다. 이 물건을 중국 1688에서 찾을 때 쓸 검색어를 만들어라.\n' +
-      '규칙: 중국어 간체로 쓴다. 브랜드명, 색상, 수량, 세트 표기, 포장 단위는 뺀다. ' +
-      '물건 자체를 가리키는 짧은 명사구로 만든다. 보통 2~6자다.\n' +
+      '규칙\n' +
+      '- 중국어 간체로 쓴다.\n' +
+      '- 브랜드명, 모델 번호, 색상, 수량, 세트 표기, 포장 단위는 뺀다.\n' +
+      '- 물건의 종류만 쓰면 너무 넓게 잡힌다. 생김새나 쓰임을 가리키는 말을 한두 개 붙인다.\n' +
+      '  예: "접이식 탁상 거치대" 는 手机支架 가 아니라 折叠桌面手机支架 로 쓴다.\n' +
+      '- 보통 4~8자다.\n' +
+      '- alt 에는 더 넓은 말과 더 좁은 말을 하나씩 넣는다.\n' +
       '상품명: ' + name + '\n' +
-      'JSON으로만 답한다: {"keyword":"주 검색어","alt":["대안1","대안2"],"ko":"한국어로 무엇인지"}';
+      'JSON으로만 답한다: {"keyword":"주 검색어","alt":["더 넓은 말","더 좁은 말"],"ko":"한국어로 무엇인지"}';
     try {
       var r = await ns.json(prompt, {modelTier:'quick', cache:true});
       if(!r || !r.keyword) return null;
@@ -856,6 +1163,19 @@ var Sampler = {
 /* =======================================================================
    3. domain — settings & profit math
    ======================================================================= */
+/* 이 화면이 기대하는 수집기 버전. 낮으면 화면에 경고를 띄운다. */
+var NEED_EXT = '3.26.0';
+function extTooOld(){
+  if(!Ext.present || !Ext.version) return false;
+  var a = String(Ext.version).split('.').map(Number);
+  var b = NEED_EXT.split('.').map(Number);
+  for(var i = 0; i < 3; i++){
+    if((a[i]||0) < (b[i]||0)) return true;
+    if((a[i]||0) > (b[i]||0)) return false;
+  }
+  return false;
+}
+
 var DEFAULTS = {
   rate:185,          // 환율을 받아오지 못했을 때 쓰는 값
   rateLocked:false,  // 이 분석을 그때 환율로 묶어둘지
@@ -924,15 +1244,41 @@ function calcFor(rec, i){
   return calc(clone);
 }
 function blankCandidate(){
-  return {url:'', name:'', price:'', moq:'', opt:'', image:''};
+  return {url:'', name:'', price:'', moq:'', opt:'', image:'', src:'', warn:''};
 }
+/* 이 상품이 어디서 왔는지. 화면 왼쪽 칸의 이름과 색이 여기에 따라 바뀐다. */
+var SOURCES = {
+  coupang: {label:'쿠팡',     mark:'C',  head:'쿠팡 판매 상품',
+            desc:'비교 기준이 되는 쿠팡의 판매 상품입니다.',
+            urlLabel:'쿠팡 상품 링크', hint:'https://www.coupang.com/vp/products/...',
+            priceLabel:'쿠팡 판매가격 (원)',
+            bg:'#f13d2c', line:'#ffd9c9', soft:'#fff6f2', edge:'#ffe6da',
+            title:'#e14a22', sub:'#b58a78'},
+  taobao:  {label:'타오바오', mark:'淘', head:'타오바오 인기 상품',
+            desc:'타오바오 판매량 순에서 고른 상품입니다. 판매가는 중국 소매가입니다.',
+            urlLabel:'타오바오 상품 링크', hint:'https://item.taobao.com/item.htm?id=...',
+            priceLabel:'쿠팡에 올릴 판매가격 (원)',
+            bg:'#ff5000', line:'#ffd9c2', soft:'#fff7f1', edge:'#ffe5d3',
+            title:'#d94500', sub:'#b3806a'},
+  temu:    {label:'테무',     mark:'T',  head:'테무 인기 상품',
+            desc:'테무에서 한국 소비자에게 팔리고 있는 상품입니다. 판매가는 원화입니다.',
+            urlLabel:'테무 상품 링크', hint:'https://www.temu.com/kr/...-g-...html',
+            priceLabel:'쿠팡에 올릴 판매가격 (원)',
+            bg:'#fb7701', line:'#ffe0bd', soft:'#fff8ef', edge:'#ffeacf',
+            title:'#d96400', sub:'#b38a63'}
+};
+function srcOf(rec){ return SOURCES[(rec && rec.source) || 'coupang'] || SOURCES.coupang; }
+
 function blankRecord(user){
   return {
     id: rid('rec_'),
     ownerId: user.uid,
     ownerName: user.name,
     title: '새 비교 분석',
-    coupang: {url:'', name:'', category:'', price:'', rating:'', reviews:'', image:''},
+    source: 'coupang',
+    srcPrice: '',
+    coupang: {url:'', name:'', category:'', price:'', rating:'', reviews:'', image:'',
+              priceSeen:'', grabbedAt:'', grabbedBy:''},
     candidates: [blankCandidate(),blankCandidate(),blankCandidate(),blankCandidate(),blankCandidate()],
     selected: 0,
     monthlyQty: 500,
@@ -944,7 +1290,11 @@ function blankRecord(user){
 }
 function normalizeRecord(r){
   var out = Object.assign({}, r);
-  out.coupang = Object.assign({url:'',name:'',category:'',price:'',rating:'',reviews:'',image:''}, r.coupang||{});
+  out.source = SOURCES[r && r.source] ? r.source : 'coupang';
+  out.srcPrice = (r && r.srcPrice) || '';
+  out.coupang = Object.assign({url:'',name:'',category:'',price:'',rating:'',reviews:'',image:'',
+    priceSeen:'', grabbedAt:'', grabbedBy:''}, r.coupang||{});
+  out.imageWhy = r.imageWhy || '';
   var c = (r.candidates||[]).slice(0,5);
   while(c.length < 5) c.push(blankCandidate());
   out.candidates = c.map(function(x){ return Object.assign(blankCandidate(), x||{}); });
@@ -1029,20 +1379,38 @@ var App = {
   users:[],
   filterUser:'',
   query:'',
+  jumpTop:false,
+  picked:{},   /* 보관함에서 고른 기록들 */
   fx:null,
   busy:{},
   kw:{seed:'', rows:[], sort:'total', ran:false, error:'', exclude:'',
-      progress:null, scored:false, stop:false, season:true, leadWeeks:6},
-  rank:{keyword:'', items:[], at:''},
+      scored:false, season:true, leadWeeks:6, col:'', dir:-1},
+  rank:{keyword:'', items:[], at:'', col:'', dir:-1, rate:3, based:null, volume:0, wing:null},
+  tb:{keyword:'', cn:'', used:'', alt:[], dropped:0, items:[], at:'', col:'', dir:-1,
+      count:20, running:false, error:''},
+  tm:{channel:'best', cat:'', items:[], at:'', col:'', dir:-1, count:20,
+      running:false, error:'', picked:false},
+  cb:{url:'', lo:6900, hi:11000, pages:1, page:0, items:[], at:'', col:'', dir:-1,
+      running:false, step:'', error:'', wing:null, seen:0,
+      tree:null, treeAt:'', loadingTree:false, c1:'', c2:'', c3:'', picked:''},
+  auto:{count:10, lo:6000, hi:11000, seed:'', exclude:null, running:false, stop:false,
+        step:'', done:0, rows:[], kws:[], log:[], ran:false, manual:true, manualTouched:false},
   imgData:{},   /* 쿠팡 썸네일 원본. 저장하지 않고 이번 방문에만 들고 있는다. */
-  apiKey:null   /* null 이면 아직 확인 전 */
+  apiKey:null,  /* null 이면 아직 확인 전 */
+  partner:null  /* 쿠팡 파트너스 키 상태 */
 };
 
 /* 검색광고 API 키가 등록돼 있는지 확장프로그램에 물어본다 */
 async function checkApiKey(){
-  if(!Ext.present){ App.apiKey = null; return; }
+  if(!Ext.present){ App.apiKey = null; App.partner = null; return; }
   var res = await Ext.keyStatus();
   App.apiKey = res.ok && res.data ? !!res.data.hasKey : false;
+
+  var pr = await Ext.partnerStatus();
+  App.partner = pr.ok && pr.data ? pr.data : {hasKey:false, left:0};
+
+  /* 공식 통로가 열려 있으면 자동 모드가 안전하다. 손대지 않았을 때만 바꾼다. */
+  if(App.partner.hasKey && !App.auto.manualTouched) App.auto.manual = false;
 }
 async function openApiSettings(){
   if(!Ext.present){
@@ -1082,55 +1450,104 @@ function apiKeyPanel(){
   '</div>';
 }
 
-/* 검색량 대비 상품 수. 낮을수록 팔기 쉽다고 본다. */
-function kwRatio(row){
-  if(!row || !row.shopCount || !row.total) return null;
-  return row.shopCount / row.total;
-}
-function kwGrade(row){
-  var r = kwRatio(row);
-  if(r === null) return {cls:'gray', text:'미확인'};
-  if(r < 1)  return {cls:'good', text:'매우 좋음'};
-  if(r < 5)  return {cls:'good', text:'좋음'};
-  if(r < 20) return {cls:'mid',  text:'보통'};
-  return {cls:'bad', text:'과열'};
-}
+/* 경쟁은 네이버 검색광고가 주는 값만으로 본다. 네이버쇼핑 페이지는 열지 않는다. */
 function adScore(comp){
   if(/낮음/.test(comp||'')) return 1;
   if(/중간/.test(comp||'')) return 0.6;
   if(/높음/.test(comp||'')) return 0.3;
-  return 0.6;
+  return null;
 }
-/* 점수 = 수요 40 + 경쟁 40 + 모바일 비중 10 + 광고 경쟁 10 */
+/* 한 검색어에 평균 몇 개의 광고가 붙는지. 많을수록 이미 돈이 몰린 자리다. */
+function depthScore(row){
+  var d = num(row && row.depth);
+  if(!d) return null;
+  return Math.max(0, Math.min(1, 1 - (d - 1) / 14));
+}
+/* 0~1 로 본 빈자리 정도. 클수록 비어 있다. */
+function kwCompete(row){
+  var ad = adScore(row && row.comp);
+  var ds = depthScore(row);
+  if(ad === null && ds === null) return null;
+  if(ds === null) return ad;
+  if(ad === null) return ds;
+  return 0.6*ad + 0.4*ds;
+}
+function kwGrade(row){
+  var c = kwCompete(row);
+  if(c === null) return {cls:'gray', text:'미확인'};
+  if(c >= 0.8) return {cls:'good', text:'매우 좋음'};
+  if(c >= 0.6) return {cls:'good', text:'좋음'};
+  if(c >= 0.4) return {cls:'mid',  text:'보통'};
+  return {cls:'bad', text:'과열'};
+}
+/* 점수 = 수요 45 + 광고 경쟁 45 + 모바일 비중 10 */
 function kwScore(row){
-  var demand = Math.min(1, Math.log10((row.total||0)+1)/5);   // 월 10만 검색이 만점
-  var ratio = kwRatio(row);
-  var comp = ratio === null ? null : Math.min(1, 1/(1+ratio/3));
+  /* 월 100회면 0점, 월 10만회면 만점 */
+  var demand = Math.max(0, Math.min(1, (Math.log10((row.total||0)+1) - 2) / 3));
+  var c = kwCompete(row);
   var mob = row.total ? (row.mobile/row.total) : 0;
-  var ad = adScore(row.comp);
-  var c = comp === null ? ad : comp;
   return {
-    score: Math.round(100*(0.4*demand + 0.4*c + 0.1*mob + 0.1*ad)),
-    estimated: comp === null
+    score: Math.round(100*(0.45*demand + 0.45*(c === null ? 0.6 : c) + 0.1*mob)),
+    estimated: c === null
   };
 }
 function kwReason(row){
   var parts = ['월 검색 '+nf(row.total)+'회'];
-  if(row.shopCount) parts.push('등록 상품 '+nf(row.shopCount)+'개');
-  var ratio = kwRatio(row);
-  if(ratio !== null) parts.push('경쟁률 '+ratio.toFixed(1));
+  if(row.comp) parts.push('광고 경쟁 '+row.comp);
+  if(num(row.depth)) parts.push('붙은 광고 '+num(row.depth).toFixed(1)+'개');
   if(row.total && row.mobile/row.total > 0.75) parts.push('모바일 검색이 대부분');
-  if(/낮음/.test(row.comp||'')) parts.push('광고 경쟁 낮음');
   return parts.join(' · ');
 }
 function kwVerdict(row){
-  var r = kwRatio(row);
-  if(r === null) return '상품 수를 확인하면 경쟁률이 나옵니다.';
-  if(r < 1)  return '수요에 비해 등록된 상품이 매우 적습니다. 지금 들어갈 만합니다.';
-  if(r < 5)  return '수요 대비 상품이 적은 편입니다. 상세페이지로 승부해볼 만합니다.';
-  if(r < 20) return '평범한 경쟁입니다. 가격이나 구성으로 차별점이 필요합니다.';
-  return '이미 상품이 넘칩니다. 후발주자로는 어렵습니다.';
+  var c = kwCompete(row);
+  if(c === null) return '광고 경쟁 정보가 없어 검색량만 보고 매긴 점수입니다.';
+  if(c >= 0.8) return '검색은 있는데 광고가 거의 붙지 않았습니다. 지금 들어갈 만합니다.';
+  if(c >= 0.6) return '광고 경쟁이 낮은 편입니다. 상세페이지로 승부해볼 만합니다.';
+  if(c >= 0.4) return '평범한 경쟁입니다. 가격이나 구성으로 차별점이 필요합니다.';
+  return '이미 광고가 빽빽합니다. 후발주자로는 광고비가 많이 듭니다.';
 }
+/* 머리글을 눌렀을 때 그 칸의 값을 꺼내는 규칙.
+   글자는 글자끼리, 숫자는 숫자끼리 견준다. 값이 없는 줄은 늘 뒤로 보낸다. */
+var KW_COLS = {
+  keyword: function(r){ return String(r.keyword || ''); },
+  total:   function(r){ return num(r.total); },
+  pc:      function(r){ return num(r.pc); },
+  mobile:  function(r){ return num(r.mobile); },
+  comp:    function(r){
+    if(/낮음/.test(r.comp||'')) return 1;
+    if(/중간/.test(r.comp||'')) return 2;
+    if(/높음/.test(r.comp||'')) return 3;
+    return null;
+  },
+  depth:   function(r){ return num(r.depth) || null; },
+  grade:   function(r){ return kwCompete(r); },
+  score:   function(r){ return kwScore(r).score; }
+};
+function kwSortRows(rows, col, dir){
+  var get = KW_COLS[col];
+  if(!get) return rows;
+  return rows.sort(function(a,b){
+    var x = get(a), y = get(b);
+    var xn = (x === null || x === undefined || x === '');
+    var yn = (y === null || y === undefined || y === '');
+    if(xn && yn) return 0;
+    if(xn) return 1;        /* 값 없는 줄은 방향과 상관없이 뒤로 */
+    if(yn) return -1;
+    if(typeof x === 'string') return dir * x.localeCompare(y, 'ko');
+    return dir * (x - y);
+  });
+}
+
+/* 누를 수 있는 머리글 한 칸. 지금 정렬 중인 칸에는 화살표를 붙인다. */
+function kwHead(col, label, cls){
+  var on = App.kw.col === col;
+  var arrow = on ? (App.kw.dir < 0 ? ' ▼' : ' ▲') : '';
+  return '<th'+(cls ? ' class="'+cls+'"' : '')+
+    ' data-kwsort="'+col+'"'+
+    ' style="cursor:pointer;'+(on ? 'color:var(--teal);' : '')+'"'+
+    ' title="눌러서 정렬">'+esc(label)+arrow+'</th>';
+}
+
 function kwExcluded(keyword){
   var words = String(App.kw.exclude||'').split(/[,\s]+/).map(function(w){ return w.trim(); }).filter(Boolean);
   if(!words.length) return false;
@@ -1174,6 +1591,7 @@ function fxCaption(){
 }
 
 function go(route, opts){
+  App.jumpTop = true;      /* 화면을 갈아탈 때는 맨 위에서 시작한다 */
   App.route = route;
   if(opts && opts.record) App.record = opts.record;
   location.hash = '#/'+route;
@@ -1269,6 +1687,10 @@ function renderAuth(){
 var NAV = [
   {id:'dash',    label:'대시보드',      icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
   {id:'keywords', label:'키워드 발굴',    icon:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/><path d="M11 8v6M8 11h6"/>'},
+  {id:'auto',    label:'자동 소싱',      icon:'<path d="M12 3l1.9 4.8L19 9l-4 3.3L16.2 18 12 15.3 7.8 18 9 12.3 5 9l5.1-1.2z"/><path d="M4 20h16"/>'},
+  {id:'cat',     label:'카테고리 베스트', icon:'<path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M13 13h7v7h-7z"/>'},
+  {id:'taobao',  label:'타오바오 베스트', icon:'<path d="M3 9l2-5h14l2 5"/><path d="M4 9h16v11H4z"/><path d="M9 13h6"/>'},
+  {id:'temu',    label:'테무 베스트',     icon:'<path d="M4 5h16"/><path d="M12 5v15"/><path d="M6 20h12"/><path d="M7 9l-2 3h4z"/><path d="M17 9l-2 3h4z"/>'},
   {id:'compare', label:'상품 비교 분석', icon:'<path d="M12 3v18"/><path d="M7 8l5-5 5 5"/><path d="M4 12h16"/>'},
   {id:'list',    label:'상품 보관함',    icon:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'},
   {id:'guide',   label:'이용 가이드',    icon:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 3.7"/><path d="M12 17.5h.01"/>'},
@@ -1278,15 +1700,22 @@ var NAV = [
 var CRUMB = {
   dash:['대시보드'], compare:['상품 비교 분석','쿠팡 vs 1688 상품 비교'],
   keywords:['키워드 발굴','검색량과 경쟁 강도'],
+  auto:['자동 소싱','가격대에 맞는 상품 찾기'],
+  cat:['카테고리 베스트','가격대별 잘 팔리는 상품'],
+  taobao:['타오바오 베스트','판매량 순 인기 상품'],
+  temu:['테무 베스트','베스트셀러와 별점 5점'],
   rank:['키워드 발굴','쿠팡 노출 순위'],
   list:['상품 보관함'], admin:['관리','어드민 콘솔'], guide:['이용 가이드'], settings:['설정']
 };
-var ROUTES = ['dash','keywords','rank','compare','list','admin','guide','settings'];
+var ROUTES = ['dash','keywords','auto','cat','taobao','temu','rank','compare','list','admin','guide','settings'];
 
 function shell(inner){
   var u = Auth.user;
   var isAdmin = u.role === 'admin';
-  var crumb = CRUMB[App.route] || ['대시보드'];
+  var crumb = (CRUMB[App.route] || ['대시보드']).slice();
+  if(App.route === 'compare' && App.record){
+    crumb = ['상품 비교 분석', srcOf(App.record).label + ' vs 1688 상품 비교'];
+  }
   var navHtml = NAV.filter(function(n){ return !n.admin || isAdmin; }).map(function(n){
     return (n.divider ? '<div class="nav-div"></div>' : '') +
       '<a href="#/'+n.id+'" class="'+(App.route===n.id?'active':'')+'" data-nav="'+n.id+'">'+
@@ -1424,11 +1853,23 @@ function viewCompare(){
     if(p > bestP){ bestP = p; best = i; }
   });
 
+  var oldExt = extTooOld()
+    ? '<div class="apibox off" style="margin-bottom:18px;">'+
+        '<span class="dot off"></span>'+
+        '<div><div class="ab-t">수집기가 옛 버전입니다 · 지금 v'+esc(Ext.version)+'</div>'+
+          '<div class="ab-s">가격을 잘못 읽을 수 있습니다. 크롬 확장 프로그램 화면에서 '+
+          '새로고침을 눌러 v'+esc(NEED_EXT)+' 로 올려주세요.</div></div>'+
+      '</div>'
+    : '';
+
+  var SH = srcOf(r);
   var head =
   '<div class="page-head">'+
     '<div>'+
-      '<h2>쿠팡 vs 1688 상품 비교</h2>'+
-      '<p>쿠팡의 판매 상품과 1688 소싱 후보 상품을 비교하여, 가장 수익성 높은 상품을 찾아보세요.</p>'+
+      '<h2>'+esc(SH.label)+' vs 1688 상품 비교</h2>'+
+      '<p>'+(r.source === 'coupang'
+        ? '쿠팡의 판매 상품과 1688 소싱 후보 상품을 비교하여, 가장 수익성 높은 상품을 찾아보세요.'
+        : esc(SH.label)+'에서 고른 상품의 매입처를 1688에서 찾고, 쿠팡에 올렸을 때의 이익을 따져보세요.')+'</p>'+
     '</div>'+
     '<div class="actions">'+
       '<button class="act" id="openList"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>불러오기</button>'+
@@ -1438,18 +1879,27 @@ function viewCompare(){
     '</div>'+
   '</div>';
 
+  var S = srcOf(r);
   var coupang =
-  '<section class="card cp">'+
-    '<div class="cp-head"><div class="cp-logo">C</div>'+
-      '<div><h3>쿠팡 판매 상품</h3><p>비교 기준이 되는 쿠팡의 판매 상품입니다.</p></div></div>'+
+  '<section class="card cp" style="border-color:'+S.line+';">'+
+    '<div class="cp-head" style="background:'+S.soft+';border-bottom-color:'+S.edge+';">'+
+      '<div class="cp-logo" style="background:'+S.bg+';">'+S.mark+'</div>'+
+      '<div><h3 style="color:'+S.title+';">'+esc(S.head)+'</h3>'+
+        '<p style="color:'+S.sub+';">'+esc(S.desc)+'</p></div>'+
+      (r.source && r.source !== 'coupang'
+        ? '<span class="src-chip" style="background:'+S.bg+';">'+esc(S.label)+'에서 가져옴</span>'
+        : '')+
+    '</div>'+
     '<div class="cp-body">'+
       '<div class="field" style="margin-top:0;">'+
-        '<label for="cpUrl">쿠팡 상품 링크</label>'+
+        '<label for="cpUrl">'+esc(S.urlLabel)+'</label>'+
         '<div class="input-row">'+
-          '<input class="input" id="cpUrl" value="'+esc(cp.url)+'" placeholder="https://www.coupang.com/vp/products/...">'+
-          '<button class="grab-btn'+(App.busy.cp?' busy':'')+'" id="cpGrab">'+
-            (App.busy.cp ? '<span class="spin"></span>수집 중'
-              : '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>수집')+'</button>'+
+          '<input class="input" id="cpUrl" value="'+esc(cp.url)+'" placeholder="'+esc(S.hint)+'">'+
+          (r.source === 'coupang'
+            ? '<button class="grab-btn'+(App.busy.cp?' busy':'')+'" id="cpGrab">'+
+                (App.busy.cp ? '<span class="spin"></span>수집 중'
+                  : '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>수집')+'</button>'
+            : '')+
           '<button class="icon-btn" id="cpOpen" title="새 탭에서 열기"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg></button>'+
         '</div>'+
       '</div>'+
@@ -1458,13 +1908,46 @@ function viewCompare(){
         '<div class="prod-info">'+
           '<div class="pname'+(cp.name?'':' empty')+'">'+(cp.name ? esc(cp.name) : '링크를 넣고 수집하면 상품명이 채워집니다')+'</div>'+
           '<div class="cat">'+(cp.category ? esc(cp.category) : '카테고리 미수집')+'</div>'+
-          '<div class="price num">'+(num(cp.price) ? won(cp.price) : '가격 미수집')+'</div>'+
+          '<div class="price num"'+(num(cp.price) ? '' : ' style="color:var(--sub2);font-size:15px;"')+'>'+
+            (num(cp.price) ? won(cp.price)
+              : (r.source === 'coupang' ? '가격 미수집' : '쿠팡 판매가 미정'))+'</div>'+
+          (r.srcPrice
+            ? '<div style="margin-top:4px;font-size:11.5px;font-weight:700;color:'+S.title+';">'+
+              esc(SOURCES[r.source] ? SOURCES[r.source].label : '')+' 판매가 '+esc(r.srcPrice)+'</div>'
+            : '')+
+          (cp.grabbedAt
+            ? '<div style="margin-top:6px;font-size:10.5px;color:var(--sub2);line-height:1.6;'+
+              'letter-spacing:-.2px;word-break:break-all;">'+
+              esc(fmtDate(cp.grabbedAt))+' 수집'+
+              (cp.grabbedBy ? ' · 수집기 v'+esc(cp.grabbedBy) : '')+
+              (cp.priceSeen ? '<br>화면에서 본 금액 · '+esc(cp.priceSeen) : '<br>본 금액 기록 없음')+
+              '</div>'
+            : '')+
           '<div class="rate">'+
             (cp.rating ? '<span class="star">★</span><b class="num">'+esc(cp.rating)+'</b>' : '<span class="star">☆</span><b>-</b>')+
             '<span class="bar">|</span><span class="num">리뷰 '+(cp.reviews ? nf(cp.reviews) : 0)+'개</span>'+
           '</div>'+
         '</div>'+
       '</div>'+
+      (r.source === 'coupang' && cpPid(cp.url)
+        ? '<div class="ri-box">'+
+            '<div class="ri-box-head"><b>리뷰 분석</b>'+
+              '<button class="tiny go" id="cpReview">'+(r.reviewInsight ? '다시 보기' : '최근 100개 분석')+'</button></div>'+
+            (r.reviewInsight
+              ? '<div class="ri-mini">'+
+                  (r.reviewInsight.summary ? '<p>'+esc(r.reviewInsight.summary)+'</p>' : '')+
+                  ((r.reviewInsight.bad || []).length
+                    ? '<div><span class="ri-tag bad">나쁜 점</span> '+
+                      r.reviewInsight.bad.slice(0,3).map(function(x){ return esc(x.point); }).join(' · ')+'</div>'
+                    : '')+
+                  ((r.reviewInsight.good || []).length
+                    ? '<div><span class="ri-tag good">좋은 점</span> '+
+                      r.reviewInsight.good.slice(0,3).map(function(x){ return esc(x.point); }).join(' · ')+'</div>'
+                    : '')+
+                '</div>'
+              : '<p class="ri-hint">최근 리뷰 100개로 좋은 점과 나쁜 점을 뽑아 드립니다.</p>')+
+          '</div>'
+        : '')+
       '<div class="stats">'+
         '<div class="stat"><div class="k">적용 수수료율</div><div class="v num">'+num(c.s.feeRate).toFixed(2)+'%</div></div>'+
         '<div class="stat"><div class="k">개당 판매수수료</div><div class="v num">'+won(c.fee)+'</div></div>'+
@@ -1472,7 +1955,7 @@ function viewCompare(){
         '<div class="stat"><div class="k">월 예상판매량</div><div class="v num">'+nf(c.qty)+'개</div></div>'+
       '</div>'+
       '<div class="field two">'+
-        '<div><label for="cpPrice">쿠팡 판매가격 (원)</label>'+
+        '<div><label for="cpPrice">'+esc(S.priceLabel)+'</label>'+
           '<div class="suffix"><input class="input" id="cpPrice" value="'+esc(nf(cp.price))+'"><span>원</span></div></div>'+
         '<div><label for="qty">월 예상판매량</label>'+
           '<div class="suffix"><input class="input" id="qty" value="'+esc(nf(r.monthlyQty))+'"><span>개</span></div></div>'+
@@ -1530,6 +2013,13 @@ function viewCompare(){
         '</span>'+
       '</div>'+
       '<div class="item-img">'+imgOr(cd.image, i%2?'dark':'')+'</div>'+
+      (cd.src || cd.warn
+        ? '<div>'+
+            (cd.src ? '<span class="src-chip '+(cd.src === '사진' ? 'img' : 'nm')+'">'+
+              esc(cd.src)+'으로 찾음</span>' : '')+
+            (cd.warn ? '<span class="src-chip warn">'+esc(cd.warn)+'</span>' : '')+
+          '</div>'
+        : '')+
       '<div class="item-name'+(cd.name?'':' empty')+'">'+(cd.name ? esc(cd.name) : '상품명 미수집')+'</div>'+
       '<div class="urlrow">'+
         '<input data-url="'+i+'" value="'+esc(cd.url)+'" placeholder="1688 상품 링크" spellcheck="false">'+
@@ -1568,10 +2058,18 @@ function viewCompare(){
             '열린 1688 결과 가져오기</button>'
         : '')+
       '<div class="hint">💡 카드를 선택하면 하단 계산이 그 상품 기준으로 바뀝니다.</div></div>'+
+    (r.imageWhy
+      ? '<div class="assist"><span class="ai">!</span>사진 검색이 비었습니다 · '+esc(r.imageWhy)+
+        '<div style="margin-top:10px;"><button class="tiny" id="retryImg">사진 검색만 다시</button>'+
+        (App.assisted ? ' <button class="tiny" id="goAssist2">1688 탭으로 가기</button>' : '')+
+        '</div></div>'
+      : '')+
     (App.assisted
       ? '<div class="assist">'+
-          '<span class="ai">1</span>새로 열린 1688 탭에서 오른쪽 패널의 <b>이미지 검색</b> 버튼을 누르세요. 1688은 두 번 눌러야 결과가 나옵니다.'+
+          '<span class="ai">1</span>1688 탭이 <b>뒤에</b> 열려 있습니다. 아래 버튼으로 그 탭에 가서 오른쪽 패널의 '+
+            '<b>이미지 검색</b> 버튼을 누르세요. 1688은 두 번 눌러야 결과가 나옵니다.'+
           '<span class="ai">2</span>상품 목록이 뜨면 이 화면으로 돌아와 <b>열린 1688 결과 가져오기</b> 를 누르세요.'+
+          '<div style="margin-top:10px;"><button class="tiny" id="goAssist">1688 탭으로 가기</button></div>'+
         '</div>'
       : '')+
     '<div class="cn-body" id="items">'+items+'</div>'+
@@ -1615,7 +2113,7 @@ function viewCompare(){
       '<span class="count num" id="memoCount">'+String(r.memo||'').length+' / 500</span></div>'+
   '</section>';
 
-  return head + '<div class="cols">'+coupang+cn+'</div>' + calcCard;
+  return head + oldExt + '<div class="cols">'+coupang+cn+'</div>' + calcCard;
 }
 
 /* =======================================================================
@@ -1641,23 +2139,23 @@ function viewKeywords(){
     if(k.season && !seasonFits(r.keyword).fit){ offSeason++; return false; }
     return true;
   });
-  if(k.sort === 'score'){
+  if(k.col){
+    kwSortRows(rows, k.col, k.dir);
+  } else if(k.sort === 'score'){
     rows.sort(function(a,b){ return kwScore(b).score - kwScore(a).score; });
   } else if(k.sort === 'ratio'){
     rows.sort(function(a,b){
-      var ra = kwRatio(a), rb = kwRatio(b);
-      if(ra === null && rb === null) return b.total - a.total;
-      if(ra === null) return 1;
-      if(rb === null) return -1;
-      return ra - rb;
+      var ca = kwCompete(a), cb = kwCompete(b);
+      if(ca === null && cb === null) return b.total - a.total;
+      if(ca === null) return 1;
+      if(cb === null) return -1;
+      return cb - ca;
     });
   } else if(k.sort === 'mobile'){
     rows.sort(function(a,b){ return b.mobile - a.mobile; });
   } else {
     rows.sort(function(a,b){ return b.total - a.total; });
   }
-
-  var running = !!k.progress;
 
   var head =
   '<div class="page-head">'+
@@ -1676,12 +2174,12 @@ function viewKeywords(){
         '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
         '<input id="kwSeed" value="'+esc(k.seed)+'" placeholder="예: 주방용품, 캠핑, 블루투스이어폰">'+
       '</span>'+
-      '<button class="act primary" id="kwReco"'+(App.busy.kw||running?' disabled':'')+'>'+
-        (App.busy.kw||running ? '분석 중'
+      '<button class="act primary" id="kwReco"'+(App.busy.kw?' disabled':'')+'>'+
+        (App.busy.kw ? '분석 중'
           : '<svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 10l-4.5 3.8L16.8 20 12 16.9 7.2 20l1.3-6.2L4 10l5.8-1.4z"/></svg>추천 키워드 뽑기')+'</button>'+
-      '<button class="act" id="kwAuto"'+(App.busy.kw||running?' disabled':'')+'>'+
+      '<button class="act" id="kwAuto"'+(App.busy.kw?' disabled':'')+'>'+
         '<svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 14h6v6h-6z"/><path d="M14 4h6v6h-6zM4 14h6v6H4z"/></svg>알아서 골라줘</button>'+
-      '<button class="act" id="kwGo"'+(App.busy.kw||running?' disabled':'')+'>검색량만 조회</button>'+
+      '<button class="act" id="kwGo"'+(App.busy.kw?' disabled':'')+'>검색량만 조회</button>'+
       (k.rows.length
         ? '<select class="sel-box" id="kwSort" style="margin-left:auto;">'+
             '<option value="score"'+(k.sort==='score'?' selected':'')+'>추천 점수 순</option>'+
@@ -1705,18 +2203,6 @@ function viewKeywords(){
       (offSeason ? '<span class="pill gray">철 지난 키워드 '+nf(offSeason)+'개 숨김</span>' : '')+
     '</div>'+
     (k.season ? seasonBanner() : '')+
-    (running
-      ? '<div style="padding:0 16px 16px;">'+
-          '<div class="bar-row" style="grid-template-columns:1fr auto auto;gap:12px;">'+
-            '<span class="bar-track"><span class="bar-fill" style="width:'+
-              Math.round(k.progress.done / k.progress.total * 100)+'%"></span></span>'+
-            '<span class="vl num">'+k.progress.done+' / '+k.progress.total+'</span>'+
-            '<button class="tiny danger" id="kwStop">중단</button>'+
-          '</div>'+
-          '<div style="margin-top:8px;font-size:11.5px;color:var(--sub);letter-spacing:-.2px;">'+
-            '“'+esc(k.progress.label)+'” 의 등록 상품 수를 세는 중입니다</div>'+
-        '</div>'
-      : '')+
     (k.error ? '<div style="padding:14px 16px;color:var(--red);font-size:12px;line-height:1.6;">'+esc(k.error)+'</div>' : '')+
   '</div>';
 
@@ -1726,7 +2212,7 @@ function viewKeywords(){
     reco =
     '<div class="card" style="margin-bottom:18px;">'+
       '<div class="sec-head"><h3>추천 키워드</h3>'+
-        '<span style="font-size:11.5px;color:var(--sub2);">수요 40 · 경쟁 40 · 모바일 비중 10 · 광고 경쟁 10 으로 매긴 점수입니다</span></div>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">수요 45 · 광고 경쟁 45 · 모바일 비중 10 으로 매긴 점수입니다</span></div>'+
       '<div class="bars">'+top.map(function(row,i){
         var sc = kwScore(row);
         return '<div class="reco">'+
@@ -1766,7 +2252,7 @@ function viewKeywords(){
       '<p>'+(k.ran
         ? '다른 단어로 다시 시도해보세요. 띄어쓰기 없이 붙여 쓰면 결과가 더 잘 나옵니다.'
         : '<b>알아서 골라줘</b>를 누르면 중국 소싱에 잘 맞는 분야 중 몇 개를 무작위로 골라 시작합니다.<br>'+
-          '거기서 연관 키워드를 모으고 검색량과 등록 상품 수를 확인해 순위를 매겨드립니다.<br><br>'+
+          '거기서 연관 키워드를 모으고 검색량과 광고 경쟁을 따져 순위를 매겨드립니다.<br><br>'+
           '검색광고 API 키는 확장프로그램 아이콘 → 검색광고 API 키 설정에서 등록합니다.')+'</p>'+
       (k.ran ? '' : '<button class="act primary" id="kwAuto2" style="margin:18px auto 0;">알아서 골라줘</button>')+
     '</div></div>';
@@ -1774,16 +2260,20 @@ function viewKeywords(){
     body =
     '<div class="card">'+
       '<div class="sec-head"><h3>연관 키워드 '+nf(rows.length)+'개</h3>'+
-        '<span style="font-size:11.5px;color:var(--sub2);">경쟁률은 네이버쇼핑 상품 수 ÷ 월간 검색량입니다</span></div>'+
-      '<div class="tbl-wrap"><table>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">판정은 네이버 검색광고의 광고 경쟁도와 붙은 광고 수로 매깁니다</span></div>'+
+      '<div class="tbl-wrap"><table class="lined">'+
         '<thead><tr>'+
-          '<th>키워드</th><th class="r">월간 검색량</th><th class="r">PC</th><th class="r">모바일</th>'+
-          '<th class="r">광고 경쟁</th><th class="r">상품 수</th><th class="r">경쟁률</th><th>판정</th><th></th>'+
+          kwHead('keyword','키워드','')+
+          kwHead('total','월간 검색량','r')+
+          kwHead('pc','PC','r')+
+          kwHead('mobile','모바일','r')+
+          kwHead('comp','광고 경쟁','r')+
+          kwHead('depth','붙은 광고','r')+
+          kwHead('grade','판정','')+
+          '<th></th>'+
         '</tr></thead>'+
         '<tbody>'+rows.map(function(row){
           var g = kwGrade(row);
-          var ratio = kwRatio(row);
-          var busyShop = App.busy['shop_'+row.keyword];
           var busyTop = App.busy['top_'+row.keyword];
           return '<tr>'+
             '<td style="font-weight:700;color:#242c38;">'+esc(row.keyword)+
@@ -1792,12 +2282,9 @@ function viewKeywords(){
             '<td class="r num" style="color:var(--sub);">'+nf(row.pc)+'</td>'+
             '<td class="r num" style="color:var(--sub);">'+nf(row.mobile)+'</td>'+
             '<td class="r">'+(row.comp ? '<span class="pill gray">'+esc(row.comp)+'</span>' : '-')+'</td>'+
-            '<td class="r num">'+(row.shopCount ? nf(row.shopCount) : '-')+'</td>'+
-            '<td class="r num">'+(ratio === null ? '-' : ratio.toFixed(1))+'</td>'+
+            '<td class="r num">'+(num(row.depth) ? num(row.depth).toFixed(1) : '-')+'</td>'+
             '<td><span class="pill '+g.cls+'">'+g.text+'</span></td>'+
             '<td><div class="row-btns">'+
-              '<button class="tiny" data-shop="'+esc(row.keyword)+'"'+(busyShop?' disabled':'')+'>'+
-                (busyShop ? '확인 중' : '경쟁 확인')+'</button>'+
               '<button class="tiny" data-rank="'+esc(row.keyword)+'"'+
                 (App.busy['rank_'+row.keyword]?' disabled':'')+'>'+
                 (App.busy['rank_'+row.keyword] ? '수집 중' : '쿠팡 20위')+'</button>'+
@@ -1808,7 +2295,7 @@ function viewKeywords(){
         }).join('')+'</tbody>'+
       '</table></div>'+
       '<div style="padding:13px 16px;border-top:1px solid var(--line2);font-size:11px;color:var(--sub2);line-height:1.6;">'+
-        '경쟁 확인은 네이버쇼핑 페이지를 한 번 열어 상품 수를 셉니다. 한 번에 몰아서 누르지 말고 관심 있는 키워드만 눌러주세요.'+
+        '네이버쇼핑 페이지는 열지 않습니다. 검색광고 API 가 준 값만 써서 네이버 접속이 막히지 않습니다.'+
       '</div>'+
     '</div>';
   }
@@ -1975,70 +2462,59 @@ async function runKeywords(){
     if(res.needsKey) toast('확장프로그램 아이콘을 눌러 검색광고 API 키를 먼저 등록해주세요.','err');
     return false;
   }
-  App.kw.rows = ((res.data && res.data.list) || []).map(function(r){
-    return Object.assign({shopCount:0}, r);
-  });
+  App.kw.rows = (res.data && res.data.list) || [];
   render();
   return true;
 }
 
-/* 씨앗 하나로 연관 키워드를 받아 상위 후보의 상품 수까지 자동으로 확인한 뒤 순위를 매긴다 */
-var RECO_DEPTH = 15;
+/* 씨앗 하나로 연관 키워드를 받아 검색광고 값만으로 순위를 매긴다.
+   네이버쇼핑을 열지 않으므로 네이버가 접속을 막을 일이 없다. */
 async function recommend(){
   var seed = $('#kwSeed').value.trim();
   if(!seed){ toast('어떤 분야인지 한 단어만 넣어주세요.','err'); return; }
   var ok = await runKeywords();
   if(!ok || !App.kw.rows.length) return;
 
-  var cands = App.kw.rows
-    .filter(function(r){
-      if(r.total < 100) return false;
-      if(kwExcluded(r.keyword)) return false;
-      if(App.kw.season && !seasonFits(r.keyword).fit) return false;
-      return true;
-    })
-    .slice(0, RECO_DEPTH);
+  var cands = App.kw.rows.filter(function(r){
+    if(r.total < 100) return false;
+    if(kwExcluded(r.keyword)) return false;
+    if(App.kw.season && !seasonFits(r.keyword).fit) return false;
+    return true;
+  });
   if(!cands.length){
     toast('조건에 맞는 키워드가 없습니다. 시즌 필터를 끄거나 더 넓은 단어로 시도해보세요.','err');
     return;
   }
 
-  App.kw.stop = false;
-  for(var i = 0; i < cands.length; i++){
-    if(App.kw.stop) break;
-    App.kw.progress = {done:i, total:cands.length, label:cands[i].keyword};
-    render();
-    var res = await Ext.shopCount(cands[i].keyword);
-    if(res.ok) cands[i].shopCount = num(res.data && res.data.count);
-    /* 네이버쪽에 부담을 주지 않도록 간격을 둔다 */
-    if(i < cands.length - 1) await wait(1400);
-  }
-  var stopped = App.kw.stop;
-  App.kw.progress = null;
-  App.kw.stop = false;
   App.kw.scored = true;
   App.kw.sort = 'score';
   render();
-  toast(stopped ? '확인을 멈췄습니다. 지금까지 결과로 순위를 매겼습니다.' : '추천 키워드를 뽑았습니다');
-}
-
-async function checkShop(keyword){
-  App.busy['shop_'+keyword] = true; render();
-  var res = await Ext.shopCount(keyword);
-  App.busy['shop_'+keyword] = false;
-  if(!res.ok){ render(); toast(res.error || '상품 수를 확인하지 못했습니다.','err'); return; }
-  var row = App.kw.rows.find(function(r){ return r.keyword === keyword; });
-  if(row) row.shopCount = num(res.data && res.data.count);
-  render();
+  toast('추천 키워드를 뽑았습니다');
 }
 
 async function startFromKeyword(keyword){
-  App.busy['top_'+keyword] = true; render();
+  App.busy['top_'+keyword] = true;
+  Progress.open('쿠팡에서 1위 상품을 가져오는 중입니다',
+    '“'+keyword+'” 로 검색해 광고를 뺀 1위 상품으로 비교를 시작합니다.');
+  Progress.step('쿠팡 검색 결과를 읽는 중');
+  render();
+
   var res = await Ext.coupangTop(keyword);
   App.busy['top_'+keyword] = false;
-  if(!res.ok){ render(); toast(res.error || '쿠팡 상위 상품을 가져오지 못했습니다.','err'); return; }
+  if(!res.ok){
+    Progress.close();
+    render();
+    if(res.blocked){ blockedModal(res.error); return; }
+    toast(res.error || '쿠팡 상위 상품을 가져오지 못했습니다.','err');
+    return;
+  }
   var top = ((res.data && res.data.items) || [])[0];
-  if(!top){ render(); toast('검색 결과에서 상품을 찾지 못했습니다.','err'); return; }
+  if(!top){
+    Progress.close();
+    render();
+    toast('검색 결과에서 상품을 찾지 못했습니다.','err');
+    return;
+  }
 
   var rec = blankRecord(Auth.user);
   rec.title = keyword;
@@ -2049,6 +2525,7 @@ async function startFromKeyword(keyword){
   rec.coupang.reviews = num(top.reviews);
   rec.memo = '키워드 발굴에서 시작 · ' + keyword;
   App.record = rec;
+  Progress.close();
   go('compare');
   toast('“'+top.name.slice(0,20)+'” 으로 비교 분석을 시작합니다. 썸네일이 필요하면 수집을 누르세요.');
 }
@@ -2062,14 +2539,11 @@ function bindKeywords(){
     var b = $(sel);
     if(b) b.onclick = autoRecommend;
   });
-  var stop = $('#kwStop');
-  if(stop) stop.onclick = function(){ App.kw.stop = true; toast('현재 확인이 끝나면 멈춥니다'); };
-
   var seed = $('#kwSeed');
   if(seed){
     seed.addEventListener('input', function(){ App.kw.seed = this.value; });
     seed.addEventListener('keydown', function(e){ if(e.key === 'Enter') recommend(); });
-    if(!App.kw.progress && !App.busy.kw){
+    if(!App.busy.kw){
       seed.focus();
       seed.setSelectionRange(seed.value.length, seed.value.length);
     }
@@ -2084,7 +2558,23 @@ function bindKeywords(){
     }, 320));
   }
   var sort = $('#kwSort');
-  if(sort) sort.onchange = function(){ App.kw.sort = sort.value; render(); };
+  if(sort) sort.onchange = function(){
+    App.kw.sort = sort.value;
+    App.kw.col = '';           /* 고르는 상자를 쓰면 머리글 정렬은 푼다 */
+    render();
+  };
+  $$('[data-kwsort]').forEach(function(th){
+    th.onclick = function(){
+      var col = th.getAttribute('data-kwsort');
+      if(App.kw.col === col){
+        App.kw.dir = App.kw.dir < 0 ? 1 : -1;    /* 같은 칸을 또 누르면 방향을 뒤집는다 */
+      } else {
+        App.kw.col = col;
+        App.kw.dir = (col === 'keyword') ? 1 : -1;   /* 글자는 가나다순, 숫자는 큰 것부터 */
+      }
+      render();
+    };
+  });
   var season = $('#kwSeason');
   if(season) season.onchange = function(){
     App.kw.season = season.checked;
@@ -2096,12 +2586,9 @@ function bindKeywords(){
   var clr = $('#kwClear');
   if(clr) clr.onclick = function(){
     App.kw = Object.assign({}, App.kw, {seed:'', rows:[], sort:'score', ran:false,
-      error:'', exclude:'', progress:null, scored:false, stop:false});
+      error:'', exclude:'', scored:false, col:'', dir:-1});
     render();
   };
-  $$('[data-shop]').forEach(function(b){
-    b.onclick = function(){ checkShop(b.getAttribute('data-shop')); };
-  });
   $$('[data-rank]').forEach(function(b){
     b.onclick = function(){ openRanking(b.getAttribute('data-rank')); };
   });
@@ -2111,20 +2598,891 @@ function bindKeywords(){
 }
 
 /* =======================================================================
+   9-d. 자동 소싱
+   키워드를 모으고, 쿠팡 상위에서 정한 가격대에 맞는 상품을 고르고,
+   그 상품의 썸네일로 1688 후보까지 붙여 보관함에 쌓는다.
+   한 건씩 차례로 한다. 몰아서 하면 쿠팡이 접속을 막는다.
+   ======================================================================= */
+var AUTO_MAX = 30;
+
+/* 브랜드 상품은 1688 에서 같은 물건을 구할 수 없다. 기본으로 뺀다.
+   자동 소싱 화면에서 직접 고칠 수 있다. */
+var AUTO_BRAND_WORDS = [
+  '삼성','갤럭시','애플','아이폰','아이패드','에어팟','맥북','애플워치',
+  'LG','엘지','다이슨','발뮤다','쿠쿠','쿠첸','위니아','캐리어',
+  '나이키','아디다스','뉴발란스','컨버스','반스','크록스',
+  '샤오미','로지텍','앱코','레이저','소니','보스','젠하이저','JBL',
+  '필립스','브라운','오랄비','파나소닉','닌텐도','플레이스테이션','엑스박스',
+  '스타벅스','락앤락','코렐','휘슬러','테팔','네스프레소','정품','공식'
+];
+
+/* 한 키워드에서 몇 개까지 가져갈지. 적게 잡을수록 여러 키워드에 골고루 퍼진다. */
+function autoPerKeyword(count){
+  return Math.max(1, Math.min(3, Math.ceil(count / 5)));
+}
+
+/* 점수 상위권 안에서 순서를 섞는다. 매번 같은 키워드만 나오지 않게 하기 위해서다. */
+function shuffle(list){
+  var a = list.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* 상품명이 그 키워드와 조금이라도 겹치는지 본다.
+   쿠팡이 검색 결과 대신 추천 상품을 내주는 일이 있어, 무관한 물건을 걸러낸다.
+   두 글자씩 끊어 하나라도 이름에 들어 있으면 관련 있다고 본다. */
+function autoRelevant(keyword, name){
+  var k = String(keyword || '').replace(/\s+/g, '');
+  var n = String(name || '').replace(/\s+/g, '').toLowerCase();
+  if(k.length < 2 || !n) return false;
+  k = k.toLowerCase();
+  for(var i = 0; i < k.length - 1; i++){
+    if(n.indexOf(k.slice(i, i + 2)) >= 0) return true;
+  }
+  return false;
+}
+
+function autoExcluded(keyword){
+  var raw = App.auto.exclude;
+  if(raw === null || raw === undefined) raw = AUTO_BRAND_WORDS.join(' ');
+  var words = String(raw).split(/[,\s]+/).map(function(w){ return w.trim(); }).filter(Boolean);
+  if(!words.length) return false;
+  var kw = String(keyword || '').toLowerCase();
+  return words.some(function(w){ return kw.indexOf(w.toLowerCase()) >= 0; });
+}
+
+function autoLog(text){
+  App.auto.log.unshift({at:new Date(), text:text});
+  if(App.auto.log.length > 60) App.auto.log.length = 60;
+}
+
+/* 이미 쓴 상품인지 본다. 같은 물건이 여러 키워드에서 겹쳐 나온다. */
+function autoSeen(url, name){
+  return App.auto.rows.some(function(r){
+    return (url && r.url === url) || (name && r.name === name);
+  });
+}
+
+function viewAuto(){
+  var A = App.auto;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>자동 소싱</h2>'+
+      '<p>개수와 판매가 범위만 정해주시면, 키워드를 모아 쿠팡에서 조건에 맞는 상품을 찾고 '+
+      '1688 후보까지 붙여 보관함에 넣어드립니다.</p></div>'+
+    '<div class="actions">'+
+      '<button class="act" id="autoCool">쿠팡 대기 풀기</button>'+
+      '<button class="act" id="autoWipe">저장된 쿠팡 결과 비우기</button>'+
+      '<button class="act" id="autoTabs">1688 탭 정리</button>'+
+      (A.rows.length && !A.running
+        ? '<button class="act" id="autoClear"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>결과 비우기</button>'
+        : '')+
+    '</div>'+
+  '</div>';
+
+  var partnerBox = '';
+  if(App.partner && App.partner.hasKey){
+    partnerBox =
+    '<div class="apibox on" style="margin-bottom:18px;">'+
+      '<span class="dot on"></span>'+
+      '<div><div class="ab-t">쿠팡 파트너스 공식 API 연결됨</div>'+
+        '<div class="ab-s">쿠팡 화면을 긁지 않아 접속이 막히지 않습니다. '+
+        '이번 한 시간에 '+nf(App.partner.left)+'번 더 검색할 수 있습니다.</div></div>'+
+    '</div>';
+  } else if(App.partner){
+    partnerBox =
+    '<div class="apibox off" style="margin-bottom:18px;">'+
+      '<span class="dot off"></span>'+
+      '<div><div class="ab-t">지금은 직접 모드로 씁니다</div>'+
+        '<div class="ab-s">쿠팡 파트너스 승인이 나서 키를 넣으면 완전 자동으로 바뀝니다. '+
+        '그때까지는 쿠팡에서 직접 검색하고 그 화면을 읽어오는 방식이 안전합니다.</div></div>'+
+    '</div>';
+  }
+
+  var form =
+  (App.apiKey === true ? '' : '<div style="margin-bottom:18px;">'+apiKeyPanel()+'</div>')+
+  partnerBox+
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="toolbar">'+
+      '<span style="display:flex;align-items:center;gap:8px;">'+
+        '<label for="autoCount" style="font-size:12px;color:#6b7480;font-weight:600;">찾을 개수</label>'+
+        '<span class="suffix" style="width:104px;flex:none;">'+
+          '<input class="input" id="autoCount" value="'+esc(A.count)+'"><span>개</span></span>'+
+      '</span>'+
+      '<span style="display:flex;align-items:center;gap:8px;">'+
+        '<label for="autoLo" style="font-size:12px;color:#6b7480;font-weight:600;">쿠팡 판매가</label>'+
+        '<span class="suffix" style="width:116px;flex:none;">'+
+          '<input class="input" id="autoLo" value="'+esc(nf(A.lo))+'"><span>원</span></span>'+
+        '<span style="color:var(--sub2);">~</span>'+
+        '<span class="suffix" style="width:116px;flex:none;">'+
+          '<input class="input" id="autoHi" value="'+esc(nf(A.hi))+'"><span>원</span></span>'+
+      '</span>'+
+      '<span class="search" style="max-width:240px;">'+
+        '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
+        '<input id="autoSeed" value="'+esc(A.seed)+'" placeholder="분야 (비우면 알아서 고름)">'+
+      '</span>'+
+      (A.running
+        ? '<button class="act danger" id="autoStop" style="margin-left:auto;">'+
+            '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>중단</button>'
+        : '<button class="act primary" id="autoRun" style="margin-left:auto;">'+
+            '<svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.8L19 9l-4 3.3L16.2 18 12 15.3 7.8 18 9 12.3 5 9l5.1-1.2z"/></svg>'+
+            (A.manual ? '키워드만 모으기' : '자동 소싱 시작')+'</button>')+
+    '</div>'+
+    '<div class="toolbar" style="border-bottom:none;padding-top:0;">'+
+      '<span class="search" style="max-width:360px;">'+
+        '<svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>'+
+        '<input id="autoExclude" value="'+
+          esc(A.exclude === null ? AUTO_BRAND_WORDS.join(' ') : A.exclude)+
+          '" placeholder="제외할 단어"></span>'+
+      '<label class="chk"><input type="checkbox" id="autoSeason"'+(App.kw.season?' checked':'')+'>시즌 필터</label>'+
+      '<label class="chk"><input type="checkbox" id="autoManual"'+(A.manual?' checked':'')+'>직접 모드</label>'+
+      '<span style="font-size:11.5px;color:var(--sub2);letter-spacing:-.2px;">'+
+        (A.manual
+          ? '쿠팡은 직접 열어 보시고, 그 화면을 읽어옵니다. 이 방식은 막히지 않습니다.'
+          : '브랜드 상품은 1688 에서 같은 물건을 구할 수 없어 기본으로 빼둡니다.')+'</span>'+
+    '</div>'+
+    (A.manual && !A.running
+      ? '<div class="toolbar" style="border-bottom:none;padding-top:0;">'+
+          '<button class="act primary" id="autoRead">'+
+            '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>'+
+            '지금 쿠팡 화면 읽기</button>'+
+          '<button class="act" id="autoFill"'+
+            (A.rows.filter(function(r){ return !r.recId; }).length ? '' : ' disabled')+'>'+
+            '1688 후보 채우기 ('+nf(A.rows.filter(function(r){ return !r.recId; }).length)+'개)</button>'+
+          '<span style="font-size:11.5px;color:var(--sub2);letter-spacing:-.2px;">'+
+            '키워드 표에서 쿠팡 열기를 누르고, 결과 화면이 뜨면 돌아와 읽기를 누르세요.</span>'+
+        '</div>'
+      : '')+
+    (A.running
+      ? '<div style="padding:0 16px 16px;">'+
+          '<div class="bar-row" style="grid-template-columns:1fr auto;gap:12px;">'+
+            '<span class="bar-track"><span class="bar-fill" style="width:'+
+              Math.max(3, Math.round(A.done / Math.max(1, A.count) * 100))+'%"></span></span>'+
+            '<span class="vl num">'+A.done+' / '+A.count+'</span>'+
+          '</div>'+
+          '<div style="margin-top:9px;display:flex;align-items:center;gap:9px;'+
+            'font-size:12px;color:#4f5866;letter-spacing:-.2px;">'+
+            '<span class="spin" style="width:13px;height:13px;border-width:2px;'+
+              'border-color:rgba(18,165,140,.28);border-top-color:var(--teal);"></span>'+
+            esc(A.step || '준비하는 중')+'</div>'+
+        '</div>'
+      : '')+
+  '</div>';
+
+  var body;
+  if(!A.rows.length){
+    body =
+    '<div class="card"><div class="empty-state">'+
+      '<div class="ic">🧭</div>'+
+      '<h4>'+(A.ran ? '조건에 맞는 상품을 찾지 못했습니다' : '개수와 가격대만 정하면 됩니다')+'</h4>'+
+      '<p>'+(A.ran
+        ? '가격대를 넓히거나 다른 분야로 다시 시도해보세요. 시즌 필터를 끄면 후보가 늘어납니다.'
+        : '기본값은 10개, 6,000원에서 11,000원 사이입니다.<br>'+
+          '분야를 비워두면 중국 소싱에 맞는 분야 중에서 알아서 고릅니다.<br><br>'+
+          '찾은 상품은 보관함에 저장되어 비교 분석에서 바로 이어집니다.')+'</p>'+
+    '</div></div>';
+  } else {
+    body =
+    '<div class="card">'+
+      '<div class="sec-head"><h3>찾은 상품 '+nf(A.rows.length)+'개</h3>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">1688 후보는 싼 것부터 5개까지 채웁니다</span></div>'+
+      '<div class="tbl-wrap"><table>'+
+        '<thead><tr><th>상품</th><th>키워드</th><th class="r">쿠팡가</th>'+
+        '<th class="r">1688 최저</th><th class="r">개당 이익</th><th>상태</th><th></th></tr></thead>'+
+        '<tbody>'+A.rows.map(function(r, i){
+          var cls = r.state === '완료' ? 'good' : (r.state === '1688 실패' ? 'bad' : 'gray');
+          return '<tr>'+
+            '<td><div class="cell-prod">'+
+              '<span class="cell-thumb">'+imgOr(r.image)+'</span>'+
+              '<span style="min-width:0;"><div class="nm">'+esc(r.name || '이름 없음')+'</div>'+
+              '<div class="sm">'+esc((r.from && r.from !== '쿠팡' ? r.from+' · ' : '')+(r.note || ''))+
+              '</div></span></div></td>'+
+            '<td style="color:var(--sub);">'+esc(r.keyword)+'</td>'+
+            '<td class="r num" style="font-weight:700;">'+won(r.price)+'</td>'+
+            '<td class="r num">'+(r.cny ? '¥'+num(r.cny).toFixed(2) : '-')+'</td>'+
+            '<td class="r num'+(r.profit < 0 ? '" style="color:var(--red);' : '')+'">'+
+              (r.cny ? won(r.profit) : '-')+'</td>'+
+            '<td><span class="pill '+cls+'">'+esc(r.state)+'</span></td>'+
+            '<td><div class="row-btns">'+
+              (r.recId ? '<button class="tiny" data-auto-open="'+esc(r.recId)+'">열기</button>' : '')+
+              '<button class="tiny" data-auto-cp="'+esc(r.url)+'">'+
+                esc(r.from || '쿠팡')+'</button>'+
+            '</div></td>'+
+          '</tr>';
+        }).join('')+'</tbody>'+
+      '</table></div>'+
+    '</div>';
+  }
+
+  var kwCard = '';
+  if(A.kws.length){
+    var used = A.kws.filter(function(k){ return k.state === '씀'; }).length;
+    /* 점수 높은 앞쪽만 보여준다. 수백 개를 다 늘어놓으면 쓰기 어렵다. */
+    var KW_SHOW = 40;
+    var shown = A.kws.slice(0, KW_SHOW);
+    var hidden = A.kws.length - shown.length;
+    kwCard =
+    '<div class="card" style="margin-bottom:18px;">'+
+      '<div class="sec-head"><h3>네이버에서 모은 키워드 '+nf(A.kws.length)+'개</h3>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">'+nf(used)+
+        '개 키워드에서 상품을 건졌습니다</span></div>'+
+      '<div class="tbl-wrap" style="max-height:300px;overflow-y:auto;">'+
+      '<table style="min-width:520px;">'+
+        '<thead><tr><th>키워드</th><th class="r">월간 검색량</th>'+
+        '<th class="r">광고 경쟁</th><th>결과</th>'+(A.manual ? '<th></th>' : '')+'</tr></thead>'+
+        '<tbody>'+shown.map(function(k){
+          var cls = k.state === '씀' ? 'good'
+            : (k.state === '보는 중' ? 'mid'
+              : (k.state === '안 봄' ? 'gray' : 'bad'));
+          return '<tr>'+
+            '<td style="font-weight:700;color:#242c38;">'+esc(k.keyword)+
+              (k.near ? ' <span class="pill gray">입력한 분야</span>' : '')+'</td>'+
+            '<td class="r num">'+nf(k.total)+'</td>'+
+            '<td class="r">'+(k.comp ? '<span class="pill gray">'+esc(k.comp)+'</span>' : '-')+'</td>'+
+            '<td><span class="pill '+cls+'">'+esc(k.state)+
+              (k.got ? ' '+nf(k.got)+'개' : '')+'</span></td>'+
+            (A.manual
+              ? '<td><div class="row-btns"><button class="tiny" data-kw-open="'+
+                  esc(k.keyword)+'">쿠팡 열기</button></div></td>'
+              : '')+
+          '</tr>';
+        }).join('')+'</tbody>'+
+      '</table></div>'+
+      (hidden > 0
+        ? '<div style="padding:11px 16px;border-top:1px solid var(--line2);'+
+          'font-size:11px;color:var(--sub2);line-height:1.6;">'+
+          '점수가 높은 '+nf(KW_SHOW)+'개만 보여드립니다. 나머지 '+nf(hidden)+'개는 '+
+          '자동 모드에서 순서대로 씁니다.</div>'
+        : '')+
+    '</div>';
+  }
+
+  var log = '';
+  if(A.log.length || A.ran){
+    log =
+    '<div class="card" style="margin-top:18px;">'+
+      '<div class="sec-head"><h3>진행 기록</h3>'+
+        '<span style="font-size:11.5px;color:var(--sub2);">최근 것이 위에 옵니다</span></div>'+
+      '<div style="padding:12px 17px;max-height:240px;overflow-y:auto;">'+
+        (A.log.length ? '' : '<div style="font-size:11.5px;color:var(--sub2);">아직 기록이 없습니다.</div>')+
+        A.log.map(function(l){
+          var p = function(n){ return (n<10?'0':'')+n; };
+          return '<div style="display:flex;gap:10px;padding:5px 0;font-size:11.5px;letter-spacing:-.2px;">'+
+            '<span class="num" style="color:var(--sub2);flex:0 0 46px;">'+
+              p(l.at.getHours())+':'+p(l.at.getMinutes())+':'+p(l.at.getSeconds())+'</span>'+
+            '<span style="color:#4f5866;">'+esc(l.text)+'</span></div>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  }
+
+  return head + form + kwCard + body + log;
+}
+
+/* 키워드를 모은다. 입력한 분야에 붙는 말을 앞에 두고, 상위권 안에서는 순서를 섞는다. */
+async function autoKeywords(seeds){
+  var seen = {};
+  var out = [];
+  var tokens = seeds.map(function(x){ return String(x).toLowerCase(); });
+  for(var i = 0; i < seeds.length; i++){
+    if(App.auto.stop) break;
+    App.auto.step = '“'+seeds[i]+'” 연관 키워드를 모으는 중';
+    autoLog('키워드 조회 · '+seeds[i]);
+    render();
+    var res = await Ext.keywords(seeds[i]);
+    if(!res.ok){
+      autoLog('키워드 조회 실패 · '+seeds[i]+' · '+(res.error || '이유 불명'));
+      if(res.needsKey) autoLog('검색광고 API 키부터 등록해야 합니다');
+      continue;
+    }
+    var got = ((res.data && res.data.list) || []).length;
+    var before = out.length;
+    ((res.data && res.data.list) || []).forEach(function(k){
+      if(seen[k.keyword]) return;
+      seen[k.keyword] = true;
+      if(num(k.total) < 200) return;
+      if(kwExcluded(k.keyword)) return;
+      if(autoExcluded(k.keyword)) return;
+      if(App.kw.season && !seasonFits(k.keyword).fit) return;
+      /* 입력한 분야가 키워드에 들어 있으면 먼저 본다 */
+      var low = String(k.keyword).toLowerCase();
+      k.near = tokens.some(function(t){ return t && low.indexOf(t) >= 0; }) ? 1 : 0;
+      out.push(k);
+    });
+    autoLog(seeds[i]+' · 연관 '+nf(got)+'개 중 '+nf(out.length - before)+'개 통과');
+  }
+  /* 붙는 말 먼저, 그다음 점수 순 */
+  out.sort(function(a,b){
+    if(a.near !== b.near) return b.near - a.near;
+    return kwScore(b).score - kwScore(a).score;
+  });
+
+  /* 상위권을 넉넉히 남기고 그 안에서 섞는다. 돌릴 때마다 다른 상품이 걸리게 한다. */
+  var deep = Math.max(24, App.auto.count * 6);
+  var head = shuffle(out.slice(0, deep));
+  var near = head.filter(function(k){ return k.near; });
+  var rest = head.filter(function(k){ return !k.near; });
+  return near.concat(rest, out.slice(deep));
+}
+
+/* 한 상품의 1688 후보를 사진과 이름 두 갈래로 찾는다 */
+async function autoFind1688(row){
+  var pair = await find1688Pair(row.image, row.name, {
+    assist: false,                       /* 여러 건을 이어 돌리므로 탭을 남기지 않는다 */
+    onStep: function(t){ App.auto.step = t; render(); }
+  });
+  if(pair.keyword) row.note = '1688 검색어 '+pair.keyword;
+  if(pair.noTranslate) autoLog('상품명을 중국어로 바꾸지 못함 · 사진 갈래만 씀 · '+row.keyword);
+  if(pair.noThumb) autoLog('썸네일이 없어 사진 검색을 건너뜀 · '+row.keyword);
+  else if(pair.imageError) autoLog('사진 검색 실패 · '+row.keyword+' · '+pair.imageError);
+  if(pair.how.length) row.note = (row.note ? row.note+' · ' : '') + pair.how.join(', ');
+  return merge1688(pair);
+}
+
+async function runAuto(){
+  var A = App.auto;
+  if(A.running) return;
+  if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
+
+  A.count = Math.max(1, Math.min(AUTO_MAX, num($('#autoCount').value) || 10));
+  A.lo = num($('#autoLo').value);
+  A.hi = num($('#autoHi').value);
+  A.seed = $('#autoSeed').value.trim();
+  var exEl = $('#autoExclude');
+  if(exEl) A.exclude = exEl.value;
+  if(A.hi <= A.lo){ toast('판매가 범위를 다시 확인해주세요.','err'); return; }
+
+  A.running = true; A.stop = false; A.ran = true;
+  A.rows = []; A.kws = []; A.log = []; A.done = 0; A.step = '시작하는 중';
+  render();
+  toast('자동 소싱을 시작합니다 · '+A.count+'개, '+nf(A.lo)+'~'+nf(A.hi)+'원');
+
+  /* 검색마다 새 탭을 여닫으면 기계처럼 보인다. 탭 하나로 이어서 본다. */
+  await Ext.coupangSession(true);
+
+  try {
+    var seeds = A.seed ? A.seed.split(/[,\s]+/).filter(Boolean) : pickSeeds(3);
+    autoLog('분야 · '+seeds.join(', '));
+    var kws = await autoKeywords(seeds);
+    if(!kws.length){
+      autoLog('쓸 만한 키워드가 하나도 없습니다');
+      autoLog('검색광고 API 키가 등록돼 있는지, 시즌 필터가 너무 좁지 않은지 봐주세요');
+      toast('조건에 맞는 키워드가 없습니다. 아래 진행 기록을 확인해주세요.','err');
+      return;
+    }
+    autoLog('키워드 '+nf(kws.length)+'개 확보 · 한 키워드당 최대 '+
+            nf(autoPerKeyword(A.count))+'개');
+    A.kws = kws.map(function(k){
+      return {keyword:k.keyword, total:num(k.total), comp:k.comp || '',
+              near:!!k.near, state:'안 봄', got:0};
+    });
+    render();
+
+    if(A.manual){
+      autoLog('직접 모드 · 쿠팡은 열지 않습니다. 키워드 표에서 직접 열어주세요');
+      toast('키워드 '+nf(A.kws.length)+'개를 모았습니다. 표에서 쿠팡 열기를 눌러주세요');
+      return;
+    }
+
+    /* 키워드를 하나씩 보며 가격대에 맞는 쿠팡 상품을 모은다 */
+    for(var i = 0; i < kws.length && A.rows.length < A.count; i++){
+      if(A.stop) break;
+      var kw = kws[i].keyword;
+      var slot = A.kws[i] || {state:'', got:0};
+      slot.state = '보는 중';
+      A.step = '“'+kw+'” 쿠팡 상위에서 '+nf(A.lo)+'~'+nf(A.hi)+'원 상품을 찾는 중';
+      render();
+      var res = await Ext.coupangTop(kw, 20, false);
+      if(res.blocked){
+        autoLog('쿠팡이 접속을 막았습니다. 여기서 멈춥니다');
+        blockedModal(res.error);
+        break;
+      }
+      if(!res.ok){
+        slot.state = '조회 실패';
+        autoLog('쿠팡 조회 실패 · '+kw+' · '+(res.error || '이유 불명'));
+        continue;
+      }
+      if(res.data && res.data.partner){
+        autoLog('쿠팡 공식 API 로 받음 · '+kw);
+      } else if(res.data && res.data.cached){
+        autoLog('저장해 둔 결과 사용 · '+kw+' (쿠팡을 열지 않음)');
+      }
+      var readCount = ((res.data && res.data.items) || []).length;
+      if(!readCount){
+        slot.state = '못 읽음';
+        autoLog('쿠팡에서 상품을 하나도 읽지 못함 · '+kw);
+        continue;
+      }
+
+      var room = A.count - A.rows.length;
+      var pool = ((res.data && res.data.items) || []);
+      var related = pool.filter(function(it){ return autoRelevant(kw, it.name); });
+      if(!related.length){
+        slot.state = '무관한 결과';
+        autoLog('검색 결과가 키워드와 무관 · '+kw+' · '+nf(pool.length)+'개 모두 버림');
+        continue;
+      }
+      if(related.length < pool.length){
+        autoLog('무관한 상품 '+nf(pool.length - related.length)+'개 걸러냄 · '+kw);
+      }
+      var hits = related
+        .filter(function(it){
+          var p = num(it.price);
+          return p >= A.lo && p <= A.hi && it.url && !autoSeen(it.url, it.name) &&
+                 !autoExcluded(it.name);
+        })
+        .sort(function(a,b){ return num(b.reviews) - num(a.reviews); })
+        .slice(0, Math.min(autoPerKeyword(A.count), room));
+
+      if(!hits.length){
+        slot.state = '가격대 밖';
+        autoLog('가격대 밖 · '+kw+' · 관련 '+nf(related.length)+'개 중 0개가 '+
+                nf(A.lo)+'~'+nf(A.hi)+'원');
+        continue;
+      }
+
+      hits.forEach(function(hit){
+        A.rows.push({
+          keyword: kw, url: hit.url, name: hit.name || '',
+          price: num(hit.price), reviews: num(hit.reviews), rating: hit.rating || '',
+          imgUrl: hit.image || '', image: '',
+          from: hit.source || '쿠팡',
+          cny: 0, profit: 0, state: '대기', note: '', recId: ''
+        });
+      });
+      slot.state = '씀';
+      slot.got = hits.length;
+      autoLog('찾음 · '+kw+' · 관련 '+nf(related.length)+'개 중 '+nf(hits.length)+'개');
+      render();
+    }
+
+    if(!A.rows.length){
+      autoLog('가격대에 맞는 상품을 찾지 못했습니다');
+      toast('그 가격대에서는 상품을 찾지 못했습니다. 범위를 넓혀보세요.','err');
+      return;
+    }
+
+    await autoFinish();
+  } catch(e){
+    autoLog('오류 · '+(e && e.message ? e.message : e));
+    toast('자동 소싱 중 문제가 생겼습니다.','err');
+  } finally {
+    await Ext.coupangSession(false);
+    A.running = false;
+    A.stop = false;
+    A.step = '';
+    Ext.backToApp(false);
+    render();
+  }
+}
+
+/* 모아둔 쿠팡 상품에 썸네일과 1688 후보를 붙여 보관함에 넣는다 */
+async function autoFinish(){
+  var A = App.auto;
+  var todo = A.rows.filter(function(r){ return !r.recId; });
+  if(!todo.length){ autoLog('새로 채울 상품이 없습니다'); return; }
+
+  /* 썸네일은 고른 것만 한 번에 받는다. 상품 페이지를 다시 열면 쿠팡이 막는다. */
+  {
+    A.step = '썸네일 '+nf(A.rows.length)+'장을 받는 중';
+    autoLog('썸네일 '+nf(A.rows.length)+'장 요청');
+    render();
+    var tres = await Ext.thumbs(A.rows.map(function(r){ return r.imgUrl; }), 240);
+    if(tres.ok && tres.data && tres.data.images){
+      tres.data.images.forEach(function(img, n){
+        if(A.rows[n] && !A.rows[n].image) A.rows[n].image = img || '';
+      });
+    }
+    render();
+  }
+
+    /* 상품마다 1688 후보를 붙여 보관함에 넣는다 */
+  for(var j = 0; j < A.rows.length; j++){
+    if(A.stop) break;
+    var row = A.rows[j];
+    if(row.recId) continue;
+    row.state = '1688 찾는 중';
+      A.step = '“'+(row.name||'').slice(0,16)+'” 의 1688 후보를 찾는 중';
+      render();
+      var found = await autoFind1688(row);
+
+      /* 기록으로 만들어 보관함에 넣는다 */
+      var rec = blankRecord(Auth.user);
+      rec.title = row.keyword + ' · 자동 소싱';
+      rec.coupang.url = row.url;
+      rec.coupang.name = row.name;
+      rec.coupang.price = row.price;
+      rec.coupang.rating = row.rating;
+      rec.coupang.reviews = row.reviews;
+      if(row.image){
+        App.imgData[row.url] = row.image;
+        rec.coupang.image = await Assets.store(row.image);
+      }
+      rec.memo = '자동 소싱 · 키워드 “'+row.keyword+'” · '+nf(A.lo)+'~'+nf(A.hi)+'원'+
+                 (row.from && row.from !== '쿠팡' ? ' · 기준 가격 '+row.from : '');
+
+      var picked = found.slice(0, 5);   /* 이미 사진 먼저, 이름 나중 순서로 섞여 있다 */
+      for(var k = 0; k < 5; k++){
+        var it = picked[k];
+        if(!it){ rec.candidates[k] = blankCandidate(); continue; }
+        rec.candidates[k] = {
+          url: it.url || '', name: it.name || '',
+          price: it.price ? String(it.price) : '',
+          moq: it.moq || '', opt: it.sold ? ('판매 '+it.sold) : '',
+          image: it.image ? await Assets.store(it.image) : '',
+          src: it.src || '', warn: it.warn || ''
+        };
+      }
+      rec.selected = 0;
+
+      try {
+        await Store.set('records/'+rec.id, stripId(rec));
+        row.recId = rec.id;
+        App.records.unshift(rec);
+        if(App.allRecords) App.allRecords.unshift(rec);
+      } catch(e){ autoLog('저장 실패 · '+row.keyword); }
+
+      if(picked.length){
+        row.cny = num(picked[0].price);
+        row.profit = calc(rec).profit;
+        row.state = '완료';
+        autoLog('완료 · '+row.keyword+' · 1688 최저 ¥'+row.cny.toFixed(2));
+      } else {
+        row.state = '1688 실패';
+        autoLog('1688 후보를 찾지 못함 · '+row.keyword);
+      }
+    A.done = j + 1;
+    render();
+  }
+
+  /* 다 돌았으면 1688 탭을 모두 닫는다 */
+  var left = await Ext.close1688Tabs(false);
+  if(left.ok && left.data && left.data.closed){
+    autoLog('1688 탭 '+nf(left.data.closed)+'개를 닫았습니다');
+  }
+
+  var ok = A.rows.filter(function(r){ return r.state === '완료'; }).length;
+  autoLog('마침 · '+nf(ok)+'개 완료');
+  toast(A.stop ? '중단했습니다. 여기까지 '+nf(ok)+'개를 보관함에 넣었습니다'
+               : nf(ok)+'개를 찾아 보관함에 넣었습니다');
+}
+
+/* 직접 모드 — 사람이 쿠팡에서 검색한 화면을 그대로 읽는다.
+   우리가 쿠팡을 열지 않으니 막힐 일이 없다. */
+async function autoOpenCoupang(keyword){
+  var res = await Ext.openCoupangSearch(keyword);
+  if(!res.ok){ toast(res.error || '쿠팡을 열지 못했습니다.','err'); return; }
+  toast('쿠팡에서 “'+keyword+'” 를 열었습니다. 화면을 보고 돌아와 읽기를 눌러주세요');
+}
+
+async function autoReadActive(){
+  var A = App.auto;
+  var res = await Ext.readActiveCoupang(20);
+  if(!res.ok){ toast(res.error || '읽지 못했습니다.','err'); return; }
+
+  var kw = (res.data && res.data.keyword) || '직접 검색';
+  var pool = (res.data && res.data.items) || [];
+  var related = pool.filter(function(it){ return autoRelevant(kw, it.name); });
+  var room = Math.max(1, A.count - A.rows.length);
+  var hits = related.filter(function(it){
+      var p = num(it.price);
+      return p >= A.lo && p <= A.hi && it.url &&
+             !autoSeen(it.url, it.name) && !autoExcluded(it.name);
+    })
+    .sort(function(a,b){ return num(b.reviews) - num(a.reviews); })
+    .slice(0, room);
+
+  if(!hits.length){
+    autoLog('직접 읽기 · '+kw+' · '+nf(pool.length)+'개 중 쓸 것 없음');
+    toast('그 화면에는 조건에 맞는 상품이 없습니다.','err');
+    render();
+    return;
+  }
+  hits.forEach(function(hit){
+    A.rows.push({
+      keyword: kw, url: hit.url, name: hit.name || '',
+      price: num(hit.price), reviews: num(hit.reviews), rating: hit.rating || '',
+      imgUrl: hit.image || '', image: '',
+      cny: 0, profit: 0, state: '대기', note: '', recId: ''
+    });
+  });
+  var slot = A.kws.find(function(k){ return k.keyword === kw; });
+  if(slot){ slot.state = '씀'; slot.got = hits.length; }
+  A.ran = true;
+  autoLog('직접 읽기 · '+kw+' · '+nf(hits.length)+'개 담음');
+  toast(nf(hits.length)+'개를 담았습니다. 더 담거나 1688 후보 채우기를 눌러주세요');
+  render();
+}
+
+async function autoRun1688(){
+  var A = App.auto;
+  if(A.running) return;
+  if(!A.rows.filter(function(r){ return !r.recId; }).length){
+    toast('채울 상품이 없습니다. 먼저 쿠팡에서 담아주세요.','err');
+    return;
+  }
+  A.running = true; A.stop = false; A.step = '시작하는 중';
+  render();
+  try {
+    await autoFinish();
+  } catch(e){
+    autoLog('오류 · '+(e && e.message ? e.message : e));
+    toast('1688 후보를 채우는 중 문제가 생겼습니다.','err');
+  } finally {
+    A.running = false; A.stop = false; A.step = '';
+    Ext.backToApp(false);
+    render();
+  }
+}
+
+function bindAuto(){
+  var run = $('#autoRun');
+  if(run) run.onclick = function(){ pressBtn(run, '시작하는 중'); runAuto(); };
+  var stop = $('#autoStop');
+  if(stop) stop.onclick = function(){
+    App.auto.stop = true;
+    autoLog('중단 요청 · 지금 하던 건까지만 끝냅니다');
+    toast('지금 하던 건을 끝내고 멈춥니다');
+  };
+  var cool = $('#autoCool');
+  if(cool) cool.onclick = async function(){
+    var res = await Ext.coupangCooldown(true);
+    if(res.ok) toast('쿠팡 대기를 풀었습니다. 다시 시작해보세요');
+    else toast(res.error || '대기를 풀지 못했습니다.','err');
+  };
+  var wipe = $('#autoWipe');
+  if(wipe) wipe.onclick = async function(){
+    var res = await Ext.searchCache(true);
+    if(res.ok) toast('저장된 쿠팡 결과 '+nf((res.data && res.data.cleared) || 0)+'건을 비웠습니다');
+    else toast(res.error || '비우지 못했습니다.','err');
+  };
+  var tabs = $('#autoTabs');
+  if(tabs) tabs.onclick = async function(){
+    var res = await Ext.close1688Tabs(false);
+    if(res.ok) toast('1688 탭 '+nf((res.data && res.data.closed) || 0)+'개를 닫았습니다');
+    else toast(res.error || '탭을 닫지 못했습니다.','err');
+  };
+  var clr = $('#autoClear');
+  if(clr) clr.onclick = function(){
+    App.auto.rows = []; App.auto.log = []; App.auto.ran = false; App.auto.done = 0;
+    render();
+  };
+  ['#autoCount','#autoLo','#autoHi','#autoSeed','#autoExclude'].forEach(function(sel){
+    var el = $(sel);
+    if(!el) return;
+    el.addEventListener('input', function(){
+      if(sel === '#autoSeed') App.auto.seed = el.value;
+      else if(sel === '#autoExclude') App.auto.exclude = el.value;
+      else if(sel === '#autoCount') App.auto.count = num(el.value);
+      else if(sel === '#autoLo') App.auto.lo = num(el.value);
+      else App.auto.hi = num(el.value);
+    });
+  });
+  var season = $('#autoSeason');
+  if(season) season.onchange = function(){ App.kw.season = season.checked; render(); };
+  var man = $('#autoManual');
+  if(man) man.onchange = function(){
+    App.auto.manual = man.checked;
+    App.auto.manualTouched = true;
+    render();
+    toast(man.checked
+      ? '직접 모드입니다. 쿠팡은 회원님이 열고, 앱은 그 화면만 읽습니다'
+      : '자동 모드로 돌아왔습니다');
+  };
+  var rd = $('#autoRead');
+  if(rd) rd.onclick = function(){ pressBtn(rd, '읽는 중'); autoReadActive(); };
+  var fl = $('#autoFill');
+  if(fl) fl.onclick = function(){ pressBtn(fl, '채우는 중'); autoRun1688(); };
+  $$('[data-kw-open]').forEach(function(b){
+    b.onclick = function(){ autoOpenCoupang(b.getAttribute('data-kw-open')); };
+  });
+  $$('[data-auto-open]').forEach(function(b){
+    b.onclick = function(){
+      var id = b.getAttribute('data-auto-open');
+      var rec = (App.allRecords||App.records||[]).find(function(x){ return x.id === id; });
+      if(rec){ App.record = normalizeRecord(rec); go('compare'); }
+      else toast('기록을 찾지 못했습니다. 보관함에서 열어주세요.','err');
+    };
+  });
+  $$('[data-auto-cp]').forEach(function(b){
+    b.onclick = function(){
+      var u = b.getAttribute('data-auto-cp');
+      if(u) window.open(u, '_blank', 'noopener');
+    };
+  });
+}
+
+/* =======================================================================
    9-c. coupang ranking for one keyword
    ======================================================================= */
 var RANK_LIMIT = 20;
 
 async function openRanking(keyword){
-  App.busy['rank_'+keyword] = true; render();
+  App.busy['rank_'+keyword] = true;
+  Progress.open('쿠팡에서 1위부터 20위까지 모으는 중입니다',
+    '“'+keyword+'” 로 검색해 광고를 뺀 상품을 가져옵니다. 잠시만 기다려주세요.');
+  Progress.step('쿠팡 검색 결과를 읽는 중');
+  render();
+
   var res = await Ext.coupangTop(keyword, RANK_LIMIT, true);
   App.busy['rank_'+keyword] = false;
-  if(!res.ok){ render(); toast(res.error || '쿠팡 검색 결과를 가져오지 못했습니다.','err'); return; }
+  if(!res.ok){
+    Progress.close();
+    render();
+    if(res.blocked){ blockedModal(res.error); return; }
+    toast(res.error || '쿠팡 검색 결과를 가져오지 못했습니다.','err');
+    return;
+  }
   var items = (res.data && res.data.items) || [];
-  if(!items.length){ render(); toast('광고를 뺀 상품을 찾지 못했습니다.','err'); return; }
-  App.rank = {keyword:keyword, items:items, at:nowIso()};
+  if(!items.length){
+    Progress.close();
+    render();
+    toast('광고를 뺀 상품을 찾지 못했습니다.','err');
+    return;
+  }
+  Progress.step('쿠팡 윙에서 28일 실적을 받는 중');
+  var wing = await fillWing28(items);
+
+  Progress.step('판매량을 가늠하는 중');
+  var est = await estimateSales(keyword, items);
+  App.rank = {keyword:keyword, items:items, at:nowIso(), col:'', dir:-1,
+              rate:rankRate(), based:est.based, volume:est.volume, wing:wing};
+  Progress.close();
   go('rank');
   toast('“'+keyword+'” 노출 순위 '+nf(items.length)+'개를 수집했습니다');
+}
+
+/* =====================================================================
+   판매량·매출 추정 — 남의 확장프로그램 없이 우리 힘으로 낸다.
+
+   쿠팡은 남의 상품 판매량을 공개하지 않는다. 그래서 리뷰가 늘어난 속도를 본다.
+   같은 키워드를 다시 수집하면, 그 사이 늘어난 리뷰 수와 지나간 날짜로
+   하루에 몇 개씩 팔리는지를 가늠하고 한 달치로 환산한다.
+   조회수는 키워드 한 달 검색량에 순위별 클릭 비율을 곱해 가늠한다.
+   ===================================================================== */
+var SNAP_KEEP = 10;          /* 키워드마다 들고 있을 기록 수 */
+var SNAP_MIN_DAYS = 0.5;     /* 이만큼은 지나야 비교할 값이 된다 */
+var SNAP_MAX_DAYS = 45;      /* 너무 오래된 기록은 쓰지 않는다 */
+
+/* 검색 결과에서 순위별로 클릭이 몰리는 비율 */
+var RANK_CTR = [0, .235, .145, .100, .074, .057, .045, .036, .030, .025, .021,
+                .018, .016, .014, .012, .011, .010, .009, .008, .007, .006];
+
+function kwKey(t){
+  var h = 5381, str = String(t || '');
+  for(var i=0;i<str.length;i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return 'kw' + h.toString(36);
+}
+function kwVolume(keyword){
+  var flat = function(t){ return String(t||'').replace(/\s+/g,''); };
+  var want = flat(keyword);
+  var row = (App.kw.rows || []).filter(function(r){ return flat(r.keyword) === want; })[0];
+  return row ? num(row.total) : 0;
+}
+
+/* 리뷰 작성률 — 산 사람 100명 중 리뷰를 남기는 사람 수 */
+function rankRate(){ return num(App.rank.rate) || 3; }
+
+function soldOf(it){
+  if(num(it.sold)) return num(it.sold);
+  if(num(it.estDaily) > 0) return Math.round(num(it.estDaily) * 30 / (rankRate() / 100));
+  return 0;
+}
+function revOf(it){
+  if(num(it.revenue)) return num(it.revenue);
+  var s = soldOf(it);
+  return s ? s * num(it.price) : 0;
+}
+function viewsOf(it){ return num(it.views) || num(it.estViews); }
+function cvrOf(it){
+  if(num(it.cvr)) return num(it.cvr);
+  var v = viewsOf(it), s = soldOf(it);
+  return (v && s) ? Math.round(s / v * 1000) / 10 : 0;
+}
+function isEstimate(it){ return !num(it.sold) && num(it.estDaily) > 0; }
+
+/* 쿠팡 윙에서 최근 28일 판매량과 조회수를 받아 채운다.
+   추정이 아니라 쿠팡이 주는 값이라 이쪽이 먼저다.
+   윙에 로그인한 탭이 없으면 조용히 넘어가고 리뷰 추정으로 간다. */
+async function fillWing28(items){
+  if(!Ext.present) return {ok:false, why:'확장프로그램이 없습니다.'};
+  var ids = items.map(function(it){
+    var m = String(it.productId || it.url || '').match(/(\d{5,})/);
+    return m ? m[1] : '';
+  }).filter(Boolean);
+  if(!ids.length) return {ok:false, why:'상품번호를 찾지 못했습니다.'};
+
+  var res = await Ext.wing28Batch(ids);
+  if(!res.ok){
+    return {ok:false, needsWing:!!res.needsWing, needsLogin:!!res.needsLogin,
+            why: res.error || '윙에서 받지 못했습니다.'};
+  }
+  var stats = (res.data && res.data.stats) || {};
+  var got = 0;
+  items.forEach(function(it){
+    var m = String(it.productId || it.url || '').match(/(\d{5,})/);
+    var d = m ? stats[m[1]] : null;
+    if(!d || d.sold == null) return;
+    it.sold = num(d.sold);
+    it.views = num(d.views);
+    it.revenue = it.sold * num(it.price);
+    it.cvr = it.views ? Math.round(it.sold / it.views * 1000) / 10 : 0;
+    got++;
+  });
+  return {ok:true, got:got, total:ids.length};
+}
+
+/* 이번에 본 값을 기록해 두고, 지난 기록이 있으면 늘어난 리뷰로 판매량을 가늠한다 */
+async function estimateSales(keyword, items){
+  var path = 'sales/' + kwKey(keyword);
+  var doc = null;
+  try { doc = await Store.get(path); } catch(e){ doc = null; }
+  var snaps = (doc && doc.snaps) || [];
+  var now = Date.now();
+
+  var mine = items.map(function(it){
+    return { pid: String(it.productId || it.url || ''), r: num(it.reviews), p: num(it.price) };
+  });
+
+  /* 쓸 수 있는 기록 중 가장 오래된 것을 기준점으로 삼는다. 기간이 길수록 덜 흔들린다. */
+  var base = null;
+  for(var i = snaps.length - 1; i >= 0; i--){
+    var d = (now - Date.parse(snaps[i].at || 0)) / 86400000;
+    if(d >= SNAP_MIN_DAYS && d <= SNAP_MAX_DAYS){ base = snaps[i]; break; }
+  }
+
+  var vol = kwVolume(keyword);
+  items.forEach(function(it){
+    it.estDaily = 0; it.estDays = 0;
+    if(vol > 0){
+      var ctr = RANK_CTR[num(it.rank)] || 0.005;
+      it.estViews = Math.round(vol * ctr);
+    }
+    if(!base) return;
+    var pid = String(it.productId || it.url || '');
+    var was = (base.items || []).filter(function(x){ return x.pid === pid; })[0];
+    if(!was) return;
+    var days = (now - Date.parse(base.at)) / 86400000;
+    var grew = num(it.reviews) - num(was.r);
+    if(days < SNAP_MIN_DAYS || grew < 0) return;
+    it.estDaily = grew / days;
+    it.estDays = Math.round(days * 10) / 10;
+  });
+
+  /* 같은 날 여러 번 수집해도 기록이 쌓이지 않게, 6시간 안쪽이면 최신 기록을 덮어쓴다 */
+  var fresh = snaps.length && (now - Date.parse(snaps[0].at || 0)) < 6 * 3600000;
+  if(fresh) snaps[0] = { at: new Date(now).toISOString(), items: mine };
+  else snaps.unshift({ at: new Date(now).toISOString(), items: mine });
+  try {
+    await Store.set(path, { keyword: String(keyword || ''), snaps: snaps.slice(0, SNAP_KEEP) });
+  } catch(e){ /* 저장 실패는 화면 표시에 영향 없음 */ }
+
+  return { based: !!base, volume: vol };
 }
 
 function rankStats(items){
@@ -2145,11 +3503,46 @@ function rankStats(items){
   };
 }
 
+/* 노출 순위 표에서 칸마다 견줄 값을 꺼낸다 */
+var RANK_COLS = {
+  rank:    function(x){ return num(x.rank); },
+  name:    function(x){ return String(x.name || ''); },
+  price:   function(x){ return num(x.price) || null; },
+  rating:  function(x){ return num(x.rating) || null; },
+  reviews: function(x){ return num(x.reviews); },
+  sold:    function(x){ return soldOf(x) || null; },
+  revenue: function(x){ return revOf(x) || null; },
+  views:   function(x){ return viewsOf(x) || null; },
+  ship:    function(x){ return x.rocket ? 2 : (x.freeShip ? 1 : null); }
+};
+function rankHead(col, label, cls, style){
+  var on = App.rank.col === col;
+  var arrow = on ? (App.rank.dir < 0 ? ' ▼' : ' ▲') : '';
+  return '<th data-sort="'+col+'"'+(cls ? ' class="'+cls+'"' : '')+
+    ' style="'+(style||'')+(on ? 'color:var(--teal);' : '')+'">'+esc(label)+arrow+'</th>';
+}
+
 function viewRank(){
   var r = App.rank;
-  var items = r.items;
+  var items = r.items.slice();
+  if(r.col){
+    var get = RANK_COLS[r.col];
+    if(get) items.sort(function(a,b){
+      var x = get(a), y = get(b);
+      var xn = (x === null || x === undefined || x === '');
+      var yn = (y === null || y === undefined || y === '');
+      if(xn && yn) return 0;
+      if(xn) return 1;
+      if(yn) return -1;
+      if(typeof x === 'string') return r.dir * x.localeCompare(y, 'ko');
+      return r.dir * (x - y);
+    });
+  }
   var st = rankStats(items);
-  var maxReview = Math.max.apply(null, items.map(function(x){ return num(x.reviews) || 0; }).concat([1]));
+  var hasSales = items.some(function(x){ return soldOf(x) || revOf(x) || viewsOf(x); });
+  var soldSum = items.reduce(function(a,x){ return a + soldOf(x); }, 0);
+  var revSum  = items.reduce(function(a,x){ return a + revOf(x); }, 0);
+  var anyEst  = items.some(isEstimate);
 
   var head =
   '<div class="page-head">'+
@@ -2172,42 +3565,109 @@ function viewRank(){
     '<div class="kpi"><div class="k">로켓배송 비중</div><div class="v num">'+
       Math.round(st.rocket / Math.max(1, st.count) * 100)+'%</div>'+
       '<div class="s num">'+nf(st.rocket)+' / '+nf(st.count)+'개</div></div>'+
-    '<div class="kpi hero"><div class="k">상위 노출 리뷰 합계</div><div class="v num">'+nf(st.reviews)+'</div>'+
-      '<div class="s">리뷰가 적을수록 비집고 들어갈 틈이 있습니다</div></div>'+
+    (hasSales
+      ? '<div class="kpi hero"><div class="k">상위 노출 월 매출'+(anyEst ? ' 추정' : '')+' 합계</div>'+
+          '<div class="v num">'+manwon(revSum)+'</div>'+
+          '<div class="s">판매량 합계 '+nf(soldSum)+'개 · 리뷰 합계 '+nf(st.reviews)+'</div></div>'
+      : '<div class="kpi hero"><div class="k">상위 노출 리뷰 합계</div><div class="v num">'+nf(st.reviews)+'</div>'+
+          '<div class="s">리뷰가 적을수록 비집고 들어갈 틈이 있습니다</div></div>')+
   '</div>';
 
   var table =
   '<div class="card">'+
     '<div class="sec-head"><h3>노출 순위</h3>'+
-      '<span style="font-size:11.5px;color:var(--sub2);">가져오기를 누르면 그 상품으로 1688 비교 분석을 시작합니다</span></div>'+
-    '<div class="tbl-wrap"><table>'+
-      '<thead><tr><th style="width:52px;">순위</th><th>상품</th><th class="r">판매가</th>'+
-      '<th class="r">별점</th><th class="r">리뷰</th><th>배송</th><th></th></tr></thead>'+
+      '<div style="display:flex;align-items:center;gap:12px;">'+
+        (anyEst
+          ? '<label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">리뷰 작성률'+
+              '<select class="sel-box" id="rankRate" style="padding:5px 8px;font-size:11.5px;">'+
+                [1,2,3,5,8].map(function(v){
+                  return '<option value="'+v+'"'+(rankRate()===v?' selected':'')+'>'+v+'%</option>';
+                }).join('')+
+              '</select></label>'
+          : '')+
+        '<span style="font-size:11.5px;color:var(--sub2);">소싱하기를 누르면 그 상품으로 1688 비교 분석을 시작합니다</span>'+
+      '</div></div>'+
+    (function(){
+      var w = App.rank.wing || {};
+      if(w.ok && w.got){
+        return '<div class="est-note ok">판매량과 조회수는 <b>쿠팡 윙의 최근 28일 실적</b>입니다. 추정이 아닙니다. '+
+          nf(w.got)+' / '+nf(w.total)+'개를 받았습니다.'+
+          (anyEst ? ' 나머지는 리뷰 증가로 가늠했습니다.' : '')+'</div>';
+      }
+      if(w.needsWing || w.needsLogin){
+        return '<div class="est-note">쿠팡 윙 탭이 없어 실제 28일 실적을 받지 못했습니다. '+
+          '<button class="tiny" id="rankWing">윙 열기</button> 를 누르고 로그인한 뒤 다시 수집하면 실제 값이 들어옵니다.'+
+          (anyEst ? ' 지금 보이는 값은 리뷰 증가로 가늠한 <b>추정치</b>입니다.' : '')+'</div>';
+      }
+      if(anyEst){
+        return '<div class="est-note">판매량과 매출은 <b>리뷰가 늘어난 속도</b>로 가늠한 값입니다. 실제 수치가 아닙니다. '+
+          '리뷰 작성률을 바꾸면 그 자리에서 다시 계산됩니다.</div>';
+      }
+      if(hasSales) return '<div class="est-note">판매량과 매출은 화면에 덧씌워진 값을 그대로 읽어온 것입니다.</div>';
+      if(App.rank.based === false){
+        return '<div class="est-note">첫 수집이라 <b>기준점만 저장</b>했습니다. 하루 뒤에 같은 키워드를 다시 수집하면 '+
+          '그 사이 늘어난 리뷰로 판매량과 매출을 가늠해 보여드립니다.</div>';
+      }
+      return '';
+    })()+
+    '<div class="tbl-wrap"><table class="lined tbl-rank"'+
+      (hasSales ? ' style="min-width:1180px;"' : '')+'>'+
+      '<colgroup>'+
+        '<col style="width:74px;"><col style="width:'+(hasSales ? 360 : 430)+'px;">'+
+        '<col style="width:116px;">'+
+        (hasSales ? '<col style="width:104px;"><col style="width:134px;">' : '')+
+        '<col style="width:98px;"><col style="width:84px;"><col style="width:222px;"><col>'+
+      '</colgroup>'+
+      '<thead><tr>'+
+        rankHead('rank','순위','c')+
+        rankHead('name','상품','')+
+        rankHead('price','판매가','r')+
+        (hasSales ? rankHead('sold','판매량','r')+rankHead('revenue','매출','r') : '')+
+        rankHead('reviews','리뷰','r')+
+        rankHead('ship','배송','c')+
+        '<th></th><th class="pad"></th>'+
+      '</tr></thead>'+
       '<tbody>'+items.map(function(it){
         var rv = num(it.reviews);
         return '<tr>'+
-          '<td><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
+          '<td class="c"><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
           '<td><div class="cell-prod">'+
             '<span class="cell-thumb">'+imgOr(it.image)+'</span>'+
-            '<span style="min-width:0;"><div class="nm" style="max-width:420px;white-space:normal;">'+
+            '<span style="min-width:0;"><div class="nm">'+
               esc(it.name || '이름 없음')+'</div>'+
-            (it.unitPrice ? '<div class="sm">'+esc(it.unitPrice)+'</div>' : '')+
+            ((it.rating || it.unitPrice)
+              ? '<div class="sm">'+
+                  (it.rating ? '<span style="color:var(--amber);">★</span> '+esc(it.rating)+
+                    (it.unitPrice ? ' · ' : '') : '')+
+                  esc(it.unitPrice || '')+
+                '</div>'
+              : '')+
             '</span></div></td>'+
-          '<td class="r num" style="font-weight:700;">'+(num(it.price) ? won(it.price) : '-')+'</td>'+
-          '<td class="r num">'+(it.rating ? '<span style="color:var(--amber);">★</span> '+esc(it.rating) : '-')+'</td>'+
-          '<td class="r"><div class="revcell">'+
-            '<span class="num">'+nf(rv)+'</span>'+
-            '<span class="bar-track" style="width:56px;height:5px;"><span class="bar-fill" style="width:'+
-              Math.max(2, Math.round(rv/maxReview*100))+'%"></span></span>'+
-          '</div></td>'+
-          '<td>'+(it.rocket ? '<span class="pill good">로켓</span>'
-                  : (it.freeShip ? '<span class="pill gray">무료</span>' : '-'))+'</td>'+
+          '<td class="r"><span class="price-cell">'+(num(it.price) ? won(it.price) : '-')+'</span></td>'+
+          (hasSales
+            ? (function(){
+                var sd = soldOf(it), rvn = revOf(it), est = isEstimate(it), cv = cvrOf(it);
+                return '<td class="r"><span class="sold-cell'+(sd ? '' : ' thin')+'">'+
+                    (sd ? nf(sd) : '-')+(sd && est ? '<i class="est-mark">추정</i>' : '')+'</span>'+
+                    (sd && est ? '<div class="sm" style="text-align:right;">'+esc(String(it.estDays))+'일 관찰</div>' : '')+
+                  '</td>'+
+                  '<td class="r"><span class="rev-money'+(rvn ? '' : ' thin')+'">'+
+                    (rvn ? manwon(rvn) : '-')+'</span>'+
+                    (cv ? '<div class="sm" style="text-align:right;">전환 '+esc(String(cv))+'%</div>' : '')+
+                  '</td>';
+              })()
+            : '')+
+          '<td class="r"><span class="rev-cell'+(rv < 10 ? ' thin' : '')+'">'+nf(rv)+'</span></td>'+
+          '<td class="c">'+(it.rocket ? '<span class="pill good">로켓</span>'
+                  : (it.freeShip ? '<span class="pill gray">무료</span>' : '<span style="color:var(--sub2);">-</span>'))+'</td>'+
           '<td><div class="row-btns">'+
             '<button class="tiny" data-rank-open="'+esc(it.url)+'">쿠팡</button>'+
-            '<button class="tiny" data-rank-use="'+esc(String(it.rank))+'"'+
+            '<button class="tiny" data-rank-review="'+esc(String(it.rank))+'">리뷰</button>'+
+            '<button class="tiny go" data-rank-use="'+esc(String(it.rank))+'"'+
               (App.busy['use_'+it.rank]?' disabled':'')+'>'+
-              (App.busy['use_'+it.rank] ? '가져오는 중' : '가져오기')+'</button>'+
+              (App.busy['use_'+it.rank] ? '준비 중' : '소싱하기')+'</button>'+
           '</div></td>'+
+          '<td class="pad"></td>'+
         '</tr>';
       }).join('')+'</tbody>'+
     '</table></div>'+
@@ -2219,9 +3679,13 @@ function viewRank(){
 async function useRankItem(rank){
   var it = App.rank.items.find(function(x){ return String(x.rank) === String(rank); });
   if(!it) return;
-  App.busy['use_'+rank] = true; render();
+  App.busy['use_'+rank] = true;
+  Progress.open('소싱 준비 중입니다', rank+'위 상품으로 1688 비교를 시작합니다.');
+  Progress.step('상품 정보를 옮기는 중');
+  render();
 
   var rec = blankRecord(Auth.user);
+  rec.source = 'coupang';
   rec.title = App.rank.keyword + ' · ' + rank + '위';
   rec.coupang.url = it.url || '';
   rec.coupang.name = it.name || '';
@@ -2235,26 +3699,1225 @@ async function useRankItem(rank){
   }
 
   App.busy['use_'+rank] = false;
+  Progress.close();
   App.record = rec;
   go('compare');
   toast(rank+'위 상품으로 비교 분석을 시작합니다. 1688 링크를 넣어보세요.');
 }
 
 function bindRank(){
+  $$('[data-sort]').forEach(function(th){
+    th.onclick = function(){
+      var col = th.getAttribute('data-sort');
+      if(App.rank.col === col) App.rank.dir = App.rank.dir < 0 ? 1 : -1;
+      else { App.rank.col = col; App.rank.dir = (col === 'name' || col === 'rank') ? 1 : -1; }
+      render();
+    };
+  });
   var again = $('#rankAgain');
   if(again) again.onclick = function(){ openRanking(App.rank.keyword); };
+  var wingBtn = $('#rankWing');
+  if(wingBtn) wingBtn.onclick = async function(){
+    var r = await Ext.wingOpen();
+    if(r.ok) toast('윙을 열었습니다. 로그인한 뒤 다시 수집을 눌러주세요');
+    else toast(r.error || '윙을 열지 못했습니다.','err');
+  };
+  var rate = $('#rankRate');
+  if(rate) rate.onchange = function(){
+    App.rank.rate = num(rate.value) || 3;
+    App.jumpTop = false;
+    render();
+  };
   $$('[data-rank-open]').forEach(function(b){
     b.onclick = function(){ window.open(b.getAttribute('data-rank-open'), '_blank', 'noopener'); };
+  });
+  $$('[data-rank-review]').forEach(function(b){
+    b.onclick = function(){
+      var it = App.rank.items.filter(function(x){ return String(x.rank) === b.getAttribute('data-rank-review'); })[0];
+      if(it) reviewInsightModal({ url: it.url, name: it.name });
+    };
   });
   $$('[data-rank-use]').forEach(function(b){
     b.onclick = function(){ useRankItem(b.getAttribute('data-rank-use')); };
   });
   var copy = $('#rankCopy');
   if(copy) copy.onclick = function(){
-    var text = ['순위\t상품명\t판매가\t별점\t리뷰\t배송\t링크'].concat(
+    var text = ['순위\t상품명\t판매가\t월 판매량\t월 매출\t조회수\t전환율\t근거\t별점\t리뷰\t배송\t링크'].concat(
       App.rank.items.map(function(it){
-        return [it.rank, it.name, num(it.price), it.rating || '', num(it.reviews),
+        return [it.rank, it.name, num(it.price), soldOf(it), revOf(it), viewsOf(it),
+                cvrOf(it) ? cvrOf(it)+'%' : '',
+                isEstimate(it) ? '추정' : (num(it.sold) ? '수집' : ''),
+                it.rating || '', num(it.reviews),
                 it.rocket ? '로켓' : (it.freeShip ? '무료' : ''), it.url].join('\t');
+      })
+    ).join('\n');
+    navigator.clipboard.writeText(text).then(
+      function(){ toast('표를 복사했습니다. 엑셀에 붙여넣으세요'); },
+      function(){ toast('복사하지 못했습니다.','err'); }
+    );
+  };
+}
+
+/* =======================================================================
+   9-1. 카테고리 베스트 — 가격대를 정해 잘 팔리는 상품을 캔다.
+
+   쿠팡은 짧은 사이에 여러 번 부르면 접속을 막는다. 그래서 규칙을 지킨다.
+   탭은 하나만 쓴다. 쪽을 넘길 때도 그 탭 주소만 바꾼다.
+   쪽과 쪽 사이는 사람이 읽는 만큼 띄운다.
+   판매량은 쿠팡 화면이 아니라 윙에서 받는다. 쿠팡을 더 부르지 않으므로 막힐 거리가 늘지 않는다.
+   ======================================================================= */
+var CAT_SORTS = 'sorter=saleCountDesc';
+
+function catBuildUrl(base, lo, hi){
+  var raw = String(base || '').trim();
+  if(!raw) return '';
+  var u;
+  try { u = new URL(raw); } catch(e){ return ''; }
+  if(!/coupang\.com$/i.test(u.hostname.replace(/^www\./,''))) return '';
+  u.searchParams.set('minPrice', String(Math.max(0, num(lo))));
+  u.searchParams.set('maxPrice', String(Math.max(0, num(hi))));
+  u.searchParams.set('listSize', '60');
+  u.searchParams.set('sorter', 'saleCountDesc');
+  u.searchParams.set('page', '1');
+  return u.toString();
+}
+
+var CB_COLS = {
+  rank:    function(x){ return num(x.rank); },
+  name:    function(x){ return String(x.name || ''); },
+  price:   function(x){ return num(x.price) || null; },
+  sold:    function(x){ return num(x.sold) || null; },
+  revenue: function(x){ return num(x.revenue) || null; },
+  views:   function(x){ return num(x.views) || null; },
+  cvr:     function(x){ return num(x.cvr) || null; },
+  reviews: function(x){ return num(x.reviews); },
+  ship:    function(x){ return x.rocket ? 2 : (x.freeShip ? 1 : null); }
+};
+function cbHead(col, label, cls){
+  var on = App.cb.col === col;
+  var arrow = on ? (App.cb.dir < 0 ? ' ▼' : ' ▲') : '';
+  return '<th data-cbsort="'+col+'"'+(cls ? ' class="'+cls+'"' : '')+
+    (on ? ' style="color:var(--teal);"' : '')+'>'+esc(label)+arrow+'</th>';
+}
+
+function viewCatBest(){
+  var C = App.cb;
+  var items = C.items.slice();
+  if(C.col){
+    var get = CB_COLS[C.col];
+    if(get) items.sort(function(a,b){
+      var x = get(a), y = get(b);
+      var xn = (x === null || x === undefined || x === '');
+      var yn = (y === null || y === undefined || y === '');
+      if(xn && yn) return 0;
+      if(xn) return 1;
+      if(yn) return -1;
+      if(typeof x === 'string') return C.dir * x.localeCompare(y, 'ko');
+      return C.dir * (x - y);
+    });
+  }
+  var soldSum = items.reduce(function(a,x){ return a + num(x.sold); }, 0);
+  var revSum  = items.reduce(function(a,x){ return a + num(x.revenue); }, 0);
+  var withSold = items.filter(function(x){ return num(x.sold); }).length;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>카테고리 베스트</h2>'+
+      '<p>쿠팡 카테고리를 가격대로 좁혀 잘 팔리는 상품을 캡니다. '+
+        '판매량은 <b>윙의 최근 28일 실적</b>이라 추정이 아닙니다.</p></div>'+
+    (items.length
+      ? '<div class="actions">'+
+          '<button class="act" id="cbCopy">표 복사</button>'+
+          '<button class="act" id="cbClear">결과 비우기</button>'+
+        '</div>'
+      : '')+
+  '</div>';
+
+  var tree = C.tree || [];
+  var mids = [];
+  var leafs = [];
+  var pick1 = null, pick2 = null;
+  if(C.c1){ pick1 = tree.filter(function(t){ return t.id === C.c1; })[0] || null; }
+  if(pick1){ mids = pick1.kids || []; }
+  if(C.c2){ pick2 = mids.filter(function(t){ return t.id === C.c2; })[0] || null; }
+  if(pick2){ leafs = pick2.kids || []; }
+
+  var selOpts = function(list, cur, none){
+    return '<option value="">'+esc(none)+'</option>'+
+      list.map(function(t){
+        return '<option value="'+esc(t.id)+'"'+(cur===t.id?' selected':'')+'>'+esc(t.name)+'</option>';
+      }).join('');
+  };
+
+  var form =
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="toolbar">'+
+      (tree.length
+        ? '<select class="sel-box" id="cbC1" style="min-width:150px;">'+
+            selOpts(tree, C.c1, '대분류 고르기')+'</select>'+
+          '<select class="sel-box" id="cbC2" style="min-width:150px;"'+(mids.length?'':' disabled')+'>'+
+            selOpts(mids, C.c2, mids.length ? '중분류 고르기' : '대분류 먼저')+'</select>'+
+          '<select class="sel-box" id="cbC3" style="min-width:170px;"'+(leafs.length?'':' disabled')+'>'+
+            selOpts(leafs, C.c3, leafs.length ? '소분류 고르기' : '중분류 먼저')+'</select>'+
+          '<button class="act" id="cbTreeAgain"'+(C.loadingTree?' disabled':'')+'>'+
+            (C.loadingTree ? '읽는 중' : '목록 새로 읽기')+'</button>'
+        : '<button class="act primary" id="cbTreeLoad"'+(C.loadingTree?' disabled':'')+'>'+
+            (C.loadingTree ? '쿠팡에서 카테고리 읽는 중' : '쿠팡 카테고리 목록 가져오기')+'</button>'+
+          '<span style="font-size:11.5px;color:var(--sub);">한 번만 읽어두면 이레 동안 그대로 씁니다</span>')+
+    '</div>'+
+    '<div class="toolbar" style="border-top:1px solid var(--line2);">'+
+      '<span class="search" style="max-width:none;flex:1;">'+
+        '<svg viewBox="0 0 24 24"><path d="M10 14L21 3"/><path d="M15 3h6v6"/><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/></svg>'+
+        '<input id="cbUrl" value="'+esc(C.url)+'" spellcheck="false" '+
+          'placeholder="또는 쿠팡 카테고리 주소를 직접 붙여넣으세요">'+
+      '</span>'+
+    '</div>'+
+    '<div class="toolbar" style="border-top:1px solid var(--line2);">'+
+      '<label style="font-size:12px;color:var(--sub);">판매가</label>'+
+      '<span class="suffix" style="width:130px;"><input class="input" id="cbLo" value="'+esc(nf(C.lo))+'"><span>원</span></span>'+
+      '<span style="color:var(--sub2);">~</span>'+
+      '<span class="suffix" style="width:130px;"><input class="input" id="cbHi" value="'+esc(nf(C.hi))+'"><span>원</span></span>'+
+      '<select class="sel-box" id="cbPages">'+
+        [1,2,3,4,5].map(function(v){
+          return '<option value="'+v+'"'+(num(C.pages)===v?' selected':'')+'>'+v+'쪽</option>';
+        }).join('')+
+      '</select>'+
+      '<button class="act primary" id="cbOpen"'+(C.running?' disabled':'')+'>'+
+        (C.running ? '작업 중입니다' : '쿠팡에서 열기')+'</button>'+
+      '<button class="act" id="cbRead"'+(C.running?' disabled':'')+'>'+
+        (C.running ? esc(C.step || '읽는 중') : '이 화면부터 읽기')+'</button>'+
+    '</div>'+
+    (C.error ? '<div class="est-note">'+esc(C.error)+'</div>' : '')+
+    (C.picked ? '<div class="est-note ok">고른 갈래는 <b>'+esc(C.picked)+'</b> 입니다.</div>' : '')+
+    '<div class="est-note ok" style="border-bottom:none;">'+
+      '<b>소분류를 고르면 쿠팡이 바로 열립니다.</b> '+
+      '가격대와 판매량순이 걸린 주소로 화면이 뜹니다. '+
+      '목록이 보이면 소싱 프로로 돌아와 <b>이 화면부터 읽기</b>를 누르세요. '+
+      '쪽을 넘길 때는 열어둔 그 탭 하나만 쓰고, 쪽 사이에 사람이 읽는 만큼 쉬어갑니다.'+
+      (num(C.seen) ? ' 지금까지 '+nf(C.seen)+'개를 봤습니다.' : '')+
+    '</div>'+
+  '</div>';
+
+  if(!items.length) return head + form;
+
+  var kpis =
+  '<div class="kpis">'+
+    '<div class="kpi"><div class="k">가격대에 든 상품</div><div class="v num">'+nf(items.length)+'</div>'+
+      '<div class="s">'+esc(fmtDate(C.at))+' 기준 · 본 상품 '+nf(C.seen)+'개</div></div>'+
+    '<div class="kpi"><div class="k">판매량을 받은 상품</div><div class="v num">'+nf(withSold)+'</div>'+
+      '<div class="s">윙 최근 28일 실적</div></div>'+
+    '<div class="kpi"><div class="k">28일 판매량 합계</div><div class="v num">'+nf(soldSum)+'</div>'+
+      '<div class="s num">평균 '+nf(withSold ? soldSum/withSold : 0)+'개</div></div>'+
+    '<div class="kpi hero"><div class="k">28일 매출 합계</div><div class="v num">'+manwon(revSum)+'</div>'+
+      '<div class="s">판매량 많고 리뷰 적은 줄이 비집고 들어갈 자리입니다</div></div>'+
+  '</div>';
+
+  var table =
+  '<div class="card">'+
+    '<div class="sec-head"><h3>'+won(C.lo)+' ~ '+won(C.hi)+' 판매량 순</h3>'+
+      '<span style="font-size:11.5px;color:var(--sub2);">소싱하기를 누르면 그 상품으로 1688 비교 분석을 시작합니다</span></div>'+
+    '<div class="tbl-wrap"><table class="lined tbl-rank" style="min-width:1240px;">'+
+      '<colgroup>'+
+        '<col style="width:74px;"><col style="width:340px;"><col style="width:112px;">'+
+        '<col style="width:104px;"><col style="width:124px;"><col style="width:96px;">'+
+        '<col style="width:78px;"><col style="width:226px;"><col>'+
+      '</colgroup>'+
+      '<thead><tr>'+
+        cbHead('rank','순위','c')+
+        cbHead('name','상품','')+
+        cbHead('price','판매가','r')+
+        cbHead('sold','28일 판매','r')+
+        cbHead('revenue','28일 매출','r')+
+        cbHead('reviews','리뷰','r')+
+        cbHead('ship','배송','c')+
+        '<th></th><th class="pad"></th>'+
+      '</tr></thead>'+
+      '<tbody>'+items.map(function(it){
+        var rv = num(it.reviews);
+        return '<tr>'+
+          '<td class="c"><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
+          '<td><div class="cell-prod">'+
+            '<span class="cell-thumb">'+imgOr(it.image)+'</span>'+
+            '<span style="min-width:0;"><div class="nm">'+esc(it.name || '이름 없음')+'</div>'+
+            (it.rating ? '<div class="sm"><span style="color:var(--amber);">★</span> '+esc(it.rating)+'</div>' : '')+
+            '</span></div></td>'+
+          '<td class="r"><span class="price-cell">'+(num(it.price) ? won(it.price) : '-')+'</span></td>'+
+          '<td class="r"><span class="sold-cell'+(num(it.sold) ? '' : ' thin')+'">'+
+            (num(it.sold) ? nf(it.sold) : '-')+'</span></td>'+
+          '<td class="r"><span class="rev-money'+(num(it.revenue) ? '' : ' thin')+'">'+
+            (num(it.revenue) ? manwon(it.revenue) : '-')+'</span>'+
+            (num(it.cvr) ? '<div class="sm" style="text-align:right;">전환 '+esc(String(it.cvr))+'%</div>' : '')+
+          '</td>'+
+          '<td class="r"><span class="rev-cell'+(rv < 10 ? ' thin' : '')+'">'+nf(rv)+'</span></td>'+
+          '<td class="c">'+(it.rocket ? '<span class="pill good">로켓</span>'
+                  : (it.freeShip ? '<span class="pill gray">무료</span>' : '<span style="color:var(--sub2);">-</span>'))+'</td>'+
+          '<td><div class="row-btns">'+
+            '<button class="tiny" data-cb-open="'+esc(it.url)+'">쿠팡</button>'+
+            '<button class="tiny" data-cb-review="'+esc(String(it.rank))+'">리뷰</button>'+
+            '<button class="tiny go" data-cb-use="'+esc(String(it.rank))+'"'+
+              (App.busy['cb_'+it.rank]?' disabled':'')+'>'+
+              (App.busy['cb_'+it.rank] ? '준비 중' : '소싱하기')+'</button>'+
+          '</div></td>'+
+          '<td class="pad"></td>'+
+        '</tr>';
+      }).join('')+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+
+  return head + form + kpis + table;
+}
+
+async function catLoadTree(force){
+  var C = App.cb;
+  if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
+  C.loadingTree = true; C.error = '';
+  Progress.open('쿠팡에서 카테고리 목록을 읽는 중입니다',
+    '한 번만 읽어두면 이레 동안 그대로 씁니다.');
+  render();
+
+  var res = await Ext.catTree(force);
+  C.loadingTree = false;
+  Progress.close();
+
+  if(!res.ok){
+    C.error = res.error || '카테고리 목록을 가져오지 못했습니다.';
+    render();
+    if(res.blocked) blockedModal(res.error);
+    else toast(C.error,'err');
+    return;
+  }
+  var tree = (res.data && res.data.tree) || [];
+  if(!tree.length){
+    C.error = '카테고리를 하나도 읽지 못했습니다. 쿠팡 첫 화면을 열어둔 채 다시 시도해주세요.';
+    render();
+    toast(C.error,'err');
+    return;
+  }
+  C.tree = tree;
+  C.treeAt = nowIso();
+  C.c1 = ''; C.c2 = ''; C.c3 = ''; C.picked = '';
+  App.jumpTop = false;
+  render();
+  var deep = tree.reduce(function(a,t){
+    return a + (t.kids||[]).reduce(function(b,m){ return b + (m.kids||[]).length; }, 0);
+  }, 0);
+  toast('대분류 '+nf(tree.length)+'개, 소분류 '+nf(deep)+'개를 읽었습니다'+
+        (res.data && res.data.cached ? ' (저장해 둔 목록)' : ''));
+}
+
+/* 소분류를 고르면 곧바로 쿠팡을 열고, 화면이 뜨면 이어서 읽는다 */
+async function catPick(id){
+  var C = App.cb;
+  C.c3 = id;
+  var top = (C.tree||[]).filter(function(t){ return t.id === C.c1; })[0];
+  var mid = top ? (top.kids||[]).filter(function(t){ return t.id === C.c2; })[0] : null;
+  var leaf = mid ? (mid.kids||[]).filter(function(t){ return t.id === id; })[0] : null;
+  if(!leaf){ render(); return; }
+
+  C.url = leaf.url || ('https://www.coupang.com/np/categories/' + leaf.id);
+  C.picked = [top && top.name, mid && mid.name, leaf.name].filter(Boolean).join(' > ');
+  C.items = []; C.seen = 0; C.error = '';
+  render();
+
+  await catOpen();
+  if(App.cb.error) return;
+  await catRead();
+}
+
+async function catOpen(){
+  var C = App.cb;
+  var url = catBuildUrl(C.url, C.lo, C.hi);
+  if(!url){
+    C.error = '쿠팡 카테고리 주소를 붙여넣어 주세요. 쿠팡에서 카테고리를 연 뒤 주소창을 그대로 복사하시면 됩니다.';
+    render();
+    toast(C.error, 'err');
+    return;
+  }
+  C.running = true; C.error = ''; C.step = '쿠팡 여는 중';
+  render();
+  var res = await Ext.coupangOpenUrl(url);
+  C.running = false; C.step = '';
+  if(!res.ok){
+    C.error = res.error || '쿠팡을 열지 못했습니다.';
+    render();
+    if(res.blocked) blockedModal(res.error);
+    else toast(C.error, 'err');
+    return;
+  }
+  render();
+  toast('쿠팡에서 열었습니다. 목록이 보이면 돌아와 이 화면부터 읽기를 눌러주세요');
+}
+
+async function catRead(){
+  var C = App.cb;
+  var pages = Math.max(1, Math.min(5, num(C.pages) || 1));
+  C.running = true; C.error = '';
+  Progress.open('쿠팡 목록을 읽는 중입니다',
+    '탭 하나만 쓰고 쪽 사이에 쉬어갑니다. 잠시만 기다려주세요.');
+  render();
+
+  var pool = [];
+  var seen = {};
+  for(var i = 0; i < pages; i++){
+    if(i > 0){
+      C.step = (i+1)+'쪽으로 넘기는 중';
+      Progress.step((i+1)+'쪽으로 넘기는 중 · 쿠팡이 막지 않도록 쉬어갑니다');
+      render();
+      var nx = await Ext.coupangNextPage();
+      if(!nx.ok){
+        C.error = nx.error || '다음 쪽으로 넘기지 못했습니다.';
+        if(nx.blocked){ Progress.close(); C.running = false; C.step = ''; render(); blockedModal(nx.error); break; }
+        break;
+      }
+    }
+    C.step = (i+1)+'쪽 읽는 중';
+    Progress.step((i+1)+'쪽 읽는 중');
+    render();
+
+    var res = await Ext.readActiveCoupang(40);
+    if(!res.ok){
+      C.error = res.error || '그 화면을 읽지 못했습니다.';
+      break;
+    }
+    var got = (res.data && res.data.items) || [];
+    got.forEach(function(it){
+      var key = String(it.productId || it.url || '');
+      if(!key || seen[key]) return;
+      seen[key] = true;
+      pool.push(it);
+    });
+    if(!got.length) break;
+  }
+
+  C.seen = pool.length;
+  var lo = num(C.lo), hi = num(C.hi);
+  var fit = pool.filter(function(it){
+    var p = num(it.price);
+    return p >= lo && p <= hi;
+  });
+
+  if(!fit.length){
+    C.running = false; C.step = '';
+    Progress.close();
+    if(!C.error) C.error = '본 '+nf(pool.length)+'개 중 그 가격대에 든 상품이 없습니다. 가격대를 넓혀보세요.';
+    render();
+    toast(C.error, 'err');
+    return;
+  }
+
+  Progress.step('윙에서 28일 실적을 받는 중');
+  render();
+  var wing = await fillWing28(fit);
+  C.wing = wing;
+
+  /* 쿠팡 화면에서 읽은 그림 주소는 이 화면에서 바로 뜨지 않는다.
+     수집기를 거쳐 그림 자체를 받아와야 깨지지 않는다. */
+  Progress.step('썸네일 '+nf(fit.length)+'장을 받는 중');
+  render();
+  var raw = fit.map(function(it){ return it.image || ''; });
+  if(raw.filter(Boolean).length){
+    var tres = await Ext.thumbs(raw, 200);
+    if(tres.ok && tres.data && tres.data.images){
+      tres.data.images.forEach(function(img, n){
+        if(fit[n] && img) fit[n].image = img;
+      });
+    }
+  }
+
+  fit.sort(function(a,b){ return num(b.sold) - num(a.sold) || num(b.reviews) - num(a.reviews); });
+  fit.forEach(function(it, i){ it.rank = i + 1; });
+
+  C.items = fit;
+  C.at = nowIso();
+  C.col = ''; C.dir = -1;
+  C.running = false; C.step = '';
+  Progress.close();
+  App.jumpTop = false;
+  render();
+  toast('가격대에 든 '+nf(fit.length)+'개를 찾았습니다'+
+        (wing && wing.ok ? ' · 판매량 '+nf(wing.got)+'개 확인' : ''));
+}
+
+async function useCatItem(rank){
+  var it = App.cb.items.filter(function(x){ return String(x.rank) === String(rank); })[0];
+  if(!it) return;
+  App.busy['cb_'+rank] = true;
+  Progress.open('소싱 준비 중입니다', rank+'위 상품으로 1688 비교를 시작합니다.');
+  render();
+
+  var rec = blankRecord(Auth.user);
+  rec.source = 'coupang';
+  rec.title = '카테고리 ' + rank + '위 · ' + String(it.name || '').slice(0, 20);
+  rec.coupang.url = it.url || '';
+  rec.coupang.name = it.name || '';
+  rec.coupang.price = num(it.price);
+  rec.coupang.rating = it.rating || '';
+  rec.coupang.reviews = num(it.reviews);
+  rec.memo = '카테고리 베스트 '+rank+'위 · '+won(it.price)+
+             (num(it.sold) ? ' · 28일 판매 '+nf(it.sold)+'개' : '')+
+             (num(it.revenue) ? ' · 28일 매출 '+manwon(it.revenue) : '');
+  if(it.image){
+    if(it.image.indexOf('data:') === 0) App.imgData[rec.id] = it.image;
+    rec.coupang.image = await Assets.store(it.image);
+  }
+
+  App.busy['cb_'+rank] = false;
+  App.record = rec;
+  Progress.close();
+  go('compare');
+  toast(rank+'위 상품으로 비교 분석을 시작합니다');
+}
+
+function bindCatBest(){
+  var C = App.cb;
+  var url = $('#cbUrl');
+  if(url) url.oninput = function(){ C.url = url.value; };
+  var lo = $('#cbLo');
+  if(lo) lo.oninput = function(){ C.lo = num(lo.value); };
+  var hi = $('#cbHi');
+  if(hi) hi.oninput = function(){ C.hi = num(hi.value); };
+  var pg = $('#cbPages');
+  if(pg) pg.onchange = function(){ C.pages = num(pg.value) || 1; };
+
+  var t1 = $('#cbTreeLoad');
+  if(t1) t1.onclick = function(){ catLoadTree(false); };
+  var t2 = $('#cbTreeAgain');
+  if(t2) t2.onclick = function(){ catLoadTree(true); };
+
+  var s1 = $('#cbC1');
+  if(s1) s1.onchange = function(){
+    C.c1 = s1.value; C.c2 = ''; C.c3 = ''; C.picked = '';
+    App.jumpTop = false; render();
+  };
+  var s2 = $('#cbC2');
+  if(s2) s2.onchange = function(){
+    C.c2 = s2.value; C.c3 = ''; C.picked = '';
+    App.jumpTop = false; render();
+  };
+  var s3 = $('#cbC3');
+  if(s3) s3.onchange = function(){
+    if(!s3.value){ C.c3 = ''; C.picked = ''; App.jumpTop = false; render(); return; }
+    if(lo) C.lo = num(lo.value);
+    if(hi) C.hi = num(hi.value);
+    catPick(s3.value);
+  };
+
+  var ob = $('#cbOpen');
+  if(ob) ob.onclick = function(){
+    if(url) C.url = url.value;
+    if(lo) C.lo = num(lo.value);
+    if(hi) C.hi = num(hi.value);
+    catOpen();
+  };
+  var rb = $('#cbRead');
+  if(rb) rb.onclick = function(){
+    if(lo) C.lo = num(lo.value);
+    if(hi) C.hi = num(hi.value);
+    catRead();
+  };
+  var cl = $('#cbClear');
+  if(cl) cl.onclick = function(){
+    C.items = []; C.error = ''; C.seen = 0;
+    App.jumpTop = false;
+    render();
+  };
+  $$('[data-cbsort]').forEach(function(th){
+    th.onclick = function(){
+      var col = th.getAttribute('data-cbsort');
+      if(C.col === col) C.dir = C.dir < 0 ? 1 : -1;
+      else { C.col = col; C.dir = (col === 'name' || col === 'rank') ? 1 : -1; }
+      App.jumpTop = false;
+      render();
+    };
+  });
+  $$('[data-cb-open]').forEach(function(b){
+    b.onclick = function(){ window.open(b.getAttribute('data-cb-open'), '_blank', 'noopener'); };
+  });
+  $$('[data-cb-review]').forEach(function(b){
+    b.onclick = function(){
+      var it = App.cb.items.filter(function(x){ return String(x.rank) === b.getAttribute('data-cb-review'); })[0];
+      if(it) reviewInsightModal({ url: it.url, name: it.name });
+    };
+  });
+  $$('[data-cb-use]').forEach(function(b){
+    b.onclick = function(){ useCatItem(b.getAttribute('data-cb-use')); };
+  });
+  var cp = $('#cbCopy');
+  if(cp) cp.onclick = function(){
+    var text = ['순위\t상품명\t판매가\t28일판매량\t28일매출\t전환율\t리뷰\t배송\t링크'].concat(
+      App.cb.items.map(function(it){
+        return [it.rank, it.name, num(it.price), num(it.sold), num(it.revenue),
+                num(it.cvr) ? it.cvr+'%' : '', num(it.reviews),
+                it.rocket ? '로켓' : (it.freeShip ? '무료' : ''), it.url].join('\t');
+      })
+    ).join('\n');
+    navigator.clipboard.writeText(text).then(
+      function(){ toast('표를 복사했습니다. 엑셀에 붙여넣으세요'); },
+      function(){ toast('복사하지 못했습니다.','err'); }
+    );
+  };
+}
+
+/* =======================================================================
+   9-2. 타오바오 베스트 — 무엇이 팔리는지 먼저 보고, 그 물건을 1688에서 산다.
+
+   예전 순위 사이트는 없어졌다. 지금은 검색 결과를 판매량 순으로 세운 것이
+   사실상의 베스트 목록이다. 카드마다 결제 인원이 붙어 있어 그것을 판매량으로 본다.
+   타오바오는 소매라 매입가로 쓰지 않는다. 무엇이 팔리는지 보는 용도다.
+   ======================================================================= */
+var TB_COLS = {
+  rank:  function(x){ return num(x.rank); },
+  name:  function(x){ return String(x.name || ''); },
+  price: function(x){ return num(x.price) || null; },
+  sold:  function(x){ return num(x.sold) || null; },
+  board: function(x){ return num(x.boardRank) || null; },
+  shop:  function(x){ return String(x.shop || ''); }
+};
+function tbHead(col, label, cls){
+  var on = App.tb.col === col;
+  var arrow = on ? (App.tb.dir < 0 ? ' ▼' : ' ▲') : '';
+  return '<th data-tbsort="'+col+'"'+(cls ? ' class="'+cls+'"' : '')+
+    (on ? ' style="color:var(--teal);"' : '')+'>'+esc(label)+arrow+'</th>';
+}
+
+function viewTaobao(){
+  var T = App.tb;
+  var items = T.items.slice();
+  if(T.col){
+    var get = TB_COLS[T.col];
+    if(get) items.sort(function(a,b){
+      var x = get(a), y = get(b);
+      var xn = (x === null || x === undefined || x === '');
+      var yn = (y === null || y === undefined || y === '');
+      if(xn && yn) return 0;
+      if(xn) return 1;
+      if(yn) return -1;
+      if(typeof x === 'string') return T.dir * x.localeCompare(y, 'zh');
+      return T.dir * (x - y);
+    });
+  }
+  var rate = effRate(null);
+  var soldSum = items.reduce(function(a,x){ return a + num(x.sold); }, 0);
+  var prices = items.map(function(x){ return num(x.price); }).filter(function(v){ return v > 0; });
+  var avg = prices.length ? prices.reduce(function(a,b){ return a+b; },0) / prices.length : 0;
+  var cheap = prices.length ? Math.min.apply(null, prices) : 0;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>타오바오 베스트</h2>'+
+      '<p>키워드를 넣으면 <b>판매량 순</b>으로 인기 상품을 가져옵니다. '+
+        '마음에 드는 상품의 1688에서 찾기를 누르면 그 사진으로 매입처를 찾습니다.</p></div>'+
+    (items.length
+      ? '<div class="actions">'+
+          '<button class="act" id="tbAgain"'+(T.running?' disabled':'')+'>'+
+            (T.running ? '수집 중' : '다시 수집')+'</button>'+
+          '<button class="act" id="tbCopy">표 복사</button>'+
+        '</div>'
+      : '')+
+  '</div>';
+
+  var form =
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="toolbar">'+
+      '<span class="search" style="max-width:360px;">'+
+        '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
+        '<input id="tbKw" value="'+esc(T.keyword)+'" placeholder="핸드폰거치대, 텀블러, 수납함 …" spellcheck="false">'+
+      '</span>'+
+      '<span class="search" style="max-width:225px;">'+
+        '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>'+
+        '<input id="tbCn" value="'+esc(T.cn)+'" placeholder="중국어 검색어 (비우면 자동)" spellcheck="false">'+
+      '</span>'+
+      '<select class="sel-box" id="tbCount">'+
+        [10,20,30,40].map(function(v){
+          return '<option value="'+v+'"'+(num(T.count)===v?' selected':'')+'>'+v+'개</option>';
+        }).join('')+
+      '</select>'+
+      '<button class="act primary" id="tbGo"'+(T.running?' disabled':'')+'>'+
+        (T.running ? '수집 중입니다' : '인기 상품 가져오기')+'</button>'+
+      '<button class="act" id="tbOpen">타오바오 열기</button>'+
+    '</div>'+
+    (T.error ? '<div class="est-note">'+esc(T.error)+'</div>' : '')+
+    (T.used
+      ? '<div class="est-note ok" style="border-bottom:none;">'+
+        '타오바오에서 실제로 검색한 말은 <b>'+esc(T.used)+'</b> 입니다.'+
+        (T.dropped ? ' 검색어와 맞지 않는 '+nf(T.dropped)+'개는 뺐습니다.' : '')+
+        ((T.alt && T.alt.length)
+          ? ' 다른 말로도 찾기: '+T.alt.map(function(a){
+              return '<button class="tiny" data-tb-alt="'+esc(a)+'">'+esc(a)+'</button>';
+            }).join(' ')
+          : '')+
+        '</div>'
+      : '<div class="est-note ok" style="border-bottom:none;">'+
+        '<b>타오바오는 한국어를 알아듣지 못합니다.</b> 한글을 넣으면 중국어로 바꿔서 검색합니다. '+
+        '중국어를 아시면 가운데 칸에 직접 넣는 편이 가장 정확합니다. 타오바오 로그인이 되어 있어야 결과가 보입니다.'+
+        '</div>')+
+  '</div>';
+
+  if(!items.length) return head + form;
+
+  var kpis =
+  '<div class="kpis">'+
+    '<div class="kpi"><div class="k">가져온 상품</div><div class="v num">'+nf(items.length)+'</div>'+
+      '<div class="s">'+esc(fmtDate(T.at))+' 기준</div></div>'+
+    '<div class="kpi"><div class="k">평균 판매가</div><div class="v num">¥'+avg.toFixed(2)+'</div>'+
+      '<div class="s num">'+won(avg * rate)+'</div></div>'+
+    '<div class="kpi"><div class="k">최저 판매가</div><div class="v num">¥'+cheap.toFixed(2)+'</div>'+
+      '<div class="s num">'+won(cheap * rate)+'</div></div>'+
+    '<div class="kpi hero"><div class="k">결제 인원 합계</div><div class="v num">'+nf(soldSum)+'</div>'+
+      '<div class="s">타오바오가 표시하는 누적 구매자 수입니다</div></div>'+
+  '</div>';
+
+  var table =
+  '<div class="card">'+
+    '<div class="sec-head"><h3>“'+esc(T.keyword)+'” 판매량 순</h3>'+
+      '<span style="font-size:11.5px;color:var(--sub2);">1688에서 찾기를 누르면 그 사진으로 매입처를 찾습니다</span></div>'+
+    '<div class="tbl-wrap"><table class="lined tbl-rank" style="min-width:1130px;">'+
+      '<colgroup>'+
+        '<col style="width:74px;"><col style="width:376px;"><col style="width:116px;">'+
+        '<col style="width:104px;"><col style="width:92px;"><col style="width:140px;">'+
+        '<col style="width:218px;"><col>'+
+      '</colgroup>'+
+      '<thead><tr>'+
+        tbHead('rank','순위','c')+
+        tbHead('name','상품','')+
+        tbHead('price','판매가','r')+
+        tbHead('sold','결제 인원','r')+
+        tbHead('board','인기 순위','c')+
+        tbHead('shop','점포','')+
+        '<th></th><th class="pad"></th>'+
+      '</tr></thead>'+
+      '<tbody>'+items.map(function(it){
+        var yuan = num(it.price);
+        return '<tr>'+
+          '<td class="c"><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
+          '<td><div class="cell-prod">'+
+            '<span class="cell-thumb">'+imgOr(it.image)+'</span>'+
+            '<span style="min-width:0;"><div class="nm">'+esc(it.name || '이름 없음')+'</div>'+
+              '<div class="sm">'+(it.tmall ? '<span class="pill mid">티몰</span> ' : '')+
+                esc(it.area || '')+'</div>'+
+            '</span></div></td>'+
+          '<td class="r"><span class="price-cell">¥'+yuan.toFixed(2)+'</span>'+
+            '<div class="sm" style="text-align:right;">'+won(yuan * rate)+'</div></td>'+
+          '<td class="r"><span class="sold-cell'+(num(it.sold) ? '' : ' thin')+'">'+
+            (num(it.sold) ? nf(it.sold) : '-')+'</span></td>'+
+          '<td class="c">'+(num(it.boardRank)
+            ? '<span class="pill good">'+it.boardRank+'위</span>'
+            : '<span style="color:var(--sub2);">-</span>')+'</td>'+
+          '<td><div class="sm" style="font-size:11.5px;color:#5b6472;">'+esc(it.shop || '-')+'</div></td>'+
+          '<td><div class="row-btns">'+
+            '<button class="tiny" data-tb-open="'+esc(it.url)+'">타오바오</button>'+
+            '<button class="tiny go" data-tb-use="'+esc(String(it.rank))+'"'+
+              (App.busy['tb_'+it.rank]?' disabled':'')+'>'+
+              (App.busy['tb_'+it.rank] ? '준비 중' : '1688에서 찾기')+'</button>'+
+          '</div></td>'+
+          '<td class="pad"></td>'+
+        '</tr>';
+      }).join('')+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+
+  return head + form + kpis + table;
+}
+
+/* 타오바오는 한국어를 모른다. 한글을 그대로 넣으면 전혀 다른 물건이 나온다.
+   그래서 한글이 섞여 있으면 반드시 중국어로 바꾼 뒤에 검색한다. */
+function hasHangul(t){ return /[\uAC00-\uD7A3]/.test(String(t || '')); }
+
+/* 검색어와 상품명이 실제로 관련 있는지 본다.
+   타오바오는 못 찾으면 엉뚱한 추천 상품을 대신 보여주는데, 그걸 걸러낸다. */
+function tbRelevant(term, name){
+  var t = String(term || '').replace(/\s+/g, '');
+  var n = String(name || '');
+  if(t.length < 2 || !n) return true;
+  for(var i = 0; i + 2 <= t.length; i++){
+    if(n.indexOf(t.slice(i, i + 2)) >= 0) return true;
+  }
+  return false;
+}
+
+async function runTaobao(){
+  var T = App.tb;
+  var kw = String(T.keyword || '').trim();
+  if(!kw && !String(T.cn || '').trim()){ toast('키워드를 넣어주세요.','err'); return; }
+  if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
+
+  if(!(await ensureShopLogin('taobao'))) return;
+
+  T.running = true; T.error = ''; T.dropped = 0;
+  Progress.open('타오바오에서 인기 상품을 모으는 중입니다', '“'+(kw || T.cn)+'” 로 시작합니다.');
+  render();
+
+  /* 1) 타오바오에 넣을 중국어 검색어를 정한다 */
+  var term = String(T.cn || '').trim();
+  if(!term){
+    if(hasHangul(kw)){
+      Progress.step('검색어를 중국어로 바꾸는 중');
+      var got = await Sampler.searchTerm(kw);
+      if(got && got.keyword){
+        term = got.keyword;
+        T.alt = got.alt || [];
+      } else {
+        T.running = false;
+        Progress.close();
+        T.error = '“'+kw+'” 를 중국어로 바꾸지 못했습니다. 중국어 검색어 칸에 직접 넣어주세요. '+
+                  '타오바오는 한국어를 알아듣지 못해 그대로 넣으면 엉뚱한 물건이 나옵니다.';
+        render();
+        toast('중국어 검색어가 필요합니다.','err');
+        return;
+      }
+    } else {
+      term = kw;
+    }
+  }
+  T.used = term;
+
+  /* 2) 그 말로 판매량 순 검색 */
+  Progress.step('타오바오에서 “'+term+'” 판매량 순으로 읽는 중');
+  render();
+
+  var res = await Ext.taobaoTop(term, num(T.count) || 20);
+  T.running = false;
+
+  if(!res.ok){
+    Progress.close();
+    T.error = res.error || '타오바오에서 상품을 가져오지 못했습니다.';
+    render();
+    if(res.needsLogin){ if(await shopLoginModal('taobao')) return runTaobao(); return; }
+    toast(T.error,'err');
+    return;
+  }
+
+  var items = (res.data && res.data.items) || [];
+  if(!items.length){
+    Progress.close();
+    T.error = '“'+term+'” 결과가 비어 있습니다. 다른 중국어 검색어로 바꿔보세요.';
+    render();
+    toast(T.error,'err');
+    return;
+  }
+
+  /* 3) 검색어와 상관없는 추천 상품을 걸러낸다 */
+  Progress.step('검색어와 맞는 상품만 고르는 중');
+  var fit = items.filter(function(it){ return tbRelevant(term, it.name); });
+  if(fit.length >= 3){
+    T.dropped = items.length - fit.length;
+    items = fit;
+  } else {
+    T.dropped = 0;
+    T.error = '“'+term+'” 와 맞는 상품이 거의 없습니다. 타오바오가 추천 상품을 대신 보여준 것으로 보입니다. '+
+              '중국어 검색어를 바꿔보세요.';
+  }
+  items.forEach(function(it, i){ it.rank = i + 1; });
+
+  T.items = items;
+  T.at = nowIso();
+  T.col = ''; T.dir = -1;
+  Progress.close();
+  App.jumpTop = false;
+  render();
+  toast('“'+term+'” 인기 상품 '+nf(items.length)+'개를 가져왔습니다'+
+        (T.dropped ? ' · 무관한 '+nf(T.dropped)+'개 제외' : ''));
+}
+
+/* 고른 타오바오 상품의 사진과 중국어 상품명으로 1688 매입처를 찾는다.
+   상품명이 이미 중국어라 번역 단계를 건너뛴다. 그래서 쿠팡에서 시작할 때보다 잘 맞는다. */
+async function useTaobaoItem(rank){
+  var it = App.tb.items.filter(function(x){ return String(x.rank) === String(rank); })[0];
+  if(!it) return;
+  App.busy['tb_'+rank] = true;
+  Progress.open('1688 매입처를 찾을 준비 중입니다', '타오바오 '+rank+'위 상품으로 시작합니다.');
+  Progress.step('상품 정보를 옮기는 중');
+  render();
+
+  var rec = blankRecord(Auth.user);
+  rec.source = 'taobao';
+  rec.srcPrice = '¥' + num(it.price).toFixed(2) + ' · ' + won(num(it.price) * effRate(null));
+  rec.title = '타오바오 · ' + String(it.name || '').slice(0, 24);
+  rec.coupang.url = it.url || '';
+  rec.coupang.name = it.name || '';
+  rec.coupang.price = '';
+  rec.memo = '타오바오 “'+App.tb.keyword+'” '+rank+'위 · ¥'+num(it.price).toFixed(2)+
+             ' · 결제 '+nf(num(it.sold))+'명'+(it.shop ? ' · '+it.shop : '')+
+             '\n타오바오 주소: '+(it.url || '');
+  if(it.image){
+    /* 사진 검색이 쓸 원본을 이번 방문 동안 들고 있는다 */
+    if(it.image.indexOf('data:') === 0) App.imgData[rec.id] = it.image;
+    rec.coupang.image = await Assets.store(it.image);
+  }
+
+  App.busy['tb_'+rank] = false;
+  App.record = rec;
+  Progress.close();
+  go('compare');
+  toast('타오바오 '+rank+'위 상품입니다. 1688에서 찾기를 누르세요');
+}
+
+function bindTaobao(){
+  var T = App.tb;
+  var kw = $('#tbKw');
+  if(kw){
+    kw.oninput = function(){ T.keyword = kw.value; };
+    kw.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); runTaobao(); } };
+  }
+  var cn = $('#tbCn');
+  if(cn){
+    cn.oninput = function(){ T.cn = cn.value; };
+    cn.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); runTaobao(); } };
+  }
+  var cnt = $('#tbCount');
+  if(cnt) cnt.onchange = function(){ T.count = num(cnt.value) || 20; };
+  var go1 = $('#tbGo');
+  if(go1) go1.onclick = function(){
+    if(kw) T.keyword = kw.value;
+    if(cn) T.cn = cn.value;
+    runTaobao();
+  };
+  var again = $('#tbAgain');
+  if(again) again.onclick = function(){ runTaobao(); };
+  $$('[data-tb-alt]').forEach(function(b){
+    b.onclick = function(){ T.cn = b.getAttribute('data-tb-alt'); runTaobao(); };
+  });
+  var open = $('#tbOpen');
+  if(open) open.onclick = async function(){
+    var r = await Ext.taobaoOpen(T.keyword || '');
+    if(r.ok) toast('타오바오를 열었습니다. 로그인 상태를 확인해주세요');
+    else toast(r.error || '타오바오를 열지 못했습니다.','err');
+  };
+  $$('[data-tbsort]').forEach(function(th){
+    th.onclick = function(){
+      var col = th.getAttribute('data-tbsort');
+      if(T.col === col) T.dir = T.dir < 0 ? 1 : -1;
+      else { T.col = col; T.dir = (col === 'name' || col === 'rank' || col === 'shop') ? 1 : -1; }
+      App.jumpTop = false;
+      render();
+    };
+  });
+  $$('[data-tb-open]').forEach(function(b){
+    b.onclick = function(){ window.open(b.getAttribute('data-tb-open'), '_blank', 'noopener'); };
+  });
+  $$('[data-tb-use]').forEach(function(b){
+    b.onclick = function(){ useTaobaoItem(b.getAttribute('data-tb-use')); };
+  });
+  var cp = $('#tbCopy');
+  if(cp) cp.onclick = function(){
+    var text = ['순위\t상품명\t판매가(¥)\t결제인원\t인기순위\t점포\t지역\t링크'].concat(
+      App.tb.items.map(function(it){
+        return [it.rank, it.name, num(it.price), num(it.sold), it.boardRank || '',
+                it.shop || '', it.area || '', it.url].join('\t');
+      })
+    ).join('\n');
+    navigator.clipboard.writeText(text).then(
+      function(){ toast('표를 복사했습니다. 엑셀에 붙여넣으세요'); },
+      function(){ toast('복사하지 못했습니다.','err'); }
+    );
+  };
+}
+
+/* =======================================================================
+   9-3. 테무 베스트 — 한국에서 지금 팔리는 중국 상품을 본다.
+
+   테무는 중국 상품을 한국 소비자에게 파는 곳이다. 그래서 여기 잘 팔리는 물건은
+   한국에서 통한다는 뜻이고, 가격도 원화라 쿠팡 판매가를 정할 때 바로 견줄 수 있다.
+   채널 두 갈래를 그대로 쓴다. 베스트셀러는 많이 팔린 순, 별점 5점은 만족도가 높은 것이다.
+   ======================================================================= */
+var TEMU_CATS = ['추천','홈&주방','여성 의류','여성화','스포츠&아웃도어','차량 용품',
+                 '남성 의류','휴대폰&액세서리','여성 커브 플러스','남성화','전자기기',
+                 '뷰티 & 맞춤 케어','도구&집 꾸미기','가방&여행가방'];
+var TEMU_CHANNELS = [
+  {id:'best', label:'베스트셀러', desc:'많이 팔린 순서입니다'},
+  {id:'star', label:'별점 5점',   desc:'만족도가 가장 높은 상품입니다'},
+  {id:'new',  label:'신상품',     desc:'막 올라온 상품입니다'}
+];
+
+var TM_COLS = {
+  rank:    function(x){ return num(x.rank); },
+  name:    function(x){ return String(x.name || ''); },
+  price:   function(x){ return num(x.price) || null; },
+  sold:    function(x){ return num(x.sold) || null; },
+  rating:  function(x){ return num(x.rating) || null; },
+  reviews: function(x){ return num(x.reviews) || null; },
+  board:   function(x){ return num(x.boardRank) || null; },
+  category:function(x){ return String(x.category || ''); }
+};
+function tmHead(col, label, cls){
+  var on = App.tm.col === col;
+  var arrow = on ? (App.tm.dir < 0 ? ' ▼' : ' ▲') : '';
+  return '<th data-tmsort="'+col+'"'+(cls ? ' class="'+cls+'"' : '')+
+    (on ? ' style="color:var(--teal);"' : '')+'>'+esc(label)+arrow+'</th>';
+}
+
+function viewTemu(){
+  var M = App.tm;
+  var items = M.items.slice();
+  if(M.col){
+    var get = TM_COLS[M.col];
+    if(get) items.sort(function(a,b){
+      var x = get(a), y = get(b);
+      var xn = (x === null || x === undefined || x === '');
+      var yn = (y === null || y === undefined || y === '');
+      if(xn && yn) return 0;
+      if(xn) return 1;
+      if(yn) return -1;
+      if(typeof x === 'string') return M.dir * x.localeCompare(y, 'ko');
+      return M.dir * (x - y);
+    });
+  }
+  var ch = TEMU_CHANNELS.filter(function(c){ return c.id === M.channel; })[0] || TEMU_CHANNELS[0];
+  var soldSum = items.reduce(function(a,x){ return a + num(x.sold); }, 0);
+  var prices = items.map(function(x){ return num(x.price); }).filter(function(v){ return v > 0; });
+  var avg = prices.length ? prices.reduce(function(a,b){ return a+b; },0) / prices.length : 0;
+  var rated = items.map(function(x){ return num(x.rating); }).filter(function(v){ return v > 0; });
+  var avgRate = rated.length ? rated.reduce(function(a,b){ return a+b; },0) / rated.length : 0;
+
+  var head =
+  '<div class="page-head">'+
+    '<div><h2>테무 베스트</h2>'+
+      '<p>테무는 중국 상품을 한국 소비자에게 파는 곳입니다. '+
+        '여기서 잘 팔리는 물건은 <b>한국에서 통한다</b>는 뜻이고, 가격이 원화라 쿠팡 판매가와 바로 견줄 수 있습니다.</p></div>'+
+    (items.length
+      ? '<div class="actions">'+
+          '<button class="act" id="tmAgain"'+(M.running?' disabled':'')+'>'+
+            (M.running ? '수집 중' : '다시 수집')+'</button>'+
+          '<button class="act" id="tmCopy">표 복사</button>'+
+        '</div>'
+      : '')+
+  '</div>';
+
+  var form =
+  '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="toolbar">'+
+      '<div class="tm-tabs">'+TEMU_CHANNELS.map(function(c){
+        return '<button class="tm-tab'+(M.channel===c.id?' on':'')+'" data-tmch="'+c.id+'">'+esc(c.label)+'</button>';
+      }).join('')+'</div>'+
+      '<select class="sel-box" id="tmCat">'+
+        '<option value="">갈래 전체</option>'+
+        TEMU_CATS.map(function(c){
+          return '<option value="'+esc(c)+'"'+(M.cat===c?' selected':'')+'>'+esc(c)+'</option>';
+        }).join('')+
+      '</select>'+
+      '<select class="sel-box" id="tmCount">'+
+        [20,30,40,60].map(function(v){
+          return '<option value="'+v+'"'+(num(M.count)===v?' selected':'')+'>'+v+'개</option>';
+        }).join('')+
+      '</select>'+
+      '<button class="act primary" id="tmGo"'+(M.running?' disabled':'')+'>'+
+        (M.running ? '수집 중입니다' : '목록 가져오기')+'</button>'+
+      '<button class="act" id="tmOpen">테무 열기</button>'+
+    '</div>'+
+    (M.error ? '<div class="est-note">'+esc(M.error)+'</div>' : '')+
+    '<div class="est-note ok" style="border-bottom:none;">'+
+      '<b>'+esc(ch.label)+'</b> · '+esc(ch.desc)+
+      (M.cat ? ' · 갈래 <b>'+esc(M.cat)+'</b>' : '')+
+      (M.cat && M.items.length && !M.picked ? ' <span style="color:#b4552f;">(갈래 딱지를 누르지 못해 전체가 나왔습니다)</span>' : '')+
+      '. 판매가는 원화입니다.'+
+    '</div>'+
+  '</div>';
+
+  if(!items.length) return head + form;
+
+  var kpis =
+  '<div class="kpis">'+
+    '<div class="kpi"><div class="k">가져온 상품</div><div class="v num">'+nf(items.length)+'</div>'+
+      '<div class="s">'+esc(fmtDate(M.at))+' 기준</div></div>'+
+    '<div class="kpi"><div class="k">평균 판매가</div><div class="v num">'+won(avg)+'</div>'+
+      '<div class="s num">최저 '+won(prices.length ? Math.min.apply(null, prices) : 0)+'</div></div>'+
+    '<div class="kpi"><div class="k">평균 별점</div><div class="v num">'+(avgRate ? avgRate.toFixed(2) : '-')+'</div>'+
+      '<div class="s">별점이 있는 '+nf(rated.length)+'개 기준</div></div>'+
+    '<div class="kpi hero"><div class="k">판매 수량 합계</div><div class="v num">'+nf(soldSum)+'</div>'+
+      '<div class="s">테무가 표시하는 누적 판매 수량입니다</div></div>'+
+  '</div>';
+
+  var table =
+  '<div class="card">'+
+    '<div class="sec-head"><h3>'+esc(ch.label)+(M.cat ? ' · '+esc(M.cat) : '')+'</h3>'+
+      '<span style="font-size:11.5px;color:var(--sub2);">1688에서 찾기를 누르면 그 사진으로 매입처를 찾습니다</span></div>'+
+    '<div class="tbl-wrap"><table class="lined tbl-rank" style="min-width:1210px;">'+
+      '<colgroup>'+
+        '<col style="width:74px;"><col style="width:340px;"><col style="width:114px;">'+
+        '<col style="width:100px;"><col style="width:94px;"><col style="width:96px;">'+
+        '<col style="width:140px;"><col style="width:218px;"><col>'+
+      '</colgroup>'+
+      '<thead><tr>'+
+        tmHead('rank','순위','c')+
+        tmHead('name','상품','')+
+        tmHead('price','판매가','r')+
+        tmHead('sold','판매 수량','r')+
+        tmHead('rating','별점','c')+
+        tmHead('reviews','리뷰','r')+
+        tmHead('board','테무 순위','')+
+        '<th></th><th class="pad"></th>'+
+      '</tr></thead>'+
+      '<tbody>'+items.map(function(it){
+        return '<tr>'+
+          '<td class="c"><span class="rankno'+(it.rank<=3?' top':'')+'">'+it.rank+'</span></td>'+
+          '<td><div class="cell-prod">'+
+            '<span class="cell-thumb">'+imgOr(it.image)+'</span>'+
+            '<span style="min-width:0;"><div class="nm">'+esc(it.name || '이름 없음')+'</div>'+
+              '<div class="sm">'+
+                (it.domestic ? '<span class="pill good">국내발송</span> ' : '')+
+                (it.topSeller ? '<span class="pill mid">우수 판매자</span> ' : '')+
+                (num(it.years) ? esc(it.years+'년차') : '')+
+              '</div>'+
+            '</span></div></td>'+
+          '<td class="r"><span class="price-cell">'+won(it.price)+'</span></td>'+
+          '<td class="r"><span class="sold-cell'+(num(it.sold) ? '' : ' thin')+'">'+
+            (num(it.sold) ? nf(it.sold) : '-')+'</span></td>'+
+          '<td class="c">'+(num(it.rating)
+            ? '<span style="color:var(--amber);">★</span> '+num(it.rating).toFixed(1)
+            : '<span style="color:var(--sub2);">-</span>')+'</td>'+
+          '<td class="r"><span class="rev-cell'+(num(it.reviews) ? '' : ' thin')+'">'+
+            (num(it.reviews) ? nf(it.reviews) : '-')+'</span></td>'+
+          '<td>'+(num(it.boardRank)
+            ? '<div class="sm" style="font-size:11px;"><b style="color:#0e8f79;">'+
+                esc(it.boardKind || '')+' '+it.boardRank+'위</b><br/>'+esc(it.category || '')+'</div>'
+            : '<span style="color:var(--sub2);">-</span>')+'</td>'+
+          '<td><div class="row-btns">'+
+            '<button class="tiny" data-tm-open="'+esc(it.url)+'">테무</button>'+
+            '<button class="tiny go" data-tm-use="'+esc(String(it.rank))+'"'+
+              (App.busy['tm_'+it.rank]?' disabled':'')+'>'+
+              (App.busy['tm_'+it.rank] ? '준비 중' : '1688에서 찾기')+'</button>'+
+          '</div></td>'+
+          '<td class="pad"></td>'+
+        '</tr>';
+      }).join('')+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+
+  return head + form + kpis + table;
+}
+
+async function runTemu(){
+  var M = App.tm;
+  if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
+  var ch = TEMU_CHANNELS.filter(function(c){ return c.id === M.channel; })[0] || TEMU_CHANNELS[0];
+
+  if(!(await ensureShopLogin('temu'))) return;
+
+  M.running = true; M.error = '';
+  Progress.open('테무에서 '+ch.label+' 목록을 모으는 중입니다',
+    (M.cat ? '갈래 “'+M.cat+'” 로 좁혀서 ' : '')+'상품을 가져옵니다. 잠시만 기다려주세요.');
+  Progress.step('테무 화면을 읽는 중');
+  render();
+
+  var res = await Ext.temuTop(M.channel, num(M.count) || 20, M.cat);
+  M.running = false;
+
+  if(!res.ok){
+    Progress.close();
+    M.error = res.error || '테무에서 상품을 가져오지 못했습니다.';
+    render();
+    if(res.needsLogin){ if(await shopLoginModal('temu')) return runTemu(); return; }
+    toast(M.error,'err');
+    return;
+  }
+
+  var d = res.data || {};
+  var items = d.items || [];
+  if(!items.length){
+    Progress.close();
+    M.error = '결과가 비어 있습니다. 갈래를 바꾸거나 잠시 뒤에 다시 시도해주세요.';
+    render();
+    toast(M.error,'err');
+    return;
+  }
+  Progress.step('상품 '+nf(items.length)+'개를 정리하는 중');
+  M.items = items;
+  M.picked = !!d.picked;
+  M.at = nowIso();
+  M.col = ''; M.dir = -1;
+  Progress.close();
+  App.jumpTop = false;
+  render();
+  toast(ch.label+' '+nf(items.length)+'개를 가져왔습니다'+(M.cat ? ' · '+M.cat : ''));
+}
+
+/* 테무 상품의 사진으로 1688 매입처를 찾는다.
+   테무 상품명은 한국어라 1688 검색에는 번역이 필요하다. 사진 검색이 주력이 된다. */
+async function useTemuItem(rank){
+  var it = App.tm.items.filter(function(x){ return String(x.rank) === String(rank); })[0];
+  if(!it) return;
+  App.busy['tm_'+rank] = true;
+  Progress.open('1688 매입처를 찾을 준비 중입니다', '테무 '+rank+'위 상품으로 시작합니다.');
+  Progress.step('상품 정보를 옮기는 중');
+  render();
+
+  var rec = blankRecord(Auth.user);
+  rec.source = 'temu';
+  rec.srcPrice = won(it.price);
+  rec.title = '테무 · ' + String(it.name || '').slice(0, 24);
+  rec.coupang.url = it.url || '';
+  rec.coupang.name = it.name || '';
+  /* 테무 판매가는 원화라 쿠팡 판매가 자리에 바로 넣어 이익을 가늠할 수 있다 */
+  rec.coupang.price = num(it.price) || '';
+  rec.coupang.rating = num(it.rating) ? String(it.rating) : '';
+  rec.coupang.reviews = num(it.reviews) || '';
+  rec.memo = '테무 '+(App.tm.channel === 'star' ? '별점 5점' : '베스트셀러')+
+             (App.tm.cat ? ' · '+App.tm.cat : '')+' '+rank+'위 · '+won(it.price)+
+             ' · 판매 '+nf(num(it.sold))+'개'+
+             (it.category ? ' · '+it.boardKind+' '+it.boardRank+'위('+it.category+')' : '')+
+             '\n테무 주소: '+(it.url || '')+
+             '\n판매가는 테무 가격입니다. 쿠팡에 올릴 값으로 바꿔주세요.';
+  if(it.image){
+    if(it.image.indexOf('data:') === 0) App.imgData[rec.id] = it.image;
+    rec.coupang.image = await Assets.store(it.image);
+  }
+
+  App.busy['tm_'+rank] = false;
+  App.record = rec;
+  Progress.close();
+  go('compare');
+  toast('테무 '+rank+'위 상품입니다. 1688에서 찾기를 누르세요');
+}
+
+function bindTemu(){
+  var M = App.tm;
+  $$('[data-tmch]').forEach(function(b){
+    b.onclick = function(){
+      M.channel = b.getAttribute('data-tmch');
+      M.items = []; M.error = '';
+      App.jumpTop = false;
+      render();
+    };
+  });
+  var cat = $('#tmCat');
+  if(cat) cat.onchange = function(){ M.cat = cat.value; };
+  var cnt = $('#tmCount');
+  if(cnt) cnt.onchange = function(){ M.count = num(cnt.value) || 20; };
+  var go1 = $('#tmGo');
+  if(go1) go1.onclick = function(){
+    if(cat) M.cat = cat.value;
+    runTemu();
+  };
+  var again = $('#tmAgain');
+  if(again) again.onclick = function(){ runTemu(); };
+  var open = $('#tmOpen');
+  if(open) open.onclick = async function(){
+    var r = await Ext.temuOpen(M.channel);
+    if(r.ok) toast('테무를 열었습니다');
+    else toast(r.error || '테무를 열지 못했습니다.','err');
+  };
+  $$('[data-tmsort]').forEach(function(th){
+    th.onclick = function(){
+      var col = th.getAttribute('data-tmsort');
+      if(M.col === col) M.dir = M.dir < 0 ? 1 : -1;
+      else { M.col = col; M.dir = (col === 'name' || col === 'rank' || col === 'category') ? 1 : -1; }
+      App.jumpTop = false;
+      render();
+    };
+  });
+  $$('[data-tm-open]').forEach(function(b){
+    b.onclick = function(){ window.open(b.getAttribute('data-tm-open'), '_blank', 'noopener'); };
+  });
+  $$('[data-tm-use]').forEach(function(b){
+    b.onclick = function(){ useTemuItem(b.getAttribute('data-tm-use')); };
+  });
+  var cp = $('#tmCopy');
+  if(cp) cp.onclick = function(){
+    var text = ['순위\t상품명\t판매가\t판매수량\t별점\t리뷰\t테무순위\t갈래\t국내발송\t링크'].concat(
+      App.tm.items.map(function(it){
+        return [it.rank, it.name, num(it.price), num(it.sold), it.rating || '', num(it.reviews),
+                num(it.boardRank) ? (it.boardKind+' '+it.boardRank+'위') : '',
+                it.category || '', it.domestic ? 'Y' : '', it.url].join('\t');
       })
     ).join('\n');
     navigator.clipboard.writeText(text).then(
@@ -2272,10 +4935,17 @@ function recordRow(r, showOwner){
   var cls = c.sell && c.cny ? (c.margin>=30?'good':(c.margin>=10?'mid':'bad')) : 'gray';
   var label = c.sell && c.cny ? c.margin.toFixed(1)+'%' : '미완성';
   return '<tr data-open-rec="'+esc(r.id)+'">'+
+    '<td style="width:34px;padding-right:0;">'+
+      '<input type="checkbox" class="pickbox" data-pick-rec="'+esc(r.id)+'"'+
+      (App.picked[r.id] ? ' checked' : '')+' aria-label="이 기록 고르기"></td>'+
     '<td><div class="cell-prod">'+
       '<span class="cell-thumb">'+imgOr(r.coupang.image)+'</span>'+
       '<span><div class="nm">'+esc(r.coupang.name || r.title || '제목 없음')+'</div>'+
-      '<div class="sm">'+esc(r.title || '-')+'</div></span></div></td>'+
+      '<div class="sm">'+
+        (r.source && r.source !== 'coupang'
+          ? '<span class="src-tag" style="background:'+srcOf(r).bg+';">'+esc(srcOf(r).label)+'</span> '
+          : '')+
+        esc(r.title || '-')+'</div></span></div></td>'+
     (showOwner ? '<td>'+esc(r.ownerName||r.ownerId||'-')+'</td>' : '')+
     '<td class="r num">'+(c.sell?won(c.sell):'-')+'</td>'+
     '<td class="r num">'+(c.cny?'¥'+c.cny.toFixed(2):'-')+'</td>'+
@@ -2292,6 +4962,7 @@ function recordRow(r, showOwner){
 
 function viewList(){
   var q = App.query.trim().toLowerCase();
+  var pickedCount = Object.keys(App.picked).filter(function(k){ return App.picked[k]; }).length;
   var recs = App.records.filter(function(r){
     if(!q) return true;
     return ((r.coupang.name||'')+' '+(r.title||'')+' '+(r.memo||'')).toLowerCase().indexOf(q) >= 0;
@@ -2309,9 +4980,23 @@ function viewList(){
     '<div class="toolbar">'+
       '<span class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'+
         '<input id="q" value="'+esc(App.query)+'" placeholder="상품명, 제목, 메모로 검색"></span>'+
+      (pickedCount
+        ? '<button class="act danger" id="delPicked">'+
+            '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>'+
+            '고른 '+nf(pickedCount)+'건 삭제</button>'
+        : '')+
+      (App.records.length
+        ? '<button class="act danger" id="delAll" style="margin-left:auto;">'+
+            '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>'+
+            '전체 비우기</button>'
+        : '')+
     '</div>'+
     (recs.length ? '<div class="tbl-wrap"><table>'+
-      '<thead><tr><th>상품</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
+      '<thead><tr>'+
+      '<th style="width:34px;padding-right:0;">'+
+        '<input type="checkbox" id="pickAll" aria-label="모두 고르기"'+
+        (recs.length && recs.every(function(r){ return App.picked[r.id]; }) ? ' checked' : '')+'></th>'+
+      '<th>상품</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
       '<th class="r">이익률</th><th class="r">월 예상이익</th><th>수정일</th><th></th></tr></thead>'+
       '<tbody>'+recs.map(function(r){ return recordRow(r,false); }).join('')+'</tbody></table></div>'
       : '<div class="empty-state"><div class="ic">🗂️</div><h4>'+(App.query?'검색 결과가 없습니다':'보관함이 비어 있습니다')+'</h4>'+
@@ -2379,7 +5064,8 @@ function viewAdmin(){
       '<span style="margin-left:auto;font-size:11.5px;color:var(--sub2);">'+nf(filtered.length)+'건 표시</span>'+
     '</div>'+
     (filtered.length ? '<div class="tbl-wrap"><table>'+
-      '<thead><tr><th>상품</th><th>사용자</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
+      '<thead><tr><th style="width:34px;padding-right:0;"></th>'+
+      '<th>상품</th><th>사용자</th><th class="r">판매가</th><th class="r">1688 단가</th><th class="r">개당 이익</th>'+
       '<th class="r">이익률</th><th class="r">월 예상이익</th><th>수정일</th><th></th></tr></thead>'+
       '<tbody>'+filtered.map(function(r){ return recordRow(r,true); }).join('')+'</tbody></table></div>'
       : '<div class="empty-state"><div class="ic">🔍</div><h4>표시할 기록이 없습니다</h4><p>필터를 바꾸거나 검색어를 지워보세요.</p></div>')+
@@ -2517,11 +5203,54 @@ function viewSettings(){
 function closeModal(){ var s = $('.scrim'); if(s) s.remove(); }
 
 /* 이미지 검색에 쓸 썸네일. 없으면 쿠팡 상품 페이지에서 다시 받아온다. */
+/* 주소로 저장된 그림을 1688 에 올릴 수 있는 형태로 바꾼다 */
+async function toDataUrl(url){
+  try {
+    var res = await fetch(url);
+    if(!res.ok) return '';
+    var blob = await res.blob();
+    if(!blob || blob.size < 500) return '';
+    return await new Promise(function(done){
+      var fr = new FileReader();
+      fr.onload = function(){ done(String(fr.result || '')); };
+      fr.onerror = function(){ done(''); };
+      fr.readAsDataURL(blob);
+    });
+  } catch(e){ return ''; }
+}
+
+/* 1688 이미지 검색에 올릴 쿠팡 썸네일을 구한다.
+   쿠팡을 다시 여는 것은 마지막 수단이다. 막혀 있으면 거기서 끝나기 때문이다. */
 async function coupangThumbData(){
   var r = App.record;
-  var cached = App.imgData[r.coupang.url || r.id];
+
+  /* 1) 이번 방문에 받아둔 원본. 주소로도 찾고 기록 번호로도 찾는다.
+        주소를 나중에 채우면 열쇠가 바뀌어 그림을 놓치기 때문이다. */
+  var cached = App.imgData[r.coupang.url] || App.imgData[r.id];
   if(cached) return cached;
-  if(!r.coupang.url){ return ''; }
+
+  /* 2) 기록에 저장된 그림이 이미 올릴 수 있는 형태면 그대로 쓴다 */
+  var img = r.coupang.image || '';
+  if(img.indexOf('data:') === 0){
+    App.imgData[r.id] = img;
+    return img;
+  }
+
+  /* 3) 주소로 저장돼 있으면 받아서 바꾼다 */
+  if(/^https?:\/\//i.test(img)){
+    App.busy.img = true; render();
+    var conv = await toDataUrl(img);
+    App.busy.img = false;
+    if(conv){
+      App.imgData[r.id] = conv;
+      return conv;
+    }
+  }
+
+  /* 4) 그래도 없으면 쿠팡 상품 페이지를 다시 읽는다.
+        쿠팡에서 온 상품일 때만 쓴다. 다른 곳 주소는 수집기가 읽지 못한다. */
+  if(r.source && r.source !== 'coupang') return '';
+  if(!r.coupang.url) return '';
   App.busy.img = true; render();
   var res = await Ext.collect(r.coupang.url);
   App.busy.img = false;
@@ -2535,47 +5264,101 @@ async function findOn1688(){
   var r = App.record;
   if(!Ext.present){ toast('확장프로그램이 연결되지 않았습니다.','err'); return; }
   if(!r.coupang.url && !r.coupang.name){
-    toast('먼저 쿠팡 상품을 수집해주세요.','err'); return;
+    toast('먼저 '+srcOf(r).label+' 상품을 수집해주세요.','err'); return;
   }
 
-  var data = await coupangThumbData();
-  if(!data){
-    toast('썸네일을 구하지 못했습니다. 상품명으로 찾아보겠습니다.','err');
-    return findByKeyword();
+  /* 로그인 확인부터 시간이 걸리므로, 그 전에 먼저 눌린 것을 보여준다 */
+  App.busy.cn = true;
+  App.busy.cnMode = '1688 로그인 확인 중';
+  render();
+  toast('눌렀습니다 · 1688에서 같은 물건을 찾습니다');
+
+  if(!(await ensure1688Login())){
+    App.busy.cn = false; App.busy.cnMode = '';
+    render();
+    return;
   }
+
+  Progress.open('1688 에서 같은 물건을 찾는 중입니다',
+    '사진과 상품명 두 가지로 함께 찾습니다.');
+  Progress.step(srcOf(r).label+' 썸네일 준비 중');
+  App.busy.cnMode = '썸네일 준비 중';
+  render();
+  var data = await coupangThumbData();
 
   App.assisted = false;
   App.busy.cn = true;
-  App.busy.cnMode = '1688 탭에서 이미지 검색 중';
+  App.busy.cnMode = '1688 에서 찾는 중';
   render();
-  var res = await Ext.image1688(data, 20);
+
+  var pair = await find1688Pair(data, r.coupang.name, {
+    onStep: function(t){ Progress.step(t); App.busy.cnMode = t; render(); }
+  });
   App.busy.cn = false;
   App.busy.cnMode = '';
 
-  if(res.assisted){
-    App.assisted = true;
+  var merged = merge1688(pair);
+  if(!merged.length){
+    if(pair.assisted){
+      App.assisted = true;
+      render();
+      /* 직접 마무리하실 탭 하나만 남기고 나머지는 닫는다 */
+      Ext.close1688Tabs(true);
+      Progress.stuck(pair.assisted);
+      return;
+    }
+    Progress.close();
     render();
-    toast(res.error || '1688 탭을 열어두었습니다. 사진을 올려 검색해주세요.','err');
-    return;
+    /* 마지막 수단 — 중국어 검색어를 직접 넣어 다시 찾는다 */
+    toast(pair.noTranslate
+      ? '상품명을 중국어로 바꾸지 못했습니다. 검색어를 직접 넣어주세요.'
+      : '후보를 찾지 못했습니다. 검색어를 바꿔 다시 찾아보세요.', 'err');
+    return findByKeyword();
   }
-  if(!res.ok){
-    render();
-    toast(res.error || '이미지 검색에 실패했습니다.','err');
-    return;
+  if(pair.keyword) r.memo = r.memo || ('1688 검색어: ' + pair.keyword);
+  /* 사진 갈래가 왜 비었는지 반드시 화면에 남긴다.
+     이름 결과가 있다고 조용히 넘어가면 왜 안 되는지 알 길이 없다. */
+  if(!pair.image.length){
+    var why = pair.noThumb
+      ? srcOf(App.record).label+' 썸네일이 없어 사진 검색을 시작하지 못했습니다.'
+      : (pair.assisted || pair.imageError || '사진 검색이 결과를 내지 못했습니다.');
+    App.record.imageWhy = why;
+    if(pair.assisted) App.assisted = true;
+    toast('사진 검색 · '+why, 'err');
+  } else {
+    App.record.imageWhy = '';
   }
+  Progress.step('찾은 상품을 고르는 중');
   App.assisted = false;
-  applyCandidates((res.data && res.data.items) || [], '이미지 검색');
+  applyCandidates(merged, '사진+이름 (' + pair.how.join(', ') + ')', true);
 }
 
 /* 열어둔 1688 탭에서 사용자가 직접 검색한 결과를 가져온다 */
 async function grabOpen1688(){
   App.busy.cn = true;
+  App.busy.cnMode = '1688 로그인 확인 중';
+  render();
+  toast('눌렀습니다 · 열린 1688 탭을 읽습니다');
+
+  if(!(await ensure1688Login())){
+    App.busy.cn = false; App.busy.cnMode = '';
+    render();
+    return;
+  }
   App.busy.cnMode = '열린 1688 탭 읽는 중';
+  Progress.open('열린 1688 탭을 읽는 중입니다', '그 탭에 떠 있는 상품 목록을 가져옵니다.');
+  Progress.step('상품 목록 읽는 중');
   render();
   var res = await Ext.grab1688Tab(20);
   App.busy.cn = false;
   App.busy.cnMode = '';
-  if(!res.ok){ render(); toast(res.error || '1688 탭에서 결과를 읽지 못했습니다.','err'); return; }
+  if(!res.ok){
+    Progress.close();
+    render();
+    toast(res.error || '1688 탭에서 결과를 읽지 못했습니다.','err');
+    return;
+  }
+  Progress.step('찾은 상품을 고르는 중');
   App.assisted = false;
   var d = res.data || {};
   applyCandidates(d.items || [], d.title ? ('1688 탭 “'+String(d.title).slice(0,18)+'”') : '1688 탭');
@@ -2596,16 +5379,156 @@ async function findByKeyword(){
   openSearch1688Modal(name, suggested);
 }
 
+/* =======================================================================
+   1688 찾기 — 사진과 이름을 함께 쓴다.
+   사진 검색은 같은 물건을 집어내지만 1688 화면 자동 조작이 자주 막힌다.
+   이름 검색은 확실히 돌아가지만 비슷한 물건이 섞인다.
+   그래서 이름 검색을 먼저 돌려 바닥을 깔고, 사진 검색이 되면 그 결과를 위에 얹는다.
+   ======================================================================= */
+async function find1688Pair(thumb, name, opts){
+  var o = opts || {};
+  var out = {image:[], name:[], keyword:'', assisted:'', how:[], noTranslate:false,
+             noThumb:false, imageError:'', baseName: String(name || '')};
+  var hasPrice = function(it){ return num(it.price) > 0; };
+
+  /* 이름 검색 — 실패할 일이 거의 없어 먼저 돌린다 */
+  if(name){
+    /* 타오바오에서 온 상품은 이름이 이미 중국어다. 그래도 제목이 너무 길어
+       그대로 넣으면 아무것도 안 나오므로, 짧은 검색어로 줄여서 쓴다. */
+    var isCn = /[\u4e00-\u9fff]/.test(name);
+    if(o.onStep) o.onStep(isCn ? '중국어 상품명을 검색어로 줄이는 중' : '상품명을 중국어로 바꾸는 중');
+    var cn = await Sampler.chinese(name);
+    var kw = (cn && cn.keyword) ? String(cn.keyword).trim() : '';
+    if(!kw && isCn){
+      /* 줄여주는 기능을 못 쓰더라도, 중국어 이름이면 앞쪽 글자를 그대로 검색어로 삼는다 */
+      kw = (name.match(/[\u4e00-\u9fff]+/g) || []).join('').slice(0, 8);
+    }
+    if(kw){
+      out.keyword = kw;
+      if(o.onStep) o.onStep('“'+kw+'” 로 1688 검색 중');
+      var sres = await Ext.search1688(kw, 12);
+      if(sres.ok) out.name = ((sres.data && sres.data.items) || []).filter(hasPrice);
+    } else {
+      /* 번역을 못 하면 이름 갈래는 통째로 빠진다. 사진 갈래만 남는다. */
+      out.noTranslate = true;
+    }
+  }
+
+  /* 사진 검색 — 되면 가장 정확하다 */
+  if(thumb){
+    if(o.onStep) o.onStep('썸네일로 1688 이미지 검색 중');
+    var ires = await Ext.image1688(thumb, 20, o.assist !== false);
+    if(ires.ok) out.image = ((ires.data && ires.data.items) || []).filter(hasPrice);
+    else if(ires.assisted) out.assisted = ires.error;
+    else out.imageError = ires.error || '이미지 검색이 실패했습니다.';
+  } else {
+    /* 썸네일이 없으면 사진 갈래는 시도조차 못 한다. 조용히 넘어가지 않는다. */
+    out.noThumb = true;
+  }
+
+  if(out.image.length) out.how.push('사진 '+nf(out.image.length)+'개');
+  else if(out.noThumb) out.how.push('사진 건너뜀 (썸네일 없음)');
+  else if(out.assisted) out.how.push('사진 막힘');
+  else if(out.imageError) out.how.push('사진 실패');
+  if(out.name.length) out.how.push('이름 '+nf(out.name.length)+'개');
+  return out;
+}
+
+/* 쿠팡 상품명과 1688 상품명이 얼마나 겹치는지 센다.
+   두 글자씩 끊어 몇 조각이 겹치는지 보는 방식이다.
+   "접이식 탁상 거치대" 와 "접이식 금속 데스크탑 브래킷" 은 접이, 이식 이 겹친다. */
+function nameScore(base, cand){
+  var clean = function(t){
+    return String(t || '').toLowerCase().replace(/[^가-힣a-z0-9]/g, '');
+  };
+  var b = clean(base), c = clean(cand);
+  if(b.length < 2 || !c) return 0;
+  var seen = {}, hit = 0;
+  for(var i = 0; i < b.length - 1; i++){
+    var g = b.slice(i, i + 2);
+    if(seen[g]) continue;
+    seen[g] = 1;
+    if(c.indexOf(g) >= 0) hit++;
+  }
+  return hit;
+}
+
+/* 값들의 한가운데 가격. 터무니없이 싼 것을 걸러내는 기준이 된다. */
+function medianPrice(list){
+  var ps = list.map(function(it){ return num(it.price); })
+               .filter(function(p){ return p > 0; })
+               .sort(function(a,b){ return a - b; });
+  if(!ps.length) return 0;
+  var m = Math.floor(ps.length / 2);
+  return ps.length % 2 ? ps[m] : (ps[m-1] + ps[m]) / 2;
+}
+
+/* 두 갈래 결과를 섞는다.
+   사진 갈래는 1688 이 닮은 순으로 준 것이라 그 순서를 존중한다.
+   가격만 보고 줄 세우면 ¥0.29 짜리 엉뚱한 부속품이 1등으로 올라온다. */
+var IMAGE_POOL = 8;    /* 사진 갈래에서 닮은 순으로 이만큼만 본다 */
+var LOW_RATIO = 0.35;  /* 한가운데 가격의 이 아래면 다른 물건으로 본다 */
+var HIGH_RATIO = 4;    /* 이 위면 더 큰 물건이나 묶음으로 본다 */
+
+function merge1688(pair){
+  var seen = {};
+  var dedupe = function(list, src){
+    return list.filter(function(it){
+      var key = it.url || ((it.name || '') + '|' + it.price);
+      if(seen[key]) return false;
+      seen[key] = true;
+      it.src = src;
+      return true;
+    });
+  };
+
+  /* 사진 갈래는 닮은 순 앞쪽만 본다. 뒤로 갈수록 닮지 않은 물건이다. */
+  var im = dedupe((pair.image || []).slice(0, IMAGE_POOL), '사진');
+  var nm = dedupe(pair.name || [], '이름');
+
+  /* 한가운데 가격에서 크게 벗어난 것은 다른 물건으로 보고 뒤로 미룬다 */
+  var med = medianPrice(im.concat(nm));
+  var sane = [], odd = [];
+  im.concat(nm).forEach(function(it){
+    var pr = num(it.price);
+    if(med && pr < med * LOW_RATIO){ it.warn = '값이 너무 쌉니다'; odd.push(it); }
+    else if(med && pr > med * HIGH_RATIO){ it.warn = '값이 너무 비쌉니다'; odd.push(it); }
+    else { sane.push(it); }
+  });
+  if(!sane.length){ sane = odd; odd = []; }
+
+  var byPrice = function(a,b){ return num(a.price) - num(b.price); };
+
+  /* 이름이 더 많이 겹치는 것을 앞에 둔다. 같은 만큼 겹치면 싼 쪽이 앞이다.
+     값만 보고 줄 세우면 전혀 다른 물건이 1등이 된다. */
+  var base = pair.baseName || '';
+  sane.forEach(function(it){ it.match = nameScore(base, it.name); });
+  var rank = function(a, b){
+    if(a.match !== b.match) return b.match - a.match;
+    return num(a.price) - num(b.price);
+  };
+  var imOk = sane.filter(function(it){ return it.src === '사진'; }).sort(rank);
+  var nmOk = sane.filter(function(it){ return it.src === '이름'; }).sort(rank);
+
+  /* 다섯 자리 중 사진에 최대 셋, 나머지는 이름에 준다.
+     의심스러운 것은 맨 뒤로 보내 눈으로 확인하실 수 있게만 남긴다. */
+  var headCount = Math.min(3, imOk.length);
+  return imOk.slice(0, headCount)
+             .concat(nmOk, imOk.slice(headCount), odd.sort(byPrice));
+}
+
 /* 값이 있는 것 중 싼 순으로 5개를 고른다 */
-function applyCandidates(items, how){
+function applyCandidates(items, how, keepOrder){
   /* 링크가 없는 결과도 받는다. 단가와 이름만 있어도 이익 계산은 된다. */
   var usable = items.filter(function(it){ return num(it.price) > 0; });
   if(!usable.length){
+    Progress.close();
     render();
     toast('가격을 읽을 수 있는 결과가 없습니다.','err');
     return;
   }
-  usable.sort(function(a,b){ return num(a.price) - num(b.price); });
+  /* 두 갈래로 찾은 결과는 이미 순서를 정해두었으므로 다시 줄 세우지 않는다 */
+  if(!keepOrder) usable.sort(function(a,b){ return num(a.price) - num(b.price); });
   var picked = usable.slice(0, 5);
   App.pending = {items:picked, how:how, total:usable.length};
   fillCandidates(picked, how, usable.length);
@@ -2615,6 +5538,7 @@ async function fillCandidates(picked, how, total){
   var r = App.record;
   App.busy.cn = true;
   App.busy.cnMode = '후보 채우는 중';
+  Progress.step('후보 카드에 채우는 중');
   render();
   for(var i = 0; i < 5; i++){
     var it = picked[i];
@@ -2626,14 +5550,19 @@ async function fillCandidates(picked, how, total){
       price: it.price ? String(it.price) : '',
       moq: it.moq || '',
       opt: it.sold ? ('판매 '+it.sold) : '',
-      image: image
+      image: image,
+      src: it.src || '',
+      warn: it.warn || ''
     };
   }
   r.selected = 0;
   App.busy.cn = false;
   App.busy.cnMode = '';
+  Progress.close();
   render();
   saveRecord(true);
+  /* 다 찾았으면 1688 탭은 모두 닫고 이 화면만 남긴다 */
+  Ext.close1688Tabs(false);
   toast(how+'으로 '+nf(total)+'개 중 가장 싼 '+nf(picked.length)+'개를 채웠습니다');
 }
 
@@ -2674,6 +5603,7 @@ function openSearch1688Modal(name, sug){
   $('#cnGo', wrap).onclick = function(){
     var kw = $('#cnKw', wrap).value.trim();
     if(!kw){ toast('검색어를 넣어주세요.','err'); return; }
+    pressBtn($('#cnGo', wrap), '찾는 중');
     closeModal();
     fill1688(kw);
   };
@@ -2684,14 +5614,36 @@ function openSearch1688Modal(name, sug){
 
 async function fill1688(keyword){
   App.busy.cn = true;
+  App.busy.cnMode = '1688 로그인 확인 중';
+  render();
+  toast('눌렀습니다 · “'+keyword+'” 로 5개를 찾습니다');
+
+  if(!(await ensure1688Login())){
+    App.busy.cn = false; App.busy.cnMode = '';
+    render();
+    return;
+  }
   App.busy.cnMode = '이름으로 1688 검색 중';
+  Progress.open('1688 에서 “'+keyword+'” 를 찾는 중입니다', '싼 것부터 5개를 골라 채웁니다.');
+  Progress.step('1688 검색 결과 읽는 중');
   render();
   var res = await Ext.search1688(keyword, 20);
   App.busy.cn = false;
   App.busy.cnMode = '';
-  if(!res.ok){ render(); toast(res.error || '1688 검색에 실패했습니다.','err'); return; }
+  if(!res.ok){
+    Progress.close();
+    render();
+    toast(res.error || '1688 검색에 실패했습니다.','err');
+    return;
+  }
   var items = (res.data && res.data.items) || [];
-  if(!items.length){ render(); toast('검색 결과가 없습니다. 다른 검색어로 시도해보세요.','err'); return; }
+  if(!items.length){
+    Progress.close();
+    render();
+    toast('검색 결과가 없습니다. 다른 검색어로 시도해보세요.','err');
+    return;
+  }
+  Progress.step('찾은 상품을 고르는 중');
   App.record.memo = App.record.memo || ('1688 검색어: ' + keyword);
   applyCandidates(items, '이름 검색 “'+keyword+'”');
 }
@@ -2743,6 +5695,278 @@ function openSettingsModal(){
   };
   $('#mRate').focus();
 }
+/* =======================================================================
+   12-a. 진행 모달
+   1688 탭으로 화면을 빼앗지 않고, 이 화면에 지금 무엇을 하는 중인지 띄운다.
+   ======================================================================= */
+var Progress = {
+  el:null,
+  open(title, line){
+    this.close();
+    var wrap = document.createElement('div');
+    wrap.className = 'scrim';
+    wrap.innerHTML =
+    '<div class="modal" style="max-width:392px;" role="dialog" aria-modal="true" aria-live="polite">'+
+      '<div class="modal-head"><h3 id="pgTitle">'+esc(title)+'</h3>'+
+        '<p id="pgLine">'+esc(line||'')+'</p></div>'+
+      '<div class="modal-body" style="padding-top:6px;">'+
+        '<div class="bar-row" style="grid-template-columns:auto 1fr;gap:12px;align-items:center;">'+
+          '<span class="spin" style="border-color:rgba(18,165,140,.25);border-top-color:var(--teal);'+
+            'width:18px;height:18px;border-width:2.5px;"></span>'+
+          '<span id="pgStep" style="font-size:12.5px;color:#4f5866;letter-spacing:-.2px;">준비하는 중</span>'+
+        '</div>'+
+        '<div class="callout" style="margin-top:16px;">1688 탭은 뒤에서 조용히 열립니다. '+
+          '이 화면을 그대로 두고 기다리시면 결과가 후보 카드에 채워집니다.</div>'+
+        '<div id="pgExtra"></div>'+
+      '</div>'+
+      '<div class="modal-foot"><button class="act" id="pgClose">숨기기</button></div>'+
+    '</div>';
+    document.body.appendChild(wrap);
+    this.el = wrap;
+    wrap.querySelector('#pgClose').onclick = function(){ Progress.close(); };
+    return wrap;
+  },
+  step(text){
+    if(!this.el) return;
+    var el = this.el.querySelector('#pgStep');
+    if(el) el.textContent = text;
+  },
+  /* 자동 검색이 막혔을 때. 이때만 1688 탭으로 갈 수 있는 길을 연다. */
+  stuck(message){
+    if(!this.el) return;
+    var box = this.el.querySelector('.modal-body');
+    var head = this.el.querySelector('#pgTitle');
+    if(head) head.textContent = '1688 에서 직접 마무리해주세요';
+    var line = this.el.querySelector('#pgLine');
+    if(line) line.textContent = message || '자동으로 결과를 띄우지 못했습니다.';
+    box.innerHTML =
+      '<div class="steps">'+
+        '<div class="step"><span class="n">1</span><div><h4>1688 탭으로 이동</h4>'+
+          '<p>아래 버튼을 누르면 뒤에 열어둔 1688 탭으로 갑니다.</p></div></div>'+
+        '<div class="step"><span class="n">2</span><div><h4>이미지 검색 누르기</h4>'+
+          '<p>사진은 이미 올려져 있습니다. 검색 버튼을 눌러 상품 목록을 띄워주세요.</p></div></div>'+
+        '<div class="step"><span class="n">3</span><div><h4>돌아와서 가져오기</h4>'+
+          '<p>이 화면으로 돌아와 <b>열린 1688 결과 가져오기</b> 를 누르면 후보가 채워집니다.</p></div></div>'+
+      '</div>';
+    var foot = this.el.querySelector('.modal-foot');
+    foot.innerHTML =
+      '<button class="act" id="pgClose">닫기</button>'+
+      '<button class="act primary" id="pgGo">1688 탭으로 가기</button>';
+    foot.querySelector('#pgClose').onclick = function(){ Progress.close(); };
+    foot.querySelector('#pgGo').onclick = async function(){
+      var res = await Ext.focus1688Tab();
+      if(!res.ok) toast(res.error || '1688 탭을 찾지 못했습니다.','err');
+      else Progress.close();
+    };
+  },
+  close(){
+    if(this.el){ this.el.remove(); this.el = null; }
+  }
+};
+
+/* =======================================================================
+   12-b. 1688 로그인 확인
+   1688 은 로그인하지 않으면 상품 목록을 보여주지 않는다.
+   그래서 수집을 시작하기 전에 먼저 확인하고, 안 되어 있으면 안내를 띄운다.
+   ======================================================================= */
+async function is1688LoggedIn(){
+  if(!Ext.present) return null;
+  var res = await Ext.login1688Status();
+  if(!res.ok || !res.data) return null;     /* 확인 불가 — 막지 않는다 */
+  return res.data.loggedIn;                 /* true / false / null */
+}
+
+/* 로그인할 때까지 붙잡는 모달. 로그인이 확인되면 true 를 준다. */
+function login1688Modal(){
+  return new Promise(function(resolve){
+    var wrap = document.createElement('div');
+    wrap.className = 'scrim';
+    wrap.innerHTML =
+    '<div class="modal" style="max-width:400px;" role="dialog" aria-modal="true" aria-label="1688 로그인">'+
+      '<div class="modal-head"><h3>1688 로그인이 필요합니다</h3>'+
+        '<p>1688 은 로그인하지 않으면 상품 목록을 보여주지 않습니다. '+
+        '먼저 로그인한 뒤 수집을 시작해주세요.</p></div>'+
+      '<div class="modal-body">'+
+        '<div class="steps">'+
+          '<div class="step"><span class="n">1</span><div><h4>로그인 화면 열기</h4>'+
+            '<p>아래 버튼을 누르면 새 탭에 1688 로그인 화면이 뜹니다.</p></div></div>'+
+          '<div class="step"><span class="n">2</span><div><h4>1688 계정으로 로그인</h4>'+
+            '<p>휴대폰 인증이나 QR 코드로 로그인합니다. 계정이 없으면 먼저 가입해야 합니다.</p></div></div>'+
+          '<div class="step"><span class="n">3</span><div><h4>이 화면으로 돌아와 확인</h4>'+
+            '<p>로그인을 마친 뒤 <b>로그인했어요</b> 를 누르면 수집이 이어집니다.</p></div></div>'+
+        '</div>'+
+        '<div id="lgMsg" class="callout" style="display:none;"></div>'+
+      '</div>'+
+      '<div class="modal-foot">'+
+        '<button class="act" id="lgCancel">취소</button>'+
+        '<button class="act" id="lgOpen">1688 로그인 열기</button>'+
+        '<button class="act primary" id="lgCheck">로그인했어요</button>'+
+      '</div>'+
+    '</div>';
+    document.body.appendChild(wrap);
+
+    var fin = function(v){ wrap.remove(); resolve(v); };
+    var say = function(text){
+      var box = $('#lgMsg', wrap);
+      box.style.display = '';
+      box.innerHTML = text;
+    };
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) fin(false); });
+    $('#lgCancel', wrap).onclick = function(){ fin(false); };
+    $('#lgOpen', wrap).onclick = async function(){
+      var res = await Ext.login1688Open();
+      if(!res.ok){
+        window.open('https://login.1688.com/member/signin.htm', '_blank', 'noopener');
+      }
+      say('새 탭에서 로그인한 뒤 이 창으로 돌아와 <b>로그인했어요</b> 를 눌러주세요.');
+    };
+    $('#lgCheck', wrap).onclick = async function(){
+      var btn = $('#lgCheck', wrap);
+      btn.disabled = true;
+      btn.textContent = '확인 중';
+      var state = await is1688LoggedIn();
+      btn.disabled = false;
+      btn.textContent = '로그인했어요';
+      if(state === false){
+        say('<b>아직 로그인되어 있지 않습니다.</b> 1688 탭에서 로그인을 끝낸 뒤 다시 눌러주세요. '+
+            '로그인했는데도 이 글이 보이면 1688 탭을 한 번 새로고침해주세요.');
+        return;
+      }
+      /* 로그인용으로 열었던 탭은 닫고, 화면을 이쪽으로 되돌린다 */
+      await Ext.backToApp(true);
+      fin(true);   /* 확인됐거나, 확인할 수 없으면 그대로 진행한다 */
+    };
+    $('#lgCheck', wrap).focus();
+  });
+}
+
+/* 타오바오와 테무도 로그인해야 목록이 제대로 나온다. 1688 과 같은 방식으로 안내한다. */
+var SHOP_LOGIN = {
+  taobao:{name:'타오바오', how:'휴대폰 인증이나 QR 코드로 로그인합니다.',
+          why:'로그인하지 않으면 검색 결과가 비거나 엉뚱한 추천 상품이 나옵니다.'},
+  temu:{name:'테무', how:'이메일이나 휴대폰 번호로 로그인합니다.',
+        why:'로그인하지 않으면 목록을 보여주지 않고 로그인 화면으로 넘깁니다.'}
+};
+
+function shopLoginModal(site){
+  var S = SHOP_LOGIN[site] || SHOP_LOGIN.taobao;
+  return new Promise(function(resolve){
+    var wrap = document.createElement('div');
+    wrap.className = 'scrim';
+    wrap.innerHTML =
+    '<div class="modal" style="max-width:400px;" role="dialog" aria-modal="true" aria-label="'+esc(S.name)+' 로그인">'+
+      '<div class="modal-head"><h3>'+esc(S.name)+' 로그인이 필요합니다</h3>'+
+        '<p>'+esc(S.why)+' 먼저 로그인한 뒤 수집을 시작해주세요.</p></div>'+
+      '<div class="modal-body">'+
+        '<div class="steps">'+
+          '<div class="step"><span class="n">1</span><div><h4>로그인 화면 열기</h4>'+
+            '<p>아래 버튼을 누르면 새 탭에 '+esc(S.name)+' 로그인 화면이 뜹니다.</p></div></div>'+
+          '<div class="step"><span class="n">2</span><div><h4>'+esc(S.name)+' 계정으로 로그인</h4>'+
+            '<p>'+esc(S.how)+'</p></div></div>'+
+          '<div class="step"><span class="n">3</span><div><h4>이 화면으로 돌아와 확인</h4>'+
+            '<p>로그인을 마친 뒤 <b>로그인했어요</b> 를 누르면 수집이 이어집니다.</p></div></div>'+
+        '</div>'+
+        '<div id="shMsg" class="callout" style="display:none;"></div>'+
+      '</div>'+
+      '<div class="modal-foot">'+
+        '<button class="act" id="shCancel">취소</button>'+
+        '<button class="act" id="shOpen">'+esc(S.name)+' 로그인 열기</button>'+
+        '<button class="act primary" id="shCheck">로그인했어요</button>'+
+      '</div>'+
+    '</div>';
+    document.body.appendChild(wrap);
+
+    var fin = function(v){ wrap.remove(); resolve(v); };
+    var say = function(text){
+      var box = $('#shMsg', wrap);
+      box.style.display = '';
+      box.innerHTML = text;
+    };
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) fin(false); });
+    $('#shCancel', wrap).onclick = function(){ fin(false); };
+    $('#shOpen', wrap).onclick = async function(){
+      var res = await Ext.shopLoginOpen(site);
+      if(!res.ok){
+        window.open(site === 'temu' ? 'https://www.temu.com/kr/login.html' : 'https://login.taobao.com/',
+          '_blank', 'noopener');
+      }
+      say('새 탭에서 로그인한 뒤 이 창으로 돌아와 <b>로그인했어요</b> 를 눌러주세요.');
+    };
+    $('#shCheck', wrap).onclick = async function(){
+      var btn = $('#shCheck', wrap);
+      btn.disabled = true;
+      btn.textContent = '확인 중';
+      var res = await Ext.shopLogin(site);
+      btn.disabled = false;
+      btn.textContent = '로그인했어요';
+      if(res.ok && res.data && res.data.on === false){
+        say('<b>아직 로그인되어 있지 않습니다.</b> '+esc(S.name)+' 탭에서 로그인을 끝낸 뒤 다시 눌러주세요. '+
+            '로그인했는데도 이 글이 보이면 그 탭을 한 번 새로고침해주세요.');
+        return;
+      }
+      await Ext.backToApp(true);
+      fin(true);
+    };
+    $('#shCheck', wrap).focus();
+  });
+}
+
+/* 수집 전에 부르는 관문. 진행해도 되면 true. */
+async function ensureShopLogin(site){
+  if(!Ext.present) return true;
+  var res = await Ext.shopLogin(site);
+  if(!res.ok) return true;                       /* 확인이 안 되면 막지 않는다 */
+  if(res.data && res.data.on) return true;
+  return shopLoginModal(site);
+}
+
+/* 수집 전에 부르는 관문. 진행해도 되면 true. */
+async function ensure1688Login(){
+  var state = await is1688LoggedIn();
+  if(state !== false) return true;
+  return login1688Modal();
+}
+
+/* 쿠팡이 접속을 막았을 때. 토스트는 금방 사라져 놓치기 쉬우므로 모달로 알린다. */
+function blockedModal(message){
+  var wrap = document.createElement('div');
+  wrap.className = 'scrim';
+  wrap.innerHTML =
+  '<div class="modal" style="max-width:400px;" role="dialog" aria-modal="true" aria-label="쿠팡 접속 제한">'+
+    '<div class="modal-head"><h3>쿠팡이 접속을 잠시 막았습니다</h3>'+
+      '<p>'+esc(message || '짧은 시간에 요청이 몰리면 쿠팡이 그 아이피를 한동안 막습니다.')+'</p></div>'+
+    '<div class="modal-body">'+
+      '<div class="steps">'+
+        '<div class="step"><span class="n">1</span><div><h4>몇 분 쉬기</h4>'+
+          '<p>보통 3분에서 10분이면 풀립니다. 그동안은 다시 눌러도 같은 화면만 나옵니다.</p></div></div>'+
+        '<div class="step"><span class="n">2</span><div><h4>쿠팡을 직접 열어 확인</h4>'+
+          '<p>크롬에서 쿠팡에 들어가 보세요. 보안 확인 화면이 뜨면 한 번 통과해두면 풀립니다.</p></div></div>'+
+        '<div class="step"><span class="n">3</span><div><h4>천천히 쓰기</h4>'+
+          '<p>키워드를 연달아 여러 개 수집하면 다시 막힙니다. 한 건씩 간격을 두고 눌러주세요.</p></div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-foot">'+
+      '<button class="act" id="bkClose">닫기</button>'+
+      '<button class="act" id="bkClear">쿠팡 멀쩡해요, 대기 풀기</button>'+
+      '<button class="act primary" id="bkOpen">쿠팡 열어서 확인</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(wrap);
+  var fin = function(){ wrap.remove(); };
+  wrap.addEventListener('click', function(e){ if(e.target === wrap) fin(); });
+  wrap.querySelector('#bkClose').onclick = fin;
+  wrap.querySelector('#bkClear').onclick = async function(){
+    var res = await Ext.coupangCooldown(true);
+    if(res.ok) toast('대기를 풀었습니다. 다시 시도해보세요');
+    else toast(res.error || '대기를 풀지 못했습니다.','err');
+    fin();
+  };
+  wrap.querySelector('#bkOpen').onclick = function(){
+    window.open('https://www.coupang.com/', '_blank', 'noopener');
+    fin();
+  };
+}
+
 function confirmModal(title, body, danger){
   return new Promise(function(resolve){
     var wrap = document.createElement('div');
@@ -2795,7 +6019,12 @@ async function grabCoupang(){
   App.busy.cp = true; render();
   var res = await Ext.collect(url);
   App.busy.cp = false;
-  if(!res.ok){ render(); toast(res.error || '수집에 실패했습니다.','err'); return; }
+  if(!res.ok){
+    render();
+    if(res.blocked){ blockedModal(res.error); return; }
+    toast(res.error || '수집에 실패했습니다.','err');
+    return;
+  }
   var d = res.data || {};
   var cp = App.record.coupang;
   cp.url = url;
@@ -2811,6 +6040,10 @@ async function grabCoupang(){
   if(!App.record.title || App.record.title === '새 비교 분석'){
     App.record.title = (cp.name || '새 비교 분석').slice(0,40);
   }
+  /* 값이 틀릴 때 무엇을 보고 그렇게 정했는지 화면에 남긴다 */
+  cp.priceSeen = d.priceSeen || '';
+  cp.grabbedAt = nowIso();
+  cp.grabbedBy = Ext.version || '';
   render();
   autosave();
   toast('쿠팡 상품 정보를 가져왔습니다');
@@ -2821,6 +6054,7 @@ async function grabCandidate(i){
   var url = validUrl(cleanUrl(input ? input.value : ''));
   if(!url){ toast('1688 상품 링크가 올바르지 않습니다. 칸을 비우고 다시 붙여넣어 주세요.','err'); return; }
   if(siteOf(url) !== '1688'){ toast('1688 상품 주소가 아닙니다.','err'); return; }
+  if(!(await ensure1688Login())) return;
   if(input) input.value = url;
   App.record.candidates[i].url = url;
   App.busy['c'+i] = true; render();
@@ -2884,19 +6118,160 @@ function bindCommon(){
   });
 }
 
+/* =======================================================================
+   리뷰 분석 — 최근 리뷰 100개로 좋은 점과 나쁜 점을 뽑는다
+   ======================================================================= */
+function cpPid(url){
+  var m = String(url || '').match(/\/vp\/products\/(\d+)/);
+  return m ? m[1] : '';
+}
+App.reviewCache = App.reviewCache || {};
+
+function riText(name, d, ins){
+  var out = [];
+  out.push('[리뷰 분석] '+(name || ''));
+  out.push('최근 리뷰 '+d.read+'개'+(d.average ? ' · 평균 별점 '+d.average : '')+(d.total ? ' · 전체 '+d.total+'개' : ''));
+  if(ins.summary) out.push('\n총평: '+ins.summary);
+  if(ins.good.length){ out.push('\n좋은 점'); ins.good.forEach(function(g){ out.push('- '+g.point+' ('+g.count+'건) "'+g.quote+'"'); }); }
+  if(ins.bad.length){ out.push('\n나쁜 점'); ins.bad.forEach(function(g){ out.push('- '+g.point+' ('+g.count+'건) "'+g.quote+'"'); }); }
+  if(ins.chance.length){ out.push('\n수입해서 팔 때 노릴 점'); ins.chance.forEach(function(c){ out.push('- '+c); }); }
+  if(ins.buyers) out.push('\n구매자: '+ins.buyers);
+  if(ins.options) out.push('옵션: '+ins.options);
+  return out.join('\n');
+}
+
+function riBody(name, d, ins){
+  var stars = [5,4,3,2,1].map(function(n){
+    var pct = num(d.distribution && d.distribution[n]);
+    return '<div class="ri-bar"><span>'+n+'점</span><i><b style="width:'+Math.min(100,pct)+'%;"></b></i><em>'+pct+'%</em></div>';
+  }).join('');
+  var photo = d.reviews.filter(function(r){ return r.photo; }).length;
+  var low = d.reviews.filter(function(r){ return r.stars && r.stars <= 3; }).length;
+  var item = function(g, kind){
+    return '<div class="ri-item '+kind+'"><div class="ri-pt">'+esc(g.point)+
+      (g.count ? '<span class="ri-cnt">'+nf(g.count)+'건</span>' : '')+'</div>'+
+      (g.quote ? '<div class="ri-q">“'+esc(g.quote)+'”</div>' : '')+'</div>';
+  };
+  return ''+
+    '<div class="ri-top">'+
+      '<div class="ri-kpi"><b>'+nf(d.read)+'</b><span>분석한 최근 리뷰</span></div>'+
+      '<div class="ri-kpi"><b>'+(d.average ? d.average : '-')+'</b><span>평균 별점</span></div>'+
+      '<div class="ri-kpi"><b>'+nf(low)+'</b><span>3점 이하</span></div>'+
+      '<div class="ri-kpi"><b>'+nf(photo)+'</b><span>사진 리뷰</span></div>'+
+      '<div class="ri-dist">'+stars+'</div>'+
+    '</div>'+
+    (ins.summary ? '<div class="ri-sum">'+esc(ins.summary)+'</div>' : '')+
+    '<div class="ri-grid">'+
+      '<div class="ri-col"><h4 class="good">좋은 점</h4>'+
+        (ins.good.length ? ins.good.map(function(g){ return item(g,'good'); }).join('') : '<p class="ri-none">뚜렷한 칭찬이 없습니다</p>')+'</div>'+
+      '<div class="ri-col"><h4 class="bad">나쁜 점</h4>'+
+        (ins.bad.length ? ins.bad.map(function(g){ return item(g,'bad'); }).join('') : '<p class="ri-none">뚜렷한 불만이 없습니다</p>')+'</div>'+
+    '</div>'+
+    (ins.chance.length
+      ? '<div class="ri-chance"><h4>수입해서 팔 때 노릴 점</h4><ul>'+
+          ins.chance.map(function(c){ return '<li>'+esc(c)+'</li>'; }).join('')+'</ul></div>'
+      : '')+
+    ((ins.buyers || ins.options)
+      ? '<div class="ri-meta">'+
+          (ins.buyers ? '<div><b>구매자</b> '+esc(ins.buyers)+'</div>' : '')+
+          (ins.options ? '<div><b>옵션</b> '+esc(ins.options)+'</div>' : '')+
+        '</div>'
+      : '');
+}
+
+/* opts: {url, name, onDone(result)} */
+function reviewInsightModal(opts){
+  var o = opts || {};
+  var pid = cpPid(o.url);
+  var wrap = document.createElement('div');
+  wrap.className = 'scrim';
+  wrap.innerHTML =
+    '<div class="modal ri-modal" role="dialog" aria-modal="true" aria-label="리뷰 분석">'+
+      '<div class="modal-head"><h3>리뷰 분석 · 최근 100개</h3>'+
+        '<p>'+esc(String(o.name || '').slice(0, 70))+'</p></div>'+
+      '<div class="modal-body" id="riBody">'+
+        '<div class="ri-wait"><span class="spin"></span><span id="riStep">쿠팡에서 최근 리뷰를 받는 중</span></div>'+
+      '</div>'+
+      '<div class="modal-foot">'+
+        '<button class="act" id="riClose">닫기</button>'+
+        '<button class="act" id="riAgain" hidden>다시 분석</button>'+
+        '<button class="act primary" id="riCopy" hidden>결과 복사</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(wrap);
+  var close = function(){ wrap.remove(); };
+  wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+  $('#riClose', wrap).onclick = close;
+
+  var step = function(t){ var el = $('#riStep', wrap); if(el) el.textContent = t; };
+  var fail = function(msg){
+    $('#riBody', wrap).innerHTML = '<div class="callout">'+esc(msg)+'</div>';
+    $('#riAgain', wrap).hidden = false;
+  };
+
+  var run = async function(force){
+    $('#riAgain', wrap).hidden = true;
+    $('#riCopy', wrap).hidden = true;
+    $('#riBody', wrap).innerHTML =
+      '<div class="ri-wait"><span class="spin"></span><span id="riStep">쿠팡에서 최근 리뷰를 받는 중</span></div>';
+    if(!pid){ fail('쿠팡 상품 주소에서 상품번호를 찾지 못했습니다.'); return; }
+    if(!Ext.present){ fail('수집기가 연결되지 않았습니다.'); return; }
+
+    var hit = !force && App.reviewCache[pid];
+    var d, ins;
+    if(hit){ d = hit.d; ins = hit.ins; }
+    else {
+      var res = await Ext.coupangReviews(pid, 100);
+      if(!res.ok){
+        if(res.blocked){ close(); blockedModal(res.error); return; }
+        fail(res.error || '쿠팡 리뷰를 받지 못했습니다.');
+        return;
+      }
+      d = res.data || {};
+      if(!d.reviews || !d.reviews.length){
+        fail(d.empty ? '이 상품에는 아직 리뷰가 없습니다.'
+                     : '리뷰를 한 개도 받지 못했습니다. ('+(d.tried || '')+')');
+        return;
+      }
+      step('리뷰 '+nf(d.reviews.length)+'개에서 좋은 점과 나쁜 점을 찾는 중');
+      ins = await Sampler.reviewInsight(o.name, d.reviews);
+      if(!ins){ fail('리뷰는 '+nf(d.reviews.length)+'개 받았지만 분석하지 못했습니다. 잠시 뒤 다시 분석을 눌러주세요.'); return; }
+      App.reviewCache[pid] = { d: d, ins: ins, at: nowIso() };
+    }
+
+    $('#riBody', wrap).innerHTML = riBody(o.name, d, ins);
+    $('#riAgain', wrap).hidden = false;
+    var cp = $('#riCopy', wrap);
+    cp.hidden = false;
+    cp.onclick = function(){
+      navigator.clipboard.writeText(riText(o.name, d, ins)).then(
+        function(){ toast('분석 결과를 복사했습니다'); },
+        function(){ toast('복사하지 못했습니다.','err'); }
+      );
+    };
+    if(o.onDone) o.onDone({ d: d, ins: ins });
+  };
+  $('#riAgain', wrap).onclick = function(){ run(true); };
+  run(false);
+}
+
 function bindCompare(){
   var r = App.record;
   var reRender = function(){ render(); };
 
-  $('#cpGrab').onclick = grabCoupang;
-  $('#cpOpen').onclick = function(){
+  /* 화면에 없는 단추를 잡으려 하면 여기서 멈춰서, 아래 단추들이 통째로 죽는다.
+     출처에 따라 안 나오는 단추가 있으므로 반드시 있는지 보고 연결한다. */
+  var on = function(id, fn){ var el = $(id); if(el) el.onclick = fn; };
+
+  on('#cpGrab', grabCoupang);
+  on('#cpOpen', function(){
     var u = validUrl(cleanUrl($('#cpUrl').value));
     if(u) window.open(u,'_blank','noopener');
-    else toast('먼저 쿠팡 링크를 입력해주세요.','err');
-  };
-  $('#openList').onclick = function(){ go('list'); };
-  $('#saveRec').onclick = function(){ saveRecord(false); };
-  $('#dupRec').onclick = function(){
+    else toast('먼저 '+srcOf(r).label+' 링크를 입력해주세요.','err');
+  });
+  on('#openList', function(){ go('list'); });
+  on('#saveRec', function(){ saveRecord(false); });
+  on('#dupRec', function(){
     var copy = normalizeRecord(JSON.parse(JSON.stringify(r)));
     copy.id = rid('rec_');
     copy.title = (r.title||'분석')+' 사본';
@@ -2904,13 +6279,41 @@ function bindCompare(){
     App.record = copy;
     render();
     saveRecord(false);
-  };
-  $('#openSettings').onclick = openSettingsModal;
+  });
+  on('#openSettings', openSettingsModal);
+  on('#cpReview', function(){
+    reviewInsightModal({
+      url: r.coupang.url, name: r.coupang.name,
+      onDone: function(res){
+        r.reviewInsight = {
+          at: nowIso(), read: res.d.read, average: res.d.average,
+          summary: res.ins.summary, good: res.ins.good, bad: res.ins.bad,
+          chance: res.ins.chance, buyers: res.ins.buyers, options: res.ins.options
+        };
+        App.jumpTop = false;
+        render();
+        saveRecord(true);
+      }
+    });
+  });
   var f1688 = $('#find1688');
-  if(f1688) f1688.onclick = findOn1688;
+  if(f1688) f1688.onclick = function(){ pressBtn(f1688, '시작하는 중'); findOn1688(); };
   var gTab = $('#grabTab');
-  if(gTab) gTab.onclick = grabOpen1688;
-  $('#fxReload').onclick = async function(){
+  if(gTab) gTab.onclick = function(){ pressBtn(gTab, '시작하는 중'); grabOpen1688(); };
+  var retryImg = $('#retryImg');
+  if(retryImg) retryImg.onclick = function(){ pressBtn(retryImg, '다시 찾는 중'); findOn1688(); };
+  var goAssist2 = $('#goAssist2');
+  if(goAssist2) goAssist2.onclick = async function(){
+    var res = await Ext.focus1688Tab();
+    if(!res.ok) toast(res.error || '열어둔 1688 탭을 찾지 못했습니다.','err');
+  };
+  var goAssist = $('#goAssist');
+  if(goAssist) goAssist.onclick = async function(){
+    var res = await Ext.focus1688Tab();
+    if(!res.ok) toast(res.error || '열어둔 1688 탭을 찾지 못했습니다.','err');
+  };
+  var fxBtn = $('#fxReload');
+  if(fxBtn) fxBtn.onclick = async function(){
     App.busy.fx = true; render();
     var ok = await refreshFx(true, false);
     render();
@@ -2966,8 +6369,10 @@ function bindCompare(){
     if(o){
       var i = num(o.getAttribute('data-open'));
       var u = validUrl(cleanUrl((($('[data-url="'+i+'"]')||{}).value) || ''));
-      if(u) window.open(u,'_blank','noopener');
-      else toast('먼저 1688 링크를 입력해주세요.','err');
+      if(u){ window.open(u,'_blank','noopener'); return; }
+      /* 한국어 이름으로 1688 을 검색하면 글자가 깨져 엉뚱한 결과가 나온다.
+         차라리 링크가 없다고 알리는 편이 낫다. */
+      toast('이 후보는 1688 링크를 얻지 못했습니다. 썸네일로 다시 찾아보세요.','err');
       return;
     }
     var cl = e.target.closest('[data-clear]');
@@ -3080,6 +6485,37 @@ function refreshCalc(){
 }
 
 function bindList(){
+  var all = $('#pickAll');
+  if(all) all.onchange = function(){
+    var q2 = App.query.trim().toLowerCase();
+    App.records.forEach(function(r){
+      var hit = !q2 || ((r.coupang.name||'')+' '+(r.title||'')+' '+(r.memo||''))
+        .toLowerCase().indexOf(q2) >= 0;
+      if(hit){
+        if(all.checked) App.picked[r.id] = true;
+        else delete App.picked[r.id];
+      }
+    });
+    render();
+  };
+  $$('[data-pick-rec]').forEach(function(b){
+    b.onclick = function(e){ e.stopPropagation(); };
+    b.onchange = function(){
+      var id = b.getAttribute('data-pick-rec');
+      if(b.checked) App.picked[id] = true;
+      else delete App.picked[id];
+      render();
+    };
+  });
+  var dp = $('#delPicked');
+  if(dp) dp.onclick = function(){
+    deleteRecords(Object.keys(App.picked).filter(function(k){ return App.picked[k]; }), '고른 기록');
+  };
+  var da = $('#delAll');
+  if(da) da.onclick = function(){
+    deleteRecords(App.records.map(function(r){ return r.id; }), '보관함 전체');
+  };
+
   var q = $('#q');
   if(q){
     q.addEventListener('input', debounce(function(){
@@ -3090,6 +6526,7 @@ function bindList(){
   document.addEventListener('click', listClick);
 }
 function listClick(e){
+  if(e.target && e.target.classList && e.target.classList.contains('pickbox')) return;
   var op = e.target.closest('[data-open-rec]');
   if(op){
     var id = op.getAttribute('data-open-rec');
@@ -3099,6 +6536,30 @@ function listClick(e){
     return;
   }
 }
+/* 여러 건을 한 번에 지운다. 되돌릴 수 없으니 반드시 확인을 받는다. */
+async function deleteRecords(ids, label){
+  if(!ids.length) return;
+  var ok = await confirmModal('기록 삭제',
+    label+' '+nf(ids.length)+'건을 지웁니다. 되돌릴 수 없습니다.', true);
+  if(!ok) return;
+
+  var done = 0, failed = 0;
+  toast(nf(ids.length)+'건을 지우는 중입니다');
+  for(var i = 0; i < ids.length; i++){
+    try {
+      await Store.del('records/'+ids[i]);
+      delete App.picked[ids[i]];
+      done++;
+    } catch(e){ failed++; }
+  }
+  if(App.record && ids.indexOf(App.record.id) >= 0) App.record = null;
+  await loadRecords();
+  render();
+  toast(failed
+    ? nf(done)+'건을 지웠습니다. '+nf(failed)+'건은 실패했습니다.'
+    : nf(done)+'건을 지웠습니다');
+}
+
 function bindRowActions(){
   $$('[data-del-rec]').forEach(function(b){
     b.addEventListener('click', async function(e){
@@ -3232,8 +6693,19 @@ function bindSettings(){
 /* =======================================================================
    15. render
    ======================================================================= */
+function restoreScroll(y){
+  if(!y) return;
+  window.scrollTo(0, y);
+  requestAnimationFrame(function(){
+    window.scrollTo(0, y);
+    requestAnimationFrame(function(){ window.scrollTo(0, y); });
+  });
+}
+
 function render(){
   if(!Auth.user){ renderAuth(); return; }
+  /* 표를 다시 그려도 보던 자리에 머물게 한다. 화면을 갈아탈 때만 위로 올린다. */
+  var keepY = window.scrollY || document.documentElement.scrollTop || 0;
   if(App.route === 'compare' && !App.record) App.record = blankRecord(Auth.user);
   if(App.route === 'admin' && Auth.user.role !== 'admin') App.route = 'dash';
   if(App.route === 'rank' && !App.rank.items.length) App.route = 'keywords';
@@ -3241,6 +6713,10 @@ function render(){
   var inner =
     App.route === 'compare'  ? viewCompare()  :
     App.route === 'keywords' ? viewKeywords() :
+    App.route === 'auto'     ? viewAuto()     :
+    App.route === 'cat'      ? viewCatBest()  :
+    App.route === 'taobao'   ? viewTaobao()   :
+    App.route === 'temu'     ? viewTemu()     :
     App.route === 'rank'     ? viewRank()     :
     App.route === 'list'     ? viewList()     :
     App.route === 'admin'    ? viewAdmin()    :
@@ -3248,10 +6724,18 @@ function render(){
     App.route === 'settings' ? viewSettings() : viewDash();
 
   $('#root').innerHTML = shell(inner);
+  if(App.jumpTop){ App.jumpTop = false; keepY = 0; }
+  /* 새로 그린 내용의 높이가 잡히기 전에 되돌리면 브라우저가 맨 위로 깎아버린다.
+     그래서 바로 한 번, 다음 그림틀에서 한 번 더 되돌린다. */
+  restoreScroll(keepY);
   document.removeEventListener('click', listClick);
   bindCommon();
   if(App.route === 'compare') bindCompare();
   if(App.route === 'keywords') bindKeywords();
+  if(App.route === 'auto') bindAuto();
+  if(App.route === 'cat') bindCatBest();
+  if(App.route === 'taobao') bindTaobao();
+  if(App.route === 'temu') bindTemu();
   if(App.route === 'rank') bindRank();
   if(App.route === 'list' || App.route === 'admin'){ bindList(); bindRowActions(); }
   if(App.route === 'admin') bindAdmin();

@@ -4,6 +4,12 @@
 
 const LOAD_TIMEOUT_MS = 30000;
 const SCRAPE_RETRIES = 12;
+
+/* 이미지 검색 대기 — 자주 확인하고 일찍 포기한다.
+   예전에는 1.5초마다 확인하며 60초까지 기다려 화면이 오래 멈춰 있었다. */
+const IMG_POLL_MS = 600;        /* 결과를 다시 확인하는 간격 */
+const IMG_CLICK_WAIT_MS = 1100; /* 검색 버튼을 누른 뒤 기다리는 시간 */
+const IMG_BUDGET_MS = 22000;    /* 여기까지 결과가 없으면 탭을 남기고 넘긴다 */
 const THUMB_MAX_PX = 320;
 
 /* 서비스 워커가 30초 유휴 후 잠들어 수집이 끊기는 것을 막는다 */
@@ -28,6 +34,69 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/* =====================================================================
+   같은 곳에 몰아서 요청하지 않는다.
+   쿠팡은 짧은 시간에 요청이 몰리면 그 아이피의 접속을 한동안 막는다.
+   ===================================================================== */
+const lastHit = {};
+async function polite(host, gapMs) {
+  const prev = lastHit[host] || 0;
+  const wait = prev + gapMs - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastHit[host] = Date.now();
+}
+/* 검색 페이지를 여는 간격. 사람이 보는 속도에 가깝게, 매번 조금씩 다르게 둔다. */
+function pageGap() {
+  return 7000 + Math.floor(Math.random() * 6000);
+}
+/* 몇 번에 한 번은 길게 쉰다 */
+let coupangHits = 0;
+const LONG_REST_EVERY = 5;
+const LONG_REST_MS = 20000;
+const IMG_GAP_MS = 250;     /* 썸네일 한 장을 받는 간격 */
+
+/* 한 번 받은 그림은 다시 받지 않는다 */
+const thumbCache = new Map();
+const THUMB_CACHE_MAX = 400;
+
+/* 쿠팡이 막았을 때 한동안 더 두드리지 않는다 */
+let coupangBlockedUntil = 0;
+function coupangCooling() {
+  const left = coupangBlockedUntil - Date.now();
+  return left > 0 ? Math.ceil(left / 1000) : 0;
+}
+function markCoupangBlocked(minutes) {
+  coupangBlockedUntil = Date.now() + (minutes || 5) * 60000;
+}
+/* 사용자가 쿠팡이 멀쩡한 것을 눈으로 확인했을 때 쉬는 시간을 푼다 */
+function clearCoupangCooldown() {
+  coupangBlockedUntil = 0;
+  return { ok: true, data: { cleared: true } };
+}
+
+/* 차단 안내 화면인지 페이지 안에서 확인한다 */
+function looksBlocked() {
+  var t = (document.title || "") + " " + ((document.body && document.body.innerText) || "").slice(0, 2000);
+  var marks = [
+    "사용권한이 없습니다", "사용권한이 제한", "권한이 제한된 페이지",
+    "일시적으로 접속이 제한", "접속이 제한", "접속이 차단", "비정상적인 접근",
+    "Access Denied", "Request unsuccessful", "잠시 후 다시 시도",
+    "Bot detected", "Are you a robot"
+  ];
+  for (var i = 0; i < marks.length; i++) {
+    if (t.indexOf(marks[i]) >= 0) {
+      return t.replace(/\s+/g, " ").trim().slice(0, 110);
+    }
+  }
+  return "";
+}
+async function blockedText(tabId) {
+  try {
+    const r = await chrome.scripting.executeScript({ target: { tabId }, func: looksBlocked });
+    return (r && r[0] && r[0].result) || "";
+  } catch (e) { return ""; }
+}
+
 /* 우리가 연 탭을 기억해 두었다가, 중간에 끊겨 남은 탭은 다음 작업 시작 때 정리한다.
    서비스 워커가 잠들었다 깨어나도 잃지 않도록 세션 저장소에도 남긴다. */
 const openedTabs = new Set();
@@ -50,6 +119,111 @@ async function openWorkTab(url, active) {
   openedTabs.add(tab.id);
   await saveTracked();
   return tab;
+}
+
+/* 일하는 화면을 사람이 보던 창에 끼워 넣지 않는다.
+   창을 따로 하나 띄우고 초점을 주지 않는다. 그러면
+   사람 화면은 소싱 프로에 그대로 있고, 그 창은 계속 그려져서 크롬이 일을 늦추지 않는다.
+   배경 탭으로 열면 크롬이 일을 늦춰 화면이 끝내 안 그려진다. 그래서 탭이 아니라 창을 쓴다. */
+let sideWindowId = null;
+let sideIdleTimer = null;
+const SIDE_IDLE_MS = 100000;   /* 일이 끝나고 이만큼 조용하면 창을 닫는다 */
+
+/* 옆창을 사람 눈에 최대한 안 띄는 자리에 놓는다.
+   화면 밖으로 완전히 밀어내면 운영체제가 도로 끌어오므로,
+   보고 있는 창 뒤 오른쪽 아래 구석에 겹쳐 둔다. 초점은 주지 않는다. */
+async function sideSpot() {
+  const fallback = { left: 60, top: 60, width: 1180, height: 900 };
+  try {
+    const cur = await chrome.windows.getCurrent();
+    if (!cur || cur.width == null) return fallback;
+    const w = Math.max(1000, Math.min(1280, cur.width - 60));
+    const h = Math.max(760, Math.min(960, cur.height - 60));
+    return {
+      left: Math.max(0, (cur.left || 0) + (cur.width || w) - w - 8),
+      top: Math.max(0, (cur.top || 0) + (cur.height || h) - h + 8),
+      width: w,
+      height: h
+    };
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function keepSideAlive() {
+  if (sideIdleTimer) clearTimeout(sideIdleTimer);
+  sideIdleTimer = setTimeout(function () {
+    sideIdleTimer = null;
+    closeSideWindow();
+  }, SIDE_IDLE_MS);
+}
+
+async function openSideTab(url) {
+  await loadTracked();
+  keepSideAlive();
+
+  /* 이미 옆창이 있으면 그 창을 다시 쓴다. 창을 열고 닫기를 되풀이하면 화면이 깜빡인다. */
+  if (sideWindowId != null) {
+    try {
+      const win = await chrome.windows.get(sideWindowId, { populate: true });
+      const first = (win.tabs || [])[0];
+      if (first) {
+        await chrome.tabs.update(first.id, { url, active: true });
+        openedTabs.add(first.id);
+        await saveTracked();
+        return { id: first.id, windowId: sideWindowId };
+      }
+    } catch (e) { sideWindowId = null; }
+  }
+
+  try {
+    const spot = await sideSpot();
+    const win = await chrome.windows.create({
+      url: url,
+      type: "normal",
+      focused: false,
+      width: spot.width,
+      height: spot.height,
+      left: spot.left,
+      top: spot.top
+    });
+    sideWindowId = win.id;
+    const tab = (win.tabs || [])[0];
+    if (tab) {
+      openedTabs.add(tab.id);
+      await saveTracked();
+      return { id: tab.id, windowId: win.id };
+    }
+  } catch (e) { /* 창을 못 만들면 아래에서 평소처럼 탭으로 연다 */ }
+
+  /* 창을 못 만드는 환경이면 어쩔 수 없이 앞 탭으로 연다 */
+  return await openWorkTab(url, true);
+}
+
+/* 일이 끝날 때마다 창을 닫지 않는다. 닫고 다시 열면 그때마다 깜빡이기 때문이다.
+   빈 화면으로 돌려두고 잠시 두었다가, 더 쓰지 않으면 그때 닫는다. */
+async function parkSideWindow() {
+  if (sideWindowId == null) return;
+  keepSideAlive();
+  try {
+    const win = await chrome.windows.get(sideWindowId, { populate: true });
+    const first = (win.tabs || [])[0];
+    if (first) {
+      await chrome.tabs.update(first.id, { url: "about:blank" });
+      /* 세워둔 탭은 더 이상 작업 탭으로 세지 않는다.
+         다음 일을 시작할 때 정리 대상에 걸려 닫히면, 창이 또 깜빡이기 때문이다. */
+      openedTabs.delete(first.id);
+      await saveTracked();
+    }
+  } catch (e) { sideWindowId = null; }
+}
+
+async function closeSideWindow() {
+  if (sideIdleTimer) { clearTimeout(sideIdleTimer); sideIdleTimer = null; }
+  if (sideWindowId == null) return;
+  const id = sideWindowId;
+  sideWindowId = null;
+  try { await chrome.windows.remove(id); } catch (e) { /* 이미 닫힘 */ }
 }
 async function closeWorkTab(tabId) {
   if (tabId == null) return;
@@ -123,14 +297,24 @@ async function makeThumbFrom(candidates) {
 
 async function makeThumb(url, maxPx) {
   if (!url) return "";
+  const key = url + "|" + (maxPx || THUMB_MAX_PX);
+  if (thumbCache.has(key)) return thumbCache.get(key);
+  if (/coupang/i.test(url)) await polite("coupang-img", IMG_GAP_MS);
+
+  /* 결과를 기억해 둔다. 같은 그림을 두 번 받지 않기 위해서다. */
+  const keep = (val) => {
+    if (thumbCache.size > THUMB_CACHE_MAX) thumbCache.clear();
+    thumbCache.set(key, val);
+    return val;
+  };
   try {
     const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) return "";
+    if (!res.ok) return keep("");
     const blob = await res.blob();
-    if (blob.size < 500) return "";
+    if (blob.size < 500) return keep("");
     const bmp = await createImageBitmap(blob);
     /* 1x1 투명 이미지 같은 자리표시자는 버린다 */
-    if (bmp.width < 60 || bmp.height < 60) return "";
+    if (bmp.width < 60 || bmp.height < 60) return keep("");
     const scale = Math.min(1, (maxPx || THUMB_MAX_PX) / Math.max(bmp.width, bmp.height));
     const w = Math.max(1, Math.round(bmp.width * scale));
     const h = Math.max(1, Math.round(bmp.height * scale));
@@ -143,13 +327,21 @@ async function makeThumb(url, maxPx) {
     const bytes = new Uint8Array(await out.arrayBuffer());
     let bin = "";
     for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    return "data:image/jpeg;base64," + btoa(bin);
+    return keep("data:image/jpeg;base64," + btoa(bin));
   } catch (e) {
-    return "";
+    return keep("");
   }
 }
 
 async function collect(url) {
+  if (/coupang\.com/i.test(String(url || ""))) {
+    const cool = coupangCooling();
+    if (cool) {
+      return { ok: false, blocked: true,
+        error: "쿠팡이 접속을 잠시 막아두었습니다. " + cool + "초쯤 뒤에 다시 시도해주세요." };
+    }
+    await polite("coupang-page", pageGap());
+  }
   if (!/^https?:\/\//i.test(url)) {
     return { ok: false, error: "http 또는 https 주소만 수집할 수 있습니다." };
   }
@@ -174,10 +366,18 @@ async function collect(url) {
       await sleep(900);
       if (i === 3) await ensureInjected(tabId);
     }
-    if (!res) {
-      return { ok: false, error: "페이지를 읽지 못했습니다. 로그인이나 보안 확인이 필요한지 확인해주세요." };
+    if (!res || !res.ok) {
+      const why = await blockedText(tabId);
+      if (why && /coupang\.com/i.test(url)) {
+        markCoupangBlocked(5);
+        return { ok: false, blocked: true,
+          error: "쿠팡이 접속을 막았습니다. 5분쯤 쉬었다가 다시 시도해주세요. (" + why + ")" };
+      }
+      if (!res) {
+        return { ok: false, error: "페이지를 읽지 못했습니다. 로그인이나 보안 확인이 필요한지 확인해주세요." };
+      }
+      return res;
     }
-    if (!res.ok) return res;
 
     res.data.image = await makeThumbFrom(res.data.imageCandidates || [res.data.image]);
     delete res.data.imageCandidates;
@@ -347,72 +547,544 @@ async function keywordTool(seed, debug) {
 }
 
 /* =====================================================================
-   경쟁 강도 — 네이버쇼핑 검색 결과의 전체 상품 수
-   ===================================================================== */
-async function shopCount(keyword) {
-  const kw = String(keyword || "").trim();
-  if (!kw) return { ok: false, error: "키워드가 비어 있습니다." };
-  await beginJob();
-  let tabId = null;
-  try {
-    const url = "https://search.shopping.naver.com/search/all?query=" + encodeURIComponent(kw);
-    const tab = await openWorkTab(url, false);
-    tabId = tab.id;
-    const loaded = await waitForLoad(tabId);
-    if (!loaded) return { ok: false, error: "네이버쇼핑 페이지를 열지 못했습니다." };
-    try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: ["shopcount.js"] });
-    } catch (e) { /* 이미 붙어 있으면 무시 */ }
-
-    let res = null;
-    for (let i = 0; i < 8; i++) {
-      res = await new Promise((resolve) => {
-        chrome.tabs.sendMessage(tabId, { type: "readShopCount" }, (r) => {
-          if (chrome.runtime.lastError) return resolve(null);
-          resolve(r || null);
-        });
-      });
-      if (res) break;
-      await sleep(800);
-    }
-    if (!res) return { ok: false, error: "네이버쇼핑 결과를 읽지 못했습니다. 잠시 후 다시 시도해주세요." };
-    return res;
-  } catch (e) {
-    return { ok: false, error: "상품 수를 확인하지 못했습니다: " + (e && e.message ? e.message : e) };
-  } finally {
-    await closeWorkTab(tabId);
-    releaseAwake();
-  }
-}
-
-/* =====================================================================
    쿠팡 검색 1위 상품 → 그대로 비교 분석으로 넘긴다
    ===================================================================== */
 /* 여러 이미지를 한꺼번에 받되 동시에 너무 많이 열지 않는다 */
 async function thumbBatch(urls, size) {
   const out = new Array(urls.length).fill("");
-  const CHUNK = 5;
+  const CHUNK = 3;
   for (let i = 0; i < urls.length; i += CHUNK) {
     const slice = urls.slice(i, i + CHUNK);
     const done = await Promise.all(slice.map((u) => makeThumb(u, size)));
     for (let j = 0; j < done.length; j++) out[i + j] = done[j];
+    if (i + CHUNK < urls.length) await sleep(300);
   }
   return out;
+}
+
+/* 필요한 그림만 골라 받는다. 목록 스무 장을 통째로 받는 것보다 훨씬 가볍다. */
+async function fetchThumbs(urls, size) {
+  const list = (urls || []).slice(0, 40).map((u) => String(u || ""));
+  if (!list.length) return { ok: true, data: { images: [] } };
+  const images = await thumbBatch(list, size || 240);
+  return { ok: true, data: { images } };
+}
+
+/* =====================================================================
+   쿠팡 파트너스 공식 API
+   쿠팡이 정식으로 열어둔 통로다. 화면을 긁지 않으므로 막히지 않는다.
+   대신 검색은 한 시간에 열 번까지, 한 번에 열 개까지다.
+   ===================================================================== */
+const PARTNER_HOST = "https://api-gateway.coupang.com";
+const PARTNER_PATH = "/v2/providers/affiliate_open_api/apis/openapi/products/search";
+const PARTNER_HOUR_LIMIT = 10;
+
+async function partnerCreds() {
+  try {
+    const o = await chrome.storage.local.get("sp.partners");
+    return o["sp.partners"] || null;
+  } catch (e) { return null; }
+}
+
+/* 쿠팡이 요구하는 서명 형식: 날짜 + 메서드 + 경로 + 질의문자열 을 이어 붙여 해시한다 */
+function signedDate(d) {
+  const p = (n) => (n < 10 ? "0" : "") + n;
+  const t = d || new Date();
+  return String(t.getUTCFullYear()).slice(2) + p(t.getUTCMonth() + 1) + p(t.getUTCDate()) +
+    "T" + p(t.getUTCHours()) + p(t.getUTCMinutes()) + p(t.getUTCSeconds()) + "Z";
+}
+async function hmacHex(secret, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.prototype.map.call(new Uint8Array(sig),
+    (b) => ("0" + b.toString(16)).slice(-2)).join("");
+}
+async function partnerAuth(method, path, query, c) {
+  const date = signedDate();
+  const message = date + method + path + query;
+  const signature = await hmacHex(c.secret, message);
+  return "CEA algorithm=HmacSHA256, access-key=" + c.accessKey +
+    ", signed-date=" + date + ", signature=" + signature;
+}
+
+/* 한 시간에 열 번 제한을 우리 쪽에서도 지킨다 */
+let partnerCalls = [];
+function partnerRoom() {
+  const hourAgo = Date.now() - 3600000;
+  partnerCalls = partnerCalls.filter((t) => t > hourAgo);
+  return PARTNER_HOUR_LIMIT - partnerCalls.length;
+}
+
+async function partnerSearch(keyword, limit) {
+  const c = await partnerCreds();
+  if (!c || !c.accessKey || !c.secret) return { ok: false, noKey: true, error: "파트너스 키가 없습니다." };
+
+  const kw = String(keyword || "").trim();
+  if (!kw) return { ok: false, error: "키워드가 비어 있습니다." };
+  if (partnerRoom() <= 0) {
+    return { ok: false, quota: true,
+      error: "쿠팡 파트너스는 한 시간에 열 번까지 검색할 수 있습니다. 잠시 뒤에 다시 시도해주세요." };
+  }
+
+  const want = Math.min(10, Math.max(1, limit || 10));
+  const query = "keyword=" + encodeURIComponent(kw) + "&limit=" + want;
+  const url = PARTNER_HOST + PARTNER_PATH + "?" + query;
+  let auth;
+  try {
+    auth = await partnerAuth("GET", PARTNER_PATH, query, c);
+  } catch (e) {
+    return { ok: false, error: "서명을 만들지 못했습니다: " + (e && e.message ? e.message : e) };
+  }
+
+  partnerCalls.push(Date.now());
+  let res, text;
+  try {
+    res = await fetch(url, { method: "GET", headers: { Authorization: auth } });
+    text = await res.text();
+  } catch (e) {
+    return { ok: false, error: "쿠팡 파트너스에 연결하지 못했습니다: " + (e && e.message ? e.message : e) };
+  }
+
+  let json = null;
+  try { json = JSON.parse(text); } catch (e) { json = null; }
+  if (!res.ok || !json) {
+    return { ok: false, error: "쿠팡 파트너스 응답이 올바르지 않습니다 (" + res.status + ")",
+             raw: String(text).slice(0, 1200) };
+  }
+  if (json.rCode && String(json.rCode) !== "0") {
+    return { ok: false, error: "쿠팡 파트너스: " + (json.rMessage || json.rCode),
+             raw: String(text).slice(0, 1200) };
+  }
+
+  /* 응답 필드 이름이 조금씩 다를 수 있어 있는 대로 골라 담는다 */
+  const rows = (json.data && (json.data.productData || json.data.products)) ||
+               json.productData || [];
+  const items = rows.map((r, i) => ({
+    rank: i + 1,
+    productId: String(r.productId || r.productid || ""),
+    url: r.productUrl || r.productURL || "",
+    name: r.productName || r.title || "",
+    price: Number(r.productPrice || r.price || 0),
+    basePrice: 0,
+    unitPrice: "",
+    rating: "",
+    reviews: 0,
+    rocket: !!(r.isRocket || r.rocket),
+    freeShip: !!(r.isFreeShipping || r.freeShipping),
+    image: r.productImage || r.image || ""
+  })).filter((x) => x.name && x.price > 0);
+
+  return { ok: true, data: { keyword: kw, items: items, read: items.length, partner: true } };
+}
+
+/* =====================================================================
+   쿠팡 검색 결과 보관함
+   같은 키워드를 다시 볼 때 쿠팡을 또 두드리지 않는다.
+   요청을 줄이는 것이 차단을 피하는 가장 확실한 방법이다.
+   ===================================================================== */
+const SEARCH_CACHE_TTL = 12 * 60 * 60 * 1000;   /* 반나절 */
+const SEARCH_CACHE_KEY = "sp.cp.";
+
+async function cachedSearch(kw) {
+  try {
+    const key = SEARCH_CACHE_KEY + kw;
+    const o = await chrome.storage.local.get(key);
+    const hit = o[key];
+    if (hit && hit.items && Date.now() - hit.at < SEARCH_CACHE_TTL) return hit.items;
+  } catch (e) { /* 저장소를 못 읽으면 그냥 새로 받는다 */ }
+  return null;
+}
+async function keepSearch(kw, items) {
+  if (!kw || !items || !items.length) return;
+  try {
+    await chrome.storage.local.set({ [SEARCH_CACHE_KEY + kw]: { at: Date.now(), items: items } });
+  } catch (e) {
+    /* 자리가 모자라면 통째로 비우고 이번 것만 남긴다 */
+    try {
+      await clearSearchCache();
+      await chrome.storage.local.set({ [SEARCH_CACHE_KEY + kw]: { at: Date.now(), items: items } });
+    } catch (e2) {}
+  }
+}
+async function clearSearchCache() {
+  try {
+    const all = await chrome.storage.local.get(null);
+    const keys = Object.keys(all).filter((k) => k.indexOf(SEARCH_CACHE_KEY) === 0);
+    if (keys.length) await chrome.storage.local.remove(keys);
+    return { ok: true, data: { cleared: keys.length } };
+  } catch (e) {
+    return { ok: false, error: "저장된 검색 기록을 비우지 못했습니다." };
+  }
+}
+async function countSearchCache() {
+  try {
+    const all = await chrome.storage.local.get(null);
+    const n = Object.keys(all).filter((k) => k.indexOf(SEARCH_CACHE_KEY) === 0).length;
+    return { ok: true, data: { count: n } };
+  } catch (e) { return { ok: true, data: { count: 0 } }; }
+}
+
+/* 쿠팡 화면 안의 검색창에 글자를 넣어 검색한다.
+   검색 주소를 곧바로 여는 것보다 사람이 쓰는 모습에 가까워 덜 막힌다. */
+function typeIntoCoupang(keyword) {
+  function findBox() {
+    var sels = [
+      "#headerSearchKeyword", 'input[name="q"]', 'input[id*="search"]',
+      'input[placeholder*="찾고"]', 'input[placeholder*="검색"]',
+      'form[action*="search"] input[type="text"]', 'input[type="search"]'
+    ];
+    for (var i = 0; i < sels.length; i++) {
+      var el = document.querySelector(sels[i]);
+      if (el && el.offsetParent !== null) return el;
+    }
+    return null;
+  }
+  return new Promise(function (resolve) {
+    var box = findBox();
+    if (!box) return resolve({ ok: false, error: "쿠팡 검색창을 찾지 못했습니다." });
+    try {
+      box.focus();
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+      setter.call(box, keyword);
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+      box.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (e) { box.value = keyword; }
+    setTimeout(function () {
+      var form = box.form || (box.closest ? box.closest("form") : null);
+      var btn = document.querySelector('button[type="submit"], [class*="search-button"], [class*="searchBtn"]');
+      try {
+        box.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter", keyCode: 13, which: 13 }));
+        box.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: "Enter", keyCode: 13, which: 13 }));
+      } catch (e) {}
+      if (btn && btn.click) { try { btn.click(); } catch (e) {} }
+      else if (form) { try { form.submit(); } catch (e) {} }
+      resolve({ ok: true });
+    }, 500);
+  });
+}
+
+/* 지금 사람이 보고 있는 쿠팡 검색 화면을 그대로 읽는다.
+   우리가 페이지를 열지 않으므로 쿠팡이 막을 거리가 없다. */
+/* 사람이 직접 열어본 쿠팡 검색 탭. 읽기를 누르면 이것부터 본다. */
+let openedCoupangTab = null;
+
+/* 카테고리 목록을 볼 때 쓰는 탭. 한 탭만 쓰고, 쪽을 넘길 때도 그 탭 주소만 바꾼다.
+   탭을 여러 개 열거나 빠르게 부르면 쿠팡이 막는다. 사람이 보는 속도로 움직인다. */
+async function coupangOpenUrl(url) {
+  const target = String(url || "").trim();
+  if (!/^https?:\/\/(www\.)?coupang\.com\//i.test(target)) {
+    return { ok: false, error: "쿠팡 주소가 아닙니다." };
+  }
+  const cool = coupangCooling();
+  if (cool) {
+    return { ok: false, blocked: true,
+      error: "쿠팡이 접속을 잠시 막아두었습니다. " + cool + "초쯤 뒤에 다시 시도해주세요." };
+  }
+  try {
+    if (openedCoupangTab != null) {
+      try {
+        await chrome.tabs.get(openedCoupangTab);
+        await polite("coupang-page", pageGap());
+        await chrome.tabs.update(openedCoupangTab, { url: target, active: true });
+        const t = await chrome.tabs.get(openedCoupangTab);
+        try { await chrome.windows.update(t.windowId, { focused: true }); } catch (e) {}
+        await waitForLoad(openedCoupangTab);
+        return { ok: true, data: { tabId: openedCoupangTab, reused: true } };
+      } catch (e) { openedCoupangTab = null; }
+    }
+    const tab = await chrome.tabs.create({ url: target, active: true });
+    openedCoupangTab = tab.id;
+    try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+    await waitForLoad(tab.id);
+    return { ok: true, data: { tabId: tab.id, reused: false } };
+  } catch (e) {
+    return { ok: false, error: "쿠팡 화면을 열지 못했습니다." };
+  }
+}
+
+/* 쿠팡 카테고리 차림표를 한 번만 읽어 저장해 둔다.
+   이 목록은 자주 바뀌지 않으므로 이레 동안 그대로 쓴다.
+   그래서 카테고리를 고르는 일로 쿠팡을 부르는 횟수는 늘지 않는다. */
+const CAT_TREE_TTL = 7 * 24 * 3600 * 1000;
+
+async function coupangCatTree(force) {
+  if (!force) {
+    try {
+      const got = await chrome.storage.local.get("sp.catTree");
+      const box = got["sp.catTree"];
+      if (box && box.at && Date.now() - box.at < CAT_TREE_TTL && (box.tree || []).length) {
+        return { ok: true, data: { tree: box.tree, cached: true, at: box.at } };
+      }
+    } catch (e) { /* 저장된 게 없으면 새로 읽는다 */ }
+  }
+
+  const cool = coupangCooling();
+  if (cool) {
+    return { ok: false, blocked: true,
+      error: "쿠팡이 접속을 잠시 막아두었습니다. " + cool + "초쯤 뒤에 다시 시도해주세요." };
+  }
+
+  /* 이미 열려 있는 쿠팡 탭이 있으면 그걸 쓴다. 없을 때만 하나 연다. */
+  let tabId = null;
+  let borrowed = false;
+  try {
+    const open = await chrome.tabs.query({ url: ["*://*.coupang.com/*", "*://coupang.com/*"] });
+    const live = (open || []).filter((t) => t && t.id != null && !/login/i.test(t.url || ""))[0];
+    if (live) { tabId = live.id; borrowed = true; }
+  } catch (e) { tabId = null; }
+
+  await beginJob();
+  try {
+    if (tabId == null) {
+      const tab = await openSideTab("https://www.coupang.com/");
+      tabId = tab.id;
+      await waitForLoad(tabId);
+      await sleep(1800);
+    }
+    await ensureInjected(tabId);
+
+    let res = null;
+    for (let i = 0; i < 6; i++) {
+      res = await new Promise((resolve) => {
+        chrome.tabs.sendMessage(tabId, { type: "catTree" }, (r) => {
+          if (chrome.runtime.lastError) return resolve(null);
+          resolve(r || null);
+        });
+      });
+      if (res) break;
+      await sleep(900);
+      await ensureInjected(tabId);
+    }
+    if (!res || !res.ok) {
+      const why = await blockedText(tabId);
+      if (why) {
+        markCoupangBlocked(5);
+        return { ok: false, blocked: true,
+          error: "쿠팡이 접속을 막았습니다. 5분쯤 쉬었다가 다시 시도해주세요. (" + why + ")" };
+      }
+      return { ok: false, error: (res && res.error) || "카테고리 차림표를 읽지 못했습니다." };
+    }
+
+    const tree = (res.data && res.data.tree) || [];
+    try {
+      await chrome.storage.local.set({ "sp.catTree": { at: Date.now(), tree: tree } });
+    } catch (e) { /* 저장 실패는 이번만 다시 읽으면 된다 */ }
+    return { ok: true, data: {
+      tree: tree, cached: false,
+      links: res.data && res.data.links, tops: res.data && res.data.tops,
+      leaves: res.data && res.data.leaves
+    } };
+  } catch (e) {
+    return { ok: false, error: "카테고리 차림표를 읽지 못했습니다: " + (e && e.message ? e.message : e) };
+  } finally {
+    if (!borrowed) await parkSideWindow();
+    releaseAwake();
+  }
+}
+
+/* 지금 보고 있는 쿠팡 목록의 다음 쪽으로 넘긴다. 새 탭을 열지 않는다. */
+async function coupangNextPage() {
+  if (openedCoupangTab == null) {
+    return { ok: false, error: "먼저 쿠팡에서 목록을 열어주세요." };
+  }
+  let here = "";
+  try {
+    const t = await chrome.tabs.get(openedCoupangTab);
+    here = (t && t.url) || "";
+  } catch (e) {
+    openedCoupangTab = null;
+    return { ok: false, error: "그 쿠팡 탭이 닫혔습니다. 다시 열어주세요." };
+  }
+  if (!/coupang\.com/i.test(here)) {
+    return { ok: false, error: "그 탭은 쿠팡 화면이 아닙니다." };
+  }
+
+  let next = "";
+  try {
+    const u = new URL(here);
+    const now = parseInt(u.searchParams.get("page") || "1", 10) || 1;
+    u.searchParams.set("page", String(now + 1));
+    next = u.toString();
+  } catch (e) {
+    return { ok: false, error: "쪽 번호를 바꾸지 못했습니다." };
+  }
+
+  /* 사람이 다음 쪽을 누르는 정도의 간격을 둔다 */
+  await polite("coupang-page", pageGap());
+  try {
+    await chrome.tabs.update(openedCoupangTab, { url: next, active: true });
+    await waitForLoad(openedCoupangTab);
+    await sleep(1400);
+  } catch (e) {
+    return { ok: false, error: "다음 쪽으로 넘기지 못했습니다." };
+  }
+
+  const why = await blockedText(openedCoupangTab);
+  if (why) {
+    markCoupangBlocked(5);
+    return { ok: false, blocked: true,
+      error: "쿠팡이 접속을 막았습니다. 5분쯤 쉬었다가 다시 시도해주세요. (" + why + ")" };
+  }
+  return { ok: true, data: { url: next } };
+}
+
+async function readActiveCoupang(limit) {
+  const want = Math.min(40, Math.max(1, limit || 20));
+
+  /* 쿠팡 탭을 여러 갈래로 찾는다.
+     쿠팡은 주소를 자주 갈아끼우므로 /np/search 만 보면 놓친다.
+     그래서 쿠팡 탭을 모두 모은 뒤, 그중 검색 결과로 보이는 것을 고른다. */
+  let all = [];
+  try {
+    all = await chrome.tabs.query({ url: ["*://*.coupang.com/*", "*://coupang.com/*"] });
+  } catch (e) { all = [] }
+  all = (all || []).filter((t) => t && t.id != null);
+
+  const isSearch = (t) => /\/np\/search|\/np\/categories|[?&]q=/i.test(t.url || "");
+
+  /* 쿠팡 열기로 띄웠던 탭이 아직 살아 있으면 그것부터 */
+  let hit = null;
+  if (openedCoupangTab != null) {
+    const mine = all.filter((t) => t.id === openedCoupangTab)[0];
+    if (mine) hit = mine;
+    else openedCoupangTab = null;
+  }
+
+  try {
+    if (!hit) {
+      const act = await chrome.tabs.query({ active: true, currentWindow: true });
+      const cur = (act || [])[0];
+      if (cur && /coupang\.com/i.test(cur.url || "") && isSearch(cur)) hit = cur;
+    }
+  } catch (e) { /* 못 읽으면 아래에서 고른다 */ }
+
+  /* 아니면 열려 있는 쿠팡 탭 가운데 검색 화면을 고른다. 가장 최근 것이 앞에 오도록 뒤에서부터 본다. */
+  if (!hit) {
+    for (let i = all.length - 1; i >= 0; i--) {
+      if (isSearch(all[i])) { hit = all[i]; break; }
+    }
+  }
+
+  if (!hit) {
+    if (!all.length) {
+      return { ok: false, error: "쿠팡 탭이 하나도 열려 있지 않습니다. 키워드 표에서 쿠팡 열기를 먼저 눌러주세요." };
+    }
+    let where = "";
+    try {
+      where = all.map((t) => String(t.url || "").replace(/^https?:\/\/(www\.)?/, "").slice(0, 46)).join(" / ");
+    } catch (e) { where = ""; }
+    return { ok: false,
+      error: "쿠팡 탭은 열려 있는데 검색 결과 화면이 아닙니다. 그 탭에서 검색을 한 번 해주세요. (지금 주소 " + where + ")" };
+  }
+  try {
+    await chrome.scripting.executeScript({ target: { tabId: hit.id }, files: ["scrape.js"] });
+  } catch (e) { /* 이미 붙어 있으면 무시 */ }
+  const res = await new Promise((resolve) => {
+    chrome.tabs.sendMessage(hit.id, { type: "searchTop", limit: want }, (r) => {
+      if (chrome.runtime.lastError) return resolve(null);
+      resolve(r || null);
+    });
+  });
+  if (!res) {
+    return { ok: false,
+      error: "그 쿠팡 탭에 수집기를 붙이지 못했습니다. 그 탭을 한 번 새로고침한 뒤 다시 눌러주세요." };
+  }
+  if (!res.ok) {
+    return { ok: false, error: "그 화면에서 상품을 읽지 못했습니다. " + (res.error || "") };
+  }
+  const items = (res.data && res.data.items) || [];
+  let kw = "";
+  try { kw = decodeURIComponent((String(hit.url).match(/[?&]q=([^&]*)/) || [, ""])[1] || ""); } catch (e) {}
+  await keepSearch(kw, items);
+  return { ok: true, data: { keyword: kw, items: items, read: items.length, manual: true } };
+}
+
+/* 쿠팡 작업용 탭 하나를 계속 쓴다. 자동 소싱처럼 여러 번 검색할 때 쓴다. */
+let coupangTabId = null;
+let coupangSession = false;
+
+async function coupangGo(url) {
+  await polite("coupang-page", pageGap());
+  coupangHits++;
+  if (coupangHits % LONG_REST_EVERY === 0) await sleep(LONG_REST_MS);
+
+  if (coupangTabId != null) {
+    try {
+      /* url 이 없으면 지금 열린 화면에서 검색창만 쓴다 */
+      if (url) await chrome.tabs.update(coupangTabId, { url });
+      else await chrome.tabs.get(coupangTabId);
+      return coupangTabId;
+    } catch (e) { coupangTabId = null; }
+  }
+  const tab = await openWorkTab(url || "https://www.coupang.com/", false);
+  coupangTabId = tab.id;
+  return tab.id;
+}
+async function endCoupangSession() {
+  coupangSession = false;
+  if (coupangTabId != null) {
+    await closeWorkTab(coupangTabId);
+    coupangTabId = null;
+  }
+  return { ok: true };
 }
 
 async function coupangTop(keyword, limit, withImages) {
   const kw = String(keyword || "").trim();
   const want = Math.min(40, Math.max(1, limit || 5));
   if (!kw) return { ok: false, error: "키워드가 비어 있습니다." };
+  /* 저장해 둔 결과가 있으면 쿠팡을 건드리지 않는다 */
+  const saved = await cachedSearch(kw);
+  if (saved) {
+    return { ok: true, data: { keyword: kw, items: saved, read: saved.length, cached: true } };
+  }
+
+  /* 공식 통로가 열려 있으면 그쪽으로 간다. 화면을 긁지 않으니 막히지 않는다. */
+  const viaPartner = await partnerSearch(kw, Math.min(10, want));
+  if (viaPartner.ok && viaPartner.data.items.length) {
+    await keepSearch(kw, viaPartner.data.items);
+    return viaPartner;
+  }
+  if (viaPartner.quota) return viaPartner;
+
+  const cool = coupangCooling();
+  if (cool) {
+    return { ok: false, blocked: true,
+      error: "쿠팡이 접속을 잠시 막아두었습니다. " + cool + "초쯤 뒤에 다시 시도해주세요." };
+  }
   await beginJob();
   let tabId = null;
   try {
-    const url = "https://www.coupang.com/np/search?q=" + encodeURIComponent(kw) +
-      "&channel=user&listSize=36&sorter=scoreDesc";
-    const tab = await openWorkTab(url, false);
+    /* 필요한 만큼만 불러온다. 한 번에 많이 부를수록 쿠팡이 막을 확률이 올라간다. */
+    /* 검색 주소를 곧바로 열지 않는다. 쿠팡 화면을 띄운 뒤 검색창에 글자를 넣는다. */
+    const home = "https://www.coupang.com/";
+    const tabId0 = await coupangGo(coupangTabId == null ? home : null);
+    const tab = { id: tabId0 };
     tabId = tab.id;
-    const loaded = await waitForLoad(tabId);
-    if (!loaded) return { ok: false, error: "쿠팡 검색 페이지를 열지 못했습니다." };
+    let loaded = await waitForLoad(tabId);
+    if (!loaded) return { ok: false, error: "쿠팡을 열지 못했습니다." };
+
+    let typed = null;
+    try {
+      const r = await chrome.scripting.executeScript({
+        target: { tabId }, func: typeIntoCoupang, args: [kw]
+      });
+      typed = r && r[0] ? r[0].result : null;
+    } catch (e) { typed = null; }
+
+    if (!typed || !typed.ok) {
+      /* 검색창을 못 찾으면 어쩔 수 없이 주소로 간다 */
+      const listSize = want <= 10 ? 20 : 36;
+      const url = "https://www.coupang.com/np/search?q=" + encodeURIComponent(kw) +
+        "&channel=user&listSize=" + listSize + "&sorter=scoreDesc";
+      try { await chrome.tabs.update(tabId, { url }); } catch (e) {}
+    }
+    await sleep(2000);
+    loaded = await waitForLoad(tabId);
+    if (!loaded) return { ok: false, error: "쿠팡 검색 결과를 열지 못했습니다." };
     await ensureInjected(tabId);
 
     let res = null;
@@ -427,21 +1099,993 @@ async function coupangTop(keyword, limit, withImages) {
       await sleep(800);
       if (i === 3) await ensureInjected(tabId);
     }
-    if (!res) return { ok: false, error: "쿠팡 검색 결과를 읽지 못했습니다." };
-    if (!res.ok) return res;
+    if (!res || !res.ok || !((res.data && res.data.items) || []).length) {
+      const why = await blockedText(tabId);
+      if (why) {
+        markCoupangBlocked(5);
+        return { ok: false, blocked: true,
+          error: "쿠팡이 접속을 막았습니다. 5분쯤 쉬었다가 다시 시도해주세요. (" + why + ")" };
+      }
+      if (!res) return { ok: false, error: "쿠팡 검색 결과를 읽지 못했습니다." };
+      if (!res.ok) return res;
+    }
 
     const items = (res.data && res.data.items) || [];
     if (withImages && items.length) {
       const thumbs = await thumbBatch(items.map((it) => it.image), 160);
       for (let i = 0; i < items.length; i++) items[i].image = thumbs[i] || "";
     }
-    return { ok: true, data: { keyword: kw, items: items } };
+    await keepSearch(kw, items);
+    return { ok: true, data: { keyword: kw, items: items, read: items.length } };
   } catch (e) {
     return { ok: false, error: "쿠팡 상위 상품을 찾지 못했습니다: " + (e && e.message ? e.message : e) };
   } finally {
-    await closeWorkTab(tabId);
+    /* 이어서 더 검색할 예정이면 탭을 그대로 둔다 */
+    if (!coupangSession) {
+      await closeWorkTab(tabId);
+      if (tabId === coupangTabId) coupangTabId = null;
+    }
     releaseAwake();
   }
+}
+
+/* =====================================================================
+   테무 — 베스트셀러와 별점 5점
+
+   테무는 채널 화면 두 개를 그대로 쓴다. 갈래(카테고리)는 주소가 아니라
+   화면 위 딱지를 눌러 갈아끼우는 구조라, 붙여넣은 스크립트가 대신 눌러준다.
+   ===================================================================== */
+const TEMU_CHANNELS = {
+  best: "https://www.temu.com/kr/channel/best-sellers.html",
+  star: "https://www.temu.com/kr/channel/full-star.html",
+  new:  "https://www.temu.com/kr/channel/new-in.html"
+};
+
+async function temuOpen(channel) {
+  const url = TEMU_CHANNELS[channel] || TEMU_CHANNELS.best;
+  try {
+    const tab = await chrome.tabs.create({ url, active: true });
+    return { ok: true, data: { tabId: tab.id } };
+  } catch (e) {
+    return { ok: false, error: "테무를 열지 못했습니다." };
+  }
+}
+
+async function temuTop(channel, limit, category, withImages) {
+  const url = TEMU_CHANNELS[channel] || TEMU_CHANNELS.best;
+  const want = Math.min(60, Math.max(1, limit || 20));
+
+  await beginJob();
+  let tabId = null;
+  try {
+    /* 테무는 화면을 다 그린 뒤에야 상품이 생긴다.
+       배경 탭은 크롬이 일을 늦춰서 끝내 안 그려진다. 그래서 앞으로 띄운다.
+       다 읽고 나면 아래에서 소싱 프로 탭으로 되돌린다. */
+    const tab = await openSideTab(url);
+    tabId = tab.id;
+    await waitForLoad(tabId);      /* 못 기다려도 계속 간다. 뒤에서 다시 확인한다. */
+    await sleep(3600);
+    await ensureInjected(tabId);
+
+    let res = null;
+    for (let i = 0; i < 10; i++) {
+      res = await new Promise((resolve) => {
+        chrome.tabs.sendMessage(tabId, { type: "temuTop", limit: want, category: category || "" }, (r) => {
+          if (chrome.runtime.lastError) return resolve(null);
+          resolve(r || null);
+        });
+      });
+      if (res) break;
+      await sleep(1200);
+      await ensureInjected(tabId);
+    }
+    if (!res) return { ok: false, error: "테무 화면에 수집기를 붙이지 못했습니다. 테무 탭을 직접 열어 한 번 새로고침해주세요." };
+    if (!res.ok) {
+      let now = "";
+      try { const t = await chrome.tabs.get(tabId); now = t.url || ""; } catch (e) {}
+      if (/login|signin/i.test(now)) {
+        return { ok: false, needsLogin: true,
+          error: "테무가 로그인을 요구합니다. 로그인한 뒤 다시 눌러주세요." };
+      }
+      return res;
+    }
+
+    const items = (res.data && res.data.items) || [];
+    if (withImages && items.length) {
+      const thumbs = await thumbBatch(items.map((it) => it.image), 160);
+      for (let i = 0; i < items.length; i++) items[i].image = thumbs[i] || "";
+    }
+    return { ok: true, data: {
+      channel: channel || "best",
+      category: category || "",
+      picked: !!(res.data && res.data.picked),
+      items: items, read: items.length
+    } };
+  } catch (e) {
+    return { ok: false, error: "테무 상품을 찾지 못했습니다: " + (e && e.message ? e.message : e) };
+  } finally {
+    await closeWorkTab(tabId);
+    await parkSideWindow();
+    releaseAwake();
+  }
+}
+
+/* =====================================================================
+   타오바오 — 판매량 순 인기 상품
+
+   예전 순위 사이트(top.taobao.com)는 없어졌다. 지금은 검색 결과를
+   판매량 순으로 정렬한 것이 사실상의 베스트 목록이다.
+   로그인한 상태라야 결과가 보이므로, 비어 있으면 로그인을 안내한다.
+   ===================================================================== */
+function taobaoSearchUrl(keyword) {
+  return "https://s.taobao.com/search?q=" + encodeURIComponent(keyword) + "&sort=sale-desc";
+}
+
+async function taobaoLoggedIn() {
+  try {
+    const c = await chrome.cookies.get({ url: "https://www.taobao.com/", name: "_nk_" });
+    if (c && c.value) return true;
+    const t = await chrome.cookies.get({ url: "https://www.taobao.com/", name: "tracknick" });
+    return !!(t && t.value);
+  } catch (e) {
+    return true; /* 확인이 안 되면 일단 진행한다 */
+  }
+}
+
+async function temuLoggedIn() {
+  /* 테무는 로그인해야 개인화된 목록이 제대로 나온다. 쿠키로 먼저 확인한다. */
+  const names = ["user_uin", "api_uid", "region", "_bee"];
+  for (let i = 0; i < names.length; i++) {
+    try {
+      const c = await chrome.cookies.get({ url: "https://www.temu.com/", name: names[i] });
+      if (c && c.value && c.value.length > 6) return true;
+    } catch (e) { /* 쿠키를 못 읽으면 다음 것을 본다 */ }
+  }
+  return false;
+}
+
+async function shopLogin(site) {
+  if (site === "temu") {
+    const on = await temuLoggedIn();
+    return { ok: true, data: { site: "temu", on: on } };
+  }
+  if (site === "taobao") {
+    const on = await taobaoLoggedIn();
+    return { ok: true, data: { site: "taobao", on: on } };
+  }
+  return { ok: false, error: "알 수 없는 곳입니다." };
+}
+
+async function shopLoginOpen(site) {
+  const url = site === "temu"
+    ? "https://www.temu.com/kr/login.html"
+    : "https://login.taobao.com/";
+  try {
+    const tab = await chrome.tabs.create({ url, active: true });
+    loginTabId = tab.id;
+    return { ok: true, data: { tabId: tab.id } };
+  } catch (e) {
+    return { ok: false, error: "로그인 화면을 열지 못했습니다." };
+  }
+}
+
+async function taobaoOpen(keyword) {
+  const url = keyword ? taobaoSearchUrl(keyword) : "https://login.taobao.com/";
+  try {
+    const tab = await chrome.tabs.create({ url, active: true });
+    return { ok: true, data: { tabId: tab.id } };
+  } catch (e) {
+    return { ok: false, error: "타오바오를 열지 못했습니다." };
+  }
+}
+
+async function taobaoTop(keyword, limit, withImages) {
+  const kw = String(keyword || "").trim();
+  const want = Math.min(40, Math.max(1, limit || 20));
+  if (!kw) return { ok: false, error: "키워드가 비어 있습니다." };
+
+  const signedIn = await taobaoLoggedIn();
+  if (!signedIn) {
+    return { ok: false, needsLogin: true,
+      error: "타오바오에 로그인되어 있지 않습니다. 로그인한 뒤 다시 눌러주세요." };
+  }
+
+  await beginJob();
+  let tabId = null;
+  try {
+    const tab = await openSideTab(taobaoSearchUrl(kw));
+    tabId = tab.id;
+    const loaded = await waitForLoad(tabId);
+    if (!loaded) return { ok: false, error: "타오바오를 열지 못했습니다." };
+    await sleep(2200);
+    await ensureInjected(tabId);
+
+    let res = null;
+    for (let i = 0; i < 8; i++) {
+      res = await new Promise((resolve) => {
+        chrome.tabs.sendMessage(tabId, { type: "taobaoTop", limit: want }, (r) => {
+          if (chrome.runtime.lastError) return resolve(null);
+          resolve(r || null);
+        });
+      });
+      if (res) break;
+      await sleep(900);
+      if (i === 3) await ensureInjected(tabId);
+    }
+    if (!res) return { ok: false, error: "타오바오 화면을 읽지 못했습니다." };
+    if (!res.ok) {
+      let url = "";
+      try { const t = await chrome.tabs.get(tabId); url = t.url || ""; } catch (e) {}
+      if (/login\.taobao\.com/i.test(url)) {
+        return { ok: false, needsLogin: true,
+          error: "타오바오가 로그인을 요구합니다. 로그인한 뒤 다시 눌러주세요." };
+      }
+      return res;
+    }
+
+    const items = (res.data && res.data.items) || [];
+    if (withImages && items.length) {
+      const thumbs = await thumbBatch(items.map((it) => it.image), 160);
+      for (let i = 0; i < items.length; i++) items[i].image = thumbs[i] || "";
+    }
+    return { ok: true, data: { keyword: kw, items: items, read: items.length } };
+  } catch (e) {
+    return { ok: false, error: "타오바오 인기 상품을 찾지 못했습니다: " + (e && e.message ? e.message : e) };
+  } finally {
+    await closeWorkTab(tabId);
+    await parkSideWindow();
+    releaseAwake();
+  }
+}
+
+/* =====================================================================
+   쿠팡 리뷰 — 최근 리뷰를 모아 좋은 점과 나쁜 점을 뽑는 재료로 쓴다.
+
+   쿠팡 상품 화면이 스스로 부르는 리뷰 통로(/next-api/review)를 그대로 쓴다.
+   한 번에 50개씩 받으므로 100개는 두 번만 부르면 된다. 화면을 넘길 일이 없어 막힐 거리가 적다.
+   먼저 여기서 바로 부르고, 막히면 쿠팡 탭 안에서 같은 주소로 부른다.
+   ===================================================================== */
+const REVIEW_SORTS = ["DATE_DESC", "ORDER_SCORE_ASC"];
+
+function reviewUrl(pid, page, size, sortBy) {
+  const q = new URLSearchParams({
+    productId: String(pid), page: String(page), size: String(size),
+    sortBy: sortBy, ratingSummary: "true", ratings: "", market: ""
+  });
+  return "https://www.coupang.com/next-api/review?" + q.toString();
+}
+
+/* 쿠팡 탭 안에서 실행된다. 같은 출처라 쿠키가 그대로 실린다. */
+async function askReviewInPage(url) {
+  try {
+    const res = await fetch(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } });
+    if (!res.ok) return { ok: false, error: "HTTP_" + res.status };
+    const body = await res.json();
+    return { ok: true, body: body };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || String(e) };
+  }
+}
+
+async function reviewPageDirect(url) {
+  try {
+    const res = await fetch(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } });
+    if (!res.ok) return { ok: false, error: "HTTP_" + res.status };
+    const body = await res.json();
+    return { ok: true, body: body };
+  } catch (e) {
+    return { ok: false, error: "NET" };
+  }
+}
+
+async function reviewPageInTab(url, pid) {
+  let tabId = null;
+  let made = false;
+  try {
+    const open = await chrome.tabs.query({ url: ["*://www.coupang.com/*"] });
+    const live = (open || []).filter((t) => t && t.id != null && !/login/i.test(t.url || ""))[0];
+    if (live) tabId = live.id;
+  } catch (e) { tabId = null; }
+  if (tabId == null) {
+    const tab = await openSideTab("https://www.coupang.com/vp/products/" + pid);
+    tabId = tab.id;
+    made = true;
+    await waitForLoad(tabId);
+    await sleep(1200);
+  }
+  try {
+    const r = await chrome.scripting.executeScript({ target: { tabId }, func: askReviewInPage, args: [url] });
+    return (r && r[0] && r[0].result) || { ok: false, error: "NO_RESULT" };
+  } catch (e) {
+    return { ok: false, error: "INJECT" };
+  } finally {
+    if (made) await parkSideWindow();
+  }
+}
+
+function mapReview(r) {
+  const title = String((r && r.title) || "").trim();
+  const body = String((r && r.content) || "").trim();
+  const text = title && body ? (title + "\n" + body) : (title || body);
+  const at = r && r.reviewAt ? new Date(r.reviewAt) : null;
+  return {
+    stars: Number(r && r.rating) || 0,
+    text: text,
+    option: String((r && r.itemName) || "").trim(),
+    date: at && !isNaN(at.getTime()) ? at.toISOString().slice(0, 10) : "",
+    at: at && !isNaN(at.getTime()) ? at.getTime() : 0,
+    photo: Array.isArray(r && r.attachments) && r.attachments.length > 0,
+    helpful: Number(r && r.helpfulTrueCount) || 0
+  };
+}
+
+/* 한 가지 방법(바로 부르기 또는 쿠팡 탭 안에서 부르기)과 한 가지 정렬로 리뷰를 모은다 */
+async function fetchReviewsOnce(pid, want, sortBy, way) {
+  const size = 50;
+  const raw = [];
+  let summary = null, total = null, err = "";
+  for (let page = 1; raw.length < want && page <= Math.ceil(want / size) + 1; page++) {
+    const url = reviewUrl(pid, page, size, sortBy);
+    const got = way === "direct" ? await reviewPageDirect(url) : await reviewPageInTab(url, pid);
+    if (!got.ok) { err = got.error || "실패"; break; }
+    const b = got.body;
+    if (!b || b.rCode !== "RET0000") { err = (b && (b.rMessage || b.rCode)) || "응답 모양이 다름"; break; }
+    const rData = b.rData || {};
+    const paging = rData.paging || {};
+    const contents = Array.isArray(paging.contents) ? paging.contents : [];
+    if (!summary && rData.ratingSummaryTotal) summary = rData.ratingSummaryTotal;
+    if (total == null && rData.reviewTotalCount != null) total = Number(rData.reviewTotalCount);
+    contents.forEach((c) => raw.push(c));
+    const tp = Number(paging.totalPage);
+    if (!contents.length || contents.length < size || (Number.isFinite(tp) && page >= tp)) break;
+    await sleep(700);
+  }
+  return { raw, summary, total, err };
+}
+
+async function coupangReviews(productId, count) {
+  const pid = String(productId || "").trim();
+  if (!/^\d{5,}$/.test(pid)) return { ok: false, error: "쿠팡 상품번호가 올바르지 않습니다." };
+  const want = Math.max(10, Math.min(300, Number(count) || 100));
+  const cool = coupangCooling();
+  if (cool) {
+    return { ok: false, blocked: true,
+      error: "쿠팡이 접속을 잠시 막아두었습니다. " + cool + "초쯤 뒤에 다시 시도해주세요." };
+  }
+
+  /* 쿠팡 탭이 열려 있으면 그 안에서 먼저 부른다. 참고한 확장프로그램이 쓰는 방식이라 가장 확실하다.
+     빈 목록이 오면 실패로 보고 다음 방법으로 넘어간다. 예전에는 빈 목록을 그대로 결과로 써서 0개가 나왔다. */
+  let hasTab = false;
+  try {
+    const open = await chrome.tabs.query({ url: ["*://www.coupang.com/*"] });
+    hasTab = (open || []).some((t) => t && t.id != null && !/login/i.test(t.url || ""));
+  } catch (e) { hasTab = false; }
+  const ways = hasTab ? ["tab", "direct"] : ["direct", "tab"];
+  const attempts = [];
+  REVIEW_SORTS.forEach((sortBy) => ways.forEach((way) => attempts.push({ sortBy, way })));
+
+  const log = [];
+  for (let i = 0; i < attempts.length; i++) {
+    const a = attempts[i];
+    const got = await fetchReviewsOnce(pid, want, a.sortBy, a.way);
+    log.push((a.way === "tab" ? "탭" : "바로") + "/" + a.sortBy + " " + got.raw.length + "개" + (got.err ? "(" + got.err + ")" : ""));
+
+    if (!got.raw.length) {
+      /* 쿠팡이 전체 리뷰 수를 0 이라고 말하면 정말 리뷰가 없는 상품이다. 더 시도하지 않는다. */
+      const count0 = got.total === 0 || (got.summary && Number(got.summary.ratingCount) === 0);
+      if (count0 && !got.err) {
+        return { ok: true, data: { productId: pid, reviews: [], read: 0, total: 0, average: null,
+          distribution: {}, sortUsed: a.sortBy, way: a.way, tried: log.join(" · "), empty: true } };
+      }
+      continue;
+    }
+
+    const list = got.raw.map(mapReview).filter((x) => x.text);
+    list.sort((x, y) => y.at - x.at);
+    const reviews = list.slice(0, want);
+    const summary = got.summary;
+    const dist = {};
+    ((summary && summary.ratingSummaries) || []).forEach((row) => {
+      if (row && row.rating != null) dist[row.rating] = Number(row.percentage) || 0;
+    });
+    return { ok: true, data: {
+      productId: pid,
+      reviews: reviews,
+      read: reviews.length,
+      total: got.total != null ? got.total : (summary && summary.ratingCount) || null,
+      average: summary && summary.ratingAverage != null ? Number(summary.ratingAverage) : null,
+      distribution: dist,
+      sortUsed: a.sortBy,
+      way: a.way,
+      tried: log.join(" · ")
+    } };
+  }
+
+  return { ok: false, error: "쿠팡 리뷰를 받지 못했습니다. (" + log.join(" · ") + ")" };
+}
+
+/* =====================================================================
+   쿠팡 화면에서 누르는 리뷰 분석
+
+   리뷰는 여기서 받는다. 문장으로 정리하는 일은 소싱 프로 화면만 할 수 있다.
+   그래서 열려 있는 소싱 프로 탭에 리뷰를 넘겨 정리를 부탁하고, 답을 쿠팡 화면으로 돌려준다.
+   소싱 프로가 안 열려 있으면 숫자와 리뷰 원문만 돌려준다.
+   ===================================================================== */
+const INSIGHT_TTL = 15 * 60 * 1000;
+const insightCache = new Map();
+const APP_URLS = [
+  "https://claude.ai/*", "https://*.claude.ai/*", "https://*.claudeusercontent.com/*",
+  "https://*.claude.site/*", "https://*.artifacts.claude.com/*",
+  "http://localhost/*", "http://127.0.0.1/*"
+];
+
+async function appTabsInOrder() {
+  const patterns = APP_URLS.slice();
+  try {
+    const reg = await chrome.scripting.getRegisteredContentScripts();
+    (reg || []).forEach((sc) => {
+      if (String(sc.id || "").indexOf("sp-bridge-") === 0) (sc.matches || []).forEach((m) => patterns.push(m));
+    });
+  } catch (e) { /* 따로 연결한 주소가 없으면 기본 주소만 본다 */ }
+  let list = [];
+  try { list = await chrome.tabs.query({ url: patterns }); } catch (e) { list = []; }
+  await recallTabs();
+  list = (list || []).filter((t) => t && t.id != null);
+  list.sort((a, b) => (b.id === appTabId ? 1 : 0) - (a.id === appTabId ? 1 : 0));
+  return list.slice(0, 6);
+}
+
+function askAppTab(tabId, payload) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => { if (!settled) { settled = true; resolve(null); } }, 100000);
+    try {
+      chrome.tabs.sendMessage(tabId, payload, (r) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (chrome.runtime.lastError) return resolve(null);
+        resolve(r || null);
+      });
+    } catch (e) {
+      settled = true;
+      clearTimeout(timer);
+      resolve(null);
+    }
+  });
+}
+
+async function reviewInsightFromPage(productId, name, force) {
+  const pid = String(productId || "").trim();
+  const hit = insightCache.get(pid);
+  if (!force && hit && Date.now() - hit.t < INSIGHT_TTL) return hit.res;
+
+  const rv = await coupangReviews(pid, 100);
+  if (!rv.ok) return rv;
+  const d = rv.data || {};
+  const reviews = d.reviews || [];
+  if (!reviews.length) {
+    return { ok: false, error: d.empty
+      ? "이 상품에는 아직 리뷰가 없습니다."
+      : "리뷰를 한 개도 받지 못했습니다. (" + (d.tried || "") + ")" };
+  }
+  const slim = (r) => ({ stars: r.stars, text: String(r.text || "").slice(0, 300), option: r.option, date: r.date });
+
+  const lows = reviews.filter((r) => r.stars && r.stars <= 3).slice(0, 5).map(slim);
+  const highs = reviews.filter((r) => r.stars >= 5 && String(r.text || "").length >= 20)
+    .slice().sort((a, b) => String(b.text).length - String(a.text).length).slice(0, 3).map(slim);
+
+  let insight = null;
+  let noApp = true;
+  let appError = "";
+  if (reviews.length) {
+    const tabs = await appTabsInOrder();
+    const payload = {
+      type: "spAnalyze",
+      name: String(name || "").slice(0, 120),
+      reviews: reviews.map((r) => ({ stars: r.stars, text: String(r.text || "").slice(0, 400), option: r.option }))
+    };
+    for (let i = 0; i < tabs.length; i++) {
+      const r = await askAppTab(tabs[i].id, payload);
+      if (!r) continue;
+      noApp = false;
+      if (r.ok && r.data) { insight = r.data; break; }
+      appError = r.error || "";
+    }
+  }
+
+  const res = { ok: true, data: {
+    productId: pid,
+    read: reviews.length,
+    total: d.total,
+    average: d.average,
+    distribution: d.distribution || {},
+    lowCount: reviews.filter((r) => r.stars && r.stars <= 3).length,
+    photoCount: reviews.filter((r) => r.photo).length,
+    lows: lows,
+    highs: highs,
+    insight: insight,
+    noApp: noApp,
+    appError: appError
+  } };
+  if (insight) insightCache.set(pid, { t: Date.now(), res: res });
+  return res;
+}
+
+/* =====================================================================
+   1688 상품 화면 — 사진 받기, 상품 정보, 옵션 정보
+
+   1688 상세 화면은 필요한 값을 전부 페이지 안 데이터(window.context)에 담아 둔다.
+   화면 글자를 긁지 않고 그 데이터를 그대로 읽는다. 1688 이 한국어 번역을 켜 두면 옵션 이름도 한국어로 온다.
+   이 데이터는 페이지 쪽 세계에만 있어서, 콘텐츠 스크립트가 아니라 MAIN 세계에 넣어 읽는다.
+   ===================================================================== */
+function read1688InPage() {
+  try {
+    var ctx = window.context && window.context.result;
+    if (!ctx) return { ok: false, error: "NO_CONTEXT" };
+    var D = ctx.data || {};
+    var m = (ctx.global && ctx.global.globalData && ctx.global.globalData.model) || {};
+    var od = m.offerDetail || {}, tm = m.tradeModel || {}, dd = m.detailDescription || {};
+    var fields = function (n) { return (D[n] && D[n].fields) || {}; };
+
+    var abs = function (u) {
+      u = String(u || "").trim();
+      if (!u) return "";
+      if (u.indexOf("//") === 0) u = "https:" + u;
+      if (!/^https?:/i.test(u)) u = "https://cbu01.alicdn.com/" + u.replace(/^\//, "");
+      return u.replace(/^http:/i, "https:");
+    };
+    /* 작은 그림 꼬리(_220x220.jpg, .310x310.jpg, _.webp)를 떼어 원본 크기로 받는다 */
+    var big = function (u) {
+      return abs(u)
+        .replace(/(\.(?:jpg|jpeg|png|webp|gif))_[^/]*$/i, "$1")
+        .replace(/\.\d+x\d+(\.(?:jpg|jpeg|png|webp))$/i, "$1");
+    };
+    var uniq = function (list) {
+      var seen = {}, out = [];
+      list.forEach(function (u) { if (u && !seen[u]) { seen[u] = 1; out.push(u); } });
+      return out;
+    };
+
+    var mainImages = uniq((od.imageList || []).map(function (x) {
+      return big(x && (x.fullPathImageURI || x.imageURI));
+    }));
+    if (!mainImages.length) {
+      var g = fields("gallery");
+      mainImages = uniq((g.offerImgList || g.mainImage || []).map(big));
+    }
+
+    var options = (od.skuProps || []).map(function (p) {
+      return {
+        prop: String(p.prop || "옵션"),
+        values: (p.value || []).map(function (v) {
+          return { name: String(v.name || ""), image: v.imageUrl ? big(v.imageUrl) : "" };
+        })
+      };
+    });
+
+    var pws = dd.pieceWeightScale || {};
+    var packRows = Array.isArray(pws.pieceWeightScaleInfo) ? pws.pieceWeightScaleInfo : [];
+    var packById = {};
+    packRows.forEach(function (r) { if (r && r.skuId != null) packById[String(r.skuId)] = r; });
+
+    var skus = (tm.skuMap || []).map(function (k) {
+      var pk = packById[String(k.skuId)] || null;
+      return {
+        spec: String(k.specAttrs || "").replace(/&gt;/g, " / "),
+        price: k.discountPrice || k.price || "",
+        stock: k.canBookCount != null ? Number(k.canBookCount) : null,
+        sold: k.saleCount != null ? Number(k.saleCount) : null,
+        skuId: k.skuId,
+        length: pk ? pk.length : null, width: pk ? pk.width : null, height: pk ? pk.height : null,
+        weight: pk ? pk.weight : null
+      };
+    });
+
+    var attrs = (od.featureAttributes || []).map(function (a) {
+      var v = a.value != null && a.value !== "" ? a.value : (a.values || []).join(", ");
+      return { name: String(a.name || ""), value: String(v || "") };
+    }).filter(function (a) { return a.name && a.value; });
+
+    var html = (window.offer_details && window.offer_details.content) || "";
+    var descImages = uniq((html.match(/https?:\/\/[^"'\s)<>]+?\.(?:jpg|jpeg|png|webp|gif)/gi) || [])
+      .concat((html.match(/\/\/[^"'\s)<>]+?alicdn\.com[^"'\s)<>]+?\.(?:jpg|jpeg|png|webp|gif)/gi) || []))
+      .map(big));
+    var descText = html.replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
+
+    var t = fields("productTitle");
+    var shop = t.shopInfo || {};
+    var vid = od.wirelessVideo || {};
+    var vurls = vid.videoUrls || {};
+
+    return { ok: true, data: {
+      offerId: String(od.offerId || tm.offerId || ""),
+      url: String(location.href).split("?")[0],
+      title: String(od.subject || t.title || document.title || "").trim(),
+      category: String(od.leafCategoryName || ""),
+      unit: String(tm.unit || t.unit || ""),
+      moq: tm.beginAmount != null ? Number(tm.beginAmount) : null,
+      minPrice: tm.minPrice || "",
+      maxPrice: tm.maxPrice || "",
+      /* 옵션마다 가격이 다른 상품은 currentPrices 가 수량 구간이 아니라 최저·최고가라 구간으로 쓰지 않는다 */
+      tiers: (tm.offerPriceModel && tm.offerPriceModel.priceDisplayType === "skuPrice")
+        ? []
+        : ((tm.offerPriceModel && tm.offerPriceModel.currentPrices) || []).map(function (x) {
+            return { from: x.beginAmount, price: x.price };
+          }),
+      saleCount: tm.saleCount != null ? Number(tm.saleCount) : (t.saleNum || null),
+      shop: String(shop.companyName || shop.shopName || shop.name || shop.sellerName || ""),
+      mainImages: mainImages,
+      options: options,
+      skus: skus,
+      packColumns: (pws.columnList || []).map(function (c) { return { name: c.name, label: c.label }; }),
+      packRows: packRows,
+      attrs: attrs,
+      descImages: descImages,
+      descText: descText,
+      descUrl: abs(od.detailUrl || (fields("description").detailUrl) || ""),
+      video: abs(vurls.android || vurls.ios || ""),
+      videoCover: abs(vid.coverUrl || "")
+    } };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || String(e) };
+  }
+}
+
+async function offer1688Read(tabId) {
+  if (tabId == null) return { ok: false, error: "1688 탭을 찾지 못했습니다." };
+  let out = null;
+  for (let i = 0; i < 6; i++) {
+    try {
+      const r = await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: read1688InPage });
+      out = r && r[0] ? r[0].result : null;
+    } catch (e) {
+      out = { ok: false, error: "INJECT" };
+    }
+    if (out && out.ok) break;
+    await sleep(900);
+  }
+  if (!out || !out.ok) {
+    return { ok: false, error: out && out.error === "NO_CONTEXT"
+      ? "이 화면에서 1688 상품 데이터를 찾지 못했습니다. 상품 상세 화면인지 확인하고 새로고침해주세요."
+      : "1688 상품 정보를 읽지 못했습니다. (" + ((out && out.error) || "알 수 없음") + ")" };
+  }
+
+  /* 상세 설명은 나중에 불러오는 경우가 있다. 페이지에 아직 없으면 설명 주소를 직접 받아 사진만 뽑는다. */
+  const d = out.data;
+  if (!d.descImages.length && d.descUrl) {
+    try {
+      const res = await fetch(d.descUrl, { credentials: "include" });
+      const text = await res.text();
+      const found = (text.match(/(?:https?:)?\/\/[^"'\s)<>\\]+?\.(?:jpg|jpeg|png|webp|gif)/gi) || [])
+        .map((u) => (u.indexOf("//") === 0 ? "https:" + u : u).replace(/^http:/i, "https:"))
+        .map((u) => u.replace(/(\.(?:jpg|jpeg|png|webp|gif))_[^/]*$/i, "$1"));
+      d.descImages = Array.from(new Set(found));
+      if (!d.descText) {
+        d.descText = text.replace(/\\u003c/gi, "<").replace(/<[^>]+>/g, " ").replace(/\\[nrt]/g, " ")
+          .replace(/\s+/g, " ").trim().slice(0, 3000);
+      }
+    } catch (e) { /* 설명을 못 받아도 나머지는 쓴다 */ }
+  }
+  return { ok: true, data: d };
+}
+
+function safeName(t, max) {
+  return String(t || "").replace(/[\\/:*?"<>|\r\n\t]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 40) || "상품";
+}
+function extOf(u, fallback) {
+  const m = String(u || "").split("?")[0].match(/\.(jpg|jpeg|png|webp|gif|mp4)$/i);
+  return m ? m[1].toLowerCase() : (fallback || "jpg");
+}
+function textDataUrl(text, mime) {
+  return "data:" + (mime || "text/plain") + ";charset=utf-8;base64," + btoa(unescape(encodeURIComponent(text)));
+}
+function downloadOne(url, filename) {
+  return new Promise((resolve) => {
+    try {
+      chrome.downloads.download({ url: url, filename: filename, saveAs: false, conflictAction: "uniquify" }, (id) => {
+        if (chrome.runtime.lastError || id == null) return resolve(false);
+        resolve(true);
+      });
+    } catch (e) { resolve(false); }
+  });
+}
+
+/* kinds: main, option, desc, video, info */
+async function offer1688Download(data, kinds, infoText, optionCsv) {
+  const d = data || {};
+  const k = kinds || {};
+  const folder = "1688/" + safeName((d.offerId ? d.offerId + "_" : "") + (d.title || ""), 50);
+  const jobs = [];
+  const pad = (n) => (n < 10 ? "0" + n : String(n));
+
+  if (k.main) (d.mainImages || []).forEach((u, i) => jobs.push({ url: u, name: "대표_" + pad(i + 1) + "." + extOf(u) }));
+  if (k.option) {
+    let n = 0;
+    (d.options || []).forEach((p) => (p.values || []).forEach((v) => {
+      if (!v.image) return;
+      n += 1;
+      jobs.push({ url: v.image, name: "옵션_" + pad(n) + "_" + safeName(v.name, 30) + "." + extOf(v.image) });
+    }));
+  }
+  if (k.desc) (d.descImages || []).forEach((u, i) => jobs.push({ url: u, name: "상세_" + pad(i + 1) + "." + extOf(u) }));
+  if (k.video && d.video) jobs.push({ url: d.video, name: "영상." + extOf(d.video, "mp4") });
+  if (k.info && infoText) jobs.push({ url: textDataUrl(infoText), name: "상품정보.txt" });
+  if (k.info && optionCsv) jobs.push({ url: textDataUrl("﻿" + optionCsv, "text/csv"), name: "옵션.csv" });
+
+  let ok = 0, fail = 0;
+  for (let i = 0; i < jobs.length; i++) {
+    const done = await downloadOne(jobs[i].url, folder + "/" + jobs[i].name);
+    if (done) ok++; else fail++;
+    await sleep(160);
+  }
+  return { ok: ok > 0, data: { ok: ok, fail: fail, total: jobs.length, folder: folder },
+           error: ok ? "" : "받은 파일이 없습니다." };
+}
+
+/* =====================================================================
+   쿠팡 윙 — 최근 28일 판매량과 조회수
+
+   윙은 판매자 본인이 들어가는 곳이라, 남의 상품이라도 28일 실적을 알려준다.
+   추정이 아니라 쿠팡이 주는 값이다. 대신 로그인된 윙 탭이 하나 열려 있어야 한다.
+   부르는 일은 그 윙 탭 안에서 시킨다. 그래야 로그인 상태가 그대로 쓰인다.
+   ===================================================================== */
+const WING_URL = "https://wing.coupang.com/";
+const WING_TTL_MS = 15 * 60 * 1000;   /* 같은 상품은 15분간 다시 묻지 않는다 */
+const WING_GAP_MS = 320;              /* 연달아 부를 때 사이 간격 */
+const wingCache = new Map();
+const wingFlight = new Map();
+
+async function wingTab() {
+  let tabs = [];
+  try { tabs = await chrome.tabs.query({ url: "*://wing.coupang.com/*" }); } catch (e) { tabs = []; }
+  return (tabs || [])[0] || null;
+}
+
+/* 윙 탭이 없으면 뒤에 조용히 하나 만든다. 화면은 뜨지 않는다.
+   한 번 만들면 그대로 두고 계속 쓴다. 상품마다 새로 열지 않는다. */
+let wingHelperTab = null;
+
+async function ensureWingTab() {
+  if (wingHelperTab != null) {
+    try {
+      const t = await chrome.tabs.get(wingHelperTab);
+      if (t && /wing\.coupang\.com/i.test(t.url || "")) return t;
+    } catch (e) { /* 닫혔으면 다시 만든다 */ }
+    wingHelperTab = null;
+  }
+  try {
+    const tab = await chrome.tabs.create({ url: WING_URL, active: false, pinned: true });
+    wingHelperTab = tab.id;
+    await waitForLoad(tab.id);
+    await sleep(1200);
+    const now = await chrome.tabs.get(tab.id);
+    /* 로그인 화면으로 넘어갔으면 값을 받을 수 없다 */
+    if (!now || /login|signin/i.test(now.url || "")) return null;
+    return now;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function closeWingTab() {
+  if (wingHelperTab == null) return;
+  const id = wingHelperTab;
+  wingHelperTab = null;
+  try { await chrome.tabs.remove(id); } catch (e) { /* 이미 닫힘 */ }
+}
+
+async function wingStatus() {
+  /* 탭이 있는지보다 중요한 건 로그인 쿠키가 살아 있는지다.
+     쿠키만 있으면 탭 없이도 값을 받아온다. */
+  let signedIn = false;
+  try {
+    const names = ["XSRF-TOKEN", "sid", "AccessToken", "wing_sid"];
+    for (let i = 0; i < names.length; i++) {
+      const c = await chrome.cookies.get({ url: "https://wing.coupang.com/", name: names[i] });
+      if (c && c.value && c.value.length > 6) { signedIn = true; break; }
+    }
+  } catch (e) { signedIn = false; }
+
+  const tab = await wingTab();
+  return { ok: true, data: {
+    signedIn: signedIn,
+    open: !!tab,
+    tabId: tab ? tab.id : null,
+    url: tab ? tab.url : ""
+  } };
+}
+
+async function wingOpen() {
+  const tab = await wingTab();
+  if (tab) {
+    try { await chrome.tabs.update(tab.id, { active: true }); } catch (e) {}
+    return { ok: true, data: { open: true, made: false } };
+  }
+  try {
+    const made = await chrome.tabs.create({ url: WING_URL, active: true });
+    return { ok: true, data: { open: true, made: true, tabId: made.id } };
+  } catch (e) {
+    return { ok: false, error: "윙을 열지 못했습니다." };
+  }
+}
+
+/* 윙 탭 안에서 실행된다. 화면을 건드리지 않고 값만 물어본다. */
+async function askWing(pid) {
+  try {
+    const raw = (document.cookie.split("; ").find((c) => c.indexOf("XSRF-TOKEN=") === 0) || "");
+    const token = raw ? decodeURIComponent(raw.split("=")[1] || "") : "";
+    const head = { "accept": "application/json, text/plain, */*", "content-type": "application/json" };
+    if (token) head["x-xsrf-token"] = token;
+
+    const res = await fetch("https://wing.coupang.com/tenants/seller-web/pre-matching/search", {
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
+      headers: head,
+      body: JSON.stringify({
+        keyword: String(pid),
+        excludedProductIds: [],
+        searchPage: 0,
+        searchOrder: "DEFAULT",
+        sortType: "DEFAULT"
+      })
+    });
+    if (res.status === 401 || res.status === 403) return { ok: false, error: "LOGIN" };
+    if (!res.ok) return { ok: false, error: "HTTP_" + res.status };
+
+    const body = await res.json();
+    const list = Array.isArray(body && body.result) ? body.result : [];
+    const hit = list.filter(function (e) { return String(e && e.productId) === String(pid); })[0] || null;
+    if (!hit) return { ok: true, data: { sold: null, views: null, found: false } };
+    return {
+      ok: true,
+      data: {
+        sold: hit.salesLast28d == null ? null : Number(hit.salesLast28d),
+        views: hit.pvLast28Day == null ? null : Number(hit.pvLast28Day),
+        found: true
+      }
+    };
+  } catch (err) {
+    return { ok: false, error: (err && err.message) || String(err) };
+  }
+}
+
+/* 윙 탭을 열지 않고 여기서 바로 물어본다.
+
+   이 서비스워커는 윙 주소에 대한 권한을 갖고 있어서, 브라우저를 거치지 않고
+   로그인 쿠키를 실어 부를 수 있다. 화면이 필요 없으니 탭도 창도 뜨지 않는다.
+   윙에 로그인만 되어 있으면 된다. 접속해 있을 필요는 없다. */
+async function askWingDirect(pid) {
+  let token = "";
+  try {
+    const c = await chrome.cookies.get({ url: "https://wing.coupang.com/", name: "XSRF-TOKEN" });
+    if (c && c.value) token = decodeURIComponent(c.value);
+  } catch (e) { /* 토큰이 없어도 한 번 불러본다 */ }
+
+  const head = { "accept": "application/json, text/plain, */*", "content-type": "application/json" };
+  if (token) head["x-xsrf-token"] = token;
+
+  let res = null;
+  try {
+    res = await fetch("https://wing.coupang.com/tenants/seller-web/pre-matching/search", {
+      method: "POST",
+      credentials: "include",
+      headers: head,
+      body: JSON.stringify({
+        keyword: String(pid),
+        excludedProductIds: [],
+        searchPage: 0,
+        searchOrder: "DEFAULT",
+        sortType: "DEFAULT"
+      })
+    });
+  } catch (e) {
+    return { ok: false, error: "NET" };
+  }
+  if (res.status === 401 || res.status === 403) return { ok: false, error: "LOGIN" };
+  if (!res.ok) return { ok: false, error: "HTTP_" + res.status };
+
+  let body = null;
+  try { body = await res.json(); } catch (e) { return { ok: false, error: "PARSE" }; }
+  const list = Array.isArray(body && body.result) ? body.result : [];
+  const found = list.filter((e) => String(e && e.productId) === String(pid))[0] || null;
+  if (!found) return { ok: true, data: { sold: null, views: null, found: false } };
+  return {
+    ok: true,
+    data: {
+      sold: found.salesLast28d == null ? null : Number(found.salesLast28d),
+      views: found.pvLast28Day == null ? null : Number(found.pvLast28Day),
+      found: true
+    }
+  };
+}
+
+async function wing28(productId) {
+  const pid = String(productId || "").trim();
+  if (!/^\d{5,}$/.test(pid)) return { ok: false, error: "상품번호가 올바르지 않습니다." };
+
+  const now = Date.now();
+  const hit = wingCache.get(pid);
+  if (hit && now - hit.t < WING_TTL_MS) return hit.res;
+  if (wingFlight.has(pid)) return wingFlight.get(pid);
+
+  const job = (async () => {
+    try {
+      /* 1) 탭 없이 바로 물어본다. 이게 되면 화면이 하나도 안 뜬다. */
+      const direct = await askWingDirect(pid);
+      if (direct.ok) {
+        const res = { ok: true, data: direct.data, how: "direct" };
+        wingCache.set(pid, { t: Date.now(), res: res });
+        return res;
+      }
+      if (direct.error === "LOGIN") {
+        return { ok: false, needsLogin: true,
+          error: "쿠팡 윙에 로그인되어 있지 않습니다. 윙에 한 번 로그인해주세요." };
+      }
+
+      /* 2) 바로 묻기가 막히면, 윙 탭 안에서 대신 물어본다.
+            열린 윙 탭이 없으면 우리가 뒤에 하나 만든다.
+            이 탭은 화면을 그릴 필요가 없다. 묻고 답만 받으면 되므로
+            배경 탭으로 열어도 잘 돈다. 사람 눈에는 아무것도 안 보인다. */
+      let tab = await wingTab();
+      if (!tab) tab = await ensureWingTab();
+      if (!tab) {
+        return { ok: false, needsLogin: true,
+          error: "쿠팡 윙에서 28일 실적을 받지 못했습니다. 윙에 한 번 로그인해주세요." };
+      }
+
+      let out = null;
+      try {
+        const r = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: askWing, args: [pid] });
+        out = r && r[0] ? r[0].result : null;
+      } catch (e) {
+        return { ok: false, error: "윙 탭에 접근하지 못했습니다." };
+      }
+      if (!out) return { ok: false, error: "윙이 답하지 않았습니다." };
+      if (!out.ok) {
+        if (out.error === "LOGIN") return { ok: false, needsLogin: true, error: "윙에 로그인되어 있지 않습니다." };
+        return { ok: false, error: "윙에서 값을 받지 못했습니다. (" + out.error + ")" };
+      }
+      const res = { ok: true, data: out.data };
+      wingCache.set(pid, { t: Date.now(), res: res });
+      return res;
+    } finally {
+      wingFlight.delete(pid);
+    }
+  })();
+
+  wingFlight.set(pid, job);
+  return job;
+}
+
+/* 여러 상품을 차례로 묻는다. 한꺼번에 몰아 부르지 않는다. */
+async function wing28Batch(ids) {
+  const list = (ids || []).map((v) => String(v || "").trim()).filter((v) => /^\d{5,}$/.test(v));
+  const out = {};
+  let needsWing = false, needsLogin = false;
+  for (let i = 0; i < list.length; i++) {
+    const r = await wing28(list[i]);
+    if (r.ok && r.data) out[list[i]] = r.data;
+    else {
+      if (r.needsWing) { needsWing = true; break; }
+      if (r.needsLogin) { needsLogin = true; break; }
+    }
+    if (i < list.length - 1) await sleep(WING_GAP_MS);
+  }
+  return { ok: !needsWing && !needsLogin, needsWing, needsLogin, data: { stats: out, read: Object.keys(out).length },
+           error: needsWing ? "쿠팡 윙 탭이 없습니다." : (needsLogin ? "윙에 로그인되어 있지 않습니다." : "") };
+}
+
+/* 쿠팡 화면에 값을 덧씌울지 여부 */
+async function overlayPref(on) {
+  if (on === undefined || on === null) {
+    const got = await chrome.storage.local.get("spOverlay");
+    return { ok: true, data: { on: got.spOverlay !== false } };
+  }
+  await chrome.storage.local.set({ spOverlay: !!on });
+  return { ok: true, data: { on: !!on } };
 }
 
 /* =====================================================================
@@ -450,6 +2094,131 @@ async function coupangTop(keyword, limit, withImages) {
 /* 1688 첫 화면의 검색창에 이미지 검색 버튼이 있고, 붙여넣기로도 검색이 된다.
    탭은 항상 하나만 연다. 여러 개를 열면 예전 검색 결과를 읽어 엉뚱한 상품이 들어온다. */
 const IMAGE_SEARCH_URL = "https://www.1688.com/";
+const LOGIN_1688_URL = "https://login.1688.com/member/signin.htm";
+
+/* 요청을 보낸 소싱 프로 탭과, 우리가 연 1688 로그인 탭 */
+let appTabId = null;
+let loginTabId = null;
+async function rememberTabs() {
+  try { await chrome.storage.session.set({ "sp.appTab": appTabId, "sp.loginTab": loginTabId }); } catch (e) {}
+}
+async function recallTabs() {
+  if (appTabId != null) return;
+  try {
+    const o = await chrome.storage.session.get(["sp.appTab", "sp.loginTab"]);
+    if (o["sp.appTab"] != null) appTabId = o["sp.appTab"];
+    if (o["sp.loginTab"] != null) loginTabId = o["sp.loginTab"];
+  } catch (e) {}
+}
+
+/* 일이 끝나면 보던 화면으로 되돌려 준다. 1688 탭에 남겨두지 않는다. */
+async function backToApp(closeLogin) {
+  await recallTabs();
+  if (closeLogin && loginTabId != null) {
+    try { await chrome.tabs.remove(loginTabId); } catch (e) { /* 이미 닫힘 */ }
+    loginTabId = null;
+    await rememberTabs();
+  }
+  if (appTabId == null) return { ok: false, error: "돌아갈 소싱 프로 탭을 찾지 못했습니다." };
+  try {
+    const tab = await chrome.tabs.get(appTabId);
+    await chrome.tabs.update(appTabId, { active: true });
+    try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: "소싱 프로 탭이 닫혀 있습니다." };
+  }
+}
+
+/* =====================================================================
+   1688 로그인 확인 — 쿠키만 읽는다. 탭을 열지 않아 즉시 끝난다.
+   로그인하면 1688 이 __cn_logon__ 과 __cn_logon_id__ 를 심는다.
+   쿠키를 읽을 수 없으면 판단을 미루고(null) 수집을 막지 않는다.
+   ===================================================================== */
+function readCookies(domain) {
+  return new Promise((resolve) => {
+    try {
+      chrome.cookies.getAll({ domain: domain }, (list) => {
+        if (chrome.runtime.lastError) return resolve(null);
+        resolve(list || []);
+      });
+    } catch (e) { resolve(null); }
+  });
+}
+async function login1688Status() {
+  if (!chrome.cookies) return { ok: true, data: { loggedIn: null, who: "" } };
+  const list = await readCookies("1688.com");
+  if (!list) return { ok: true, data: { loggedIn: null, who: "" } };
+
+  const pick = (name) => {
+    const hit = list.find((c) => c.name === name && c.value);
+    return hit ? decodeURIComponent(hit.value) : "";
+  };
+  const flag = pick("__cn_logon__");
+  const nick = pick("__cn_logon_id__") || pick("_nk_") || pick("tracknick") || pick("lgc");
+  const unb = pick("unb");
+
+  if (flag === "true") return { ok: true, data: { loggedIn: true, who: nick } };
+  if (flag === "false" && !nick) return { ok: true, data: { loggedIn: false, who: "" } };
+  if (nick || unb) return { ok: true, data: { loggedIn: true, who: nick } };
+  return { ok: true, data: { loggedIn: false, who: "" } };
+}
+
+/* 일이 끝나면 1688 탭을 모두 닫는다. 소싱 프로 화면만 남긴다.
+   직접 마무리하시라고 남겨둔 탭은 keepAssisted 일 때 건드리지 않는다. */
+async function closeAll1688(keepAssisted) {
+  const keep = keepAssisted ? await getAssistedTab() : null;
+  let closed = 0;
+  let list = [];
+  try {
+    list = await chrome.tabs.query({ url: ["*://*.1688.com/*", "*://*.alibaba.com/*"] });
+  } catch (e) { list = []; }
+  for (const t of list) {
+    if (!t || t.id == null) continue;
+    if (keep != null && t.id === keep) continue;
+    try {
+      await chrome.tabs.remove(t.id);
+      closed++;
+      openedTabs.delete(t.id);
+    } catch (e) { /* 이미 닫힘 */ }
+  }
+  await saveTracked();
+  if (keep == null) {
+    assistedTabId = null;
+    try { await chrome.storage.session.remove("sp.assistedTab"); } catch (e) {}
+  }
+  if (keep == null) await parkSideWindow();
+  await backToApp(false);
+  return { ok: true, data: { closed: closed } };
+}
+
+/* 뒤에 열어둔 1688 탭을 앞으로 꺼낸다. 사용자가 직접 누를 때만 부른다. */
+async function focus1688Tab() {
+  const id = await getAssistedTab();
+  if (id == null) return { ok: false, error: "열어둔 1688 탭이 없습니다." };
+  try {
+    const tab = await chrome.tabs.get(id);
+    await chrome.tabs.update(id, { active: true });
+    try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+    return { ok: true, data: { tabId: id } };
+  } catch (e) {
+    await dropAssistedTab(false);
+    return { ok: false, error: "1688 탭이 이미 닫혔습니다." };
+  }
+}
+
+/* 로그인 화면을 눈에 보이게 띄운다. 로그인은 사용자가 직접 한다. */
+async function login1688Open() {
+  try {
+    const tab = await chrome.tabs.create({ url: LOGIN_1688_URL, active: true });
+    loginTabId = tab.id;
+    await rememberTabs();
+    try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+    return { ok: true, data: { tabId: tab.id } };
+  } catch (e) {
+    return { ok: false, error: "1688 로그인 화면을 열지 못했습니다." };
+  }
+}
 
 /* 직접 마무리하시라고 남겨둔 탭. 결과는 오직 이 탭에서만 읽는다. */
 let assistedTabId = null;
@@ -472,6 +2241,76 @@ async function dropAssistedTab(close) {
   try { await chrome.storage.session.remove("sp.assistedTab"); } catch (e) {}
 }
 
+/* 1688 첫 화면에서 사람이 하는 그대로 밟는다.
+   브라우저로 직접 확인한 순서다.
+   1) input[type=file].image-file-reader-wrapper 에 사진을 넣는다
+   2) 오른쪽에 "같은 스타일을 찾아드립니다" 패널이 뜬다
+   3) 그 안의 .copy-image-container .search-btn 을 누른다
+   4) 결과가 새 탭에서 열린다 */
+function uploadTheKnownWay(dataUrl) {
+  function toFile(u) {
+    var parts = String(u).split(",");
+    var mime = (parts[0].match(/data:([^;]+)/) || [, "image/jpeg"])[1];
+    var bin = atob(parts[1] || "");
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new File([arr], "search.jpg", { type: mime });
+  }
+  function waitFor(find, ms) {
+    return new Promise(function (done) {
+      var spent = 0;
+      (function tick() {
+        var el = null;
+        try { el = find(); } catch (e) { el = null; }
+        if (el) return done(el);
+        spent += 300;
+        if (spent >= ms) return done(null);
+        setTimeout(tick, 300);
+      })();
+    });
+  }
+
+  return (async function () {
+    var file;
+    try { file = toFile(dataUrl); }
+    catch (e) { return { ok: false, step: "file", error: "사진을 파일로 바꾸지 못했습니다." }; }
+
+    var input = await waitFor(function () {
+      return document.querySelector('input[type="file"].image-file-reader-wrapper') ||
+             document.querySelector('input[type="file"][accept*="jpg"]') ||
+             document.querySelector('input[type="file"][accept*="image"]');
+    }, 12000);
+    if (!input) return { ok: false, step: "input", error: "사진 넣을 칸을 찾지 못했습니다." };
+
+    try {
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (e) {
+      return { ok: false, step: "set", error: "사진을 칸에 넣지 못했습니다: " + (e && e.message ? e.message : e) };
+    }
+
+    var btn = await waitFor(function () {
+      return document.querySelector(".copy-image-container .search-btn");
+    }, 12000);
+    if (!btn) {
+      var up = /업로드\s*완료|上传完成/.test(document.body ? document.body.innerText || "" : "");
+      return { ok: false, step: up ? "button" : "upload",
+               error: up ? "검색 버튼을 찾지 못했습니다." : "사진이 올라가지 않았습니다." };
+    }
+
+    try {
+      btn.scrollIntoView({ block: "center" });
+      btn.click();
+    } catch (e) {
+      return { ok: false, step: "click", error: "검색 버튼을 누르지 못했습니다." };
+    }
+    return { ok: true, step: "clicked" };
+  })();
+}
+
 /* 이 함수는 1688 페이지 안에서 실행된다. 파일 칸에 넣기, 끌어다 놓기, 붙여넣기를 차례로 시도한다. */
 function putImageIntoSearch(dataUrl, opts) {
   function toFile(u) {
@@ -488,10 +2327,20 @@ function putImageIntoSearch(dataUrl, opts) {
     return dt;
   }
   function inputs() {
-    return Array.prototype.filter.call(
+    var all = Array.prototype.filter.call(
       document.querySelectorAll('input[type="file"]'),
       function (el) { return !el.disabled; }
     );
+    /* 1688 첫 화면의 이미지 검색 칸은 이 클래스를 쓴다. 확인하고 넣은 값이다. */
+    var known = [];
+    var rest = [];
+    for (var i = 0; i < all.length; i++) {
+      var cls = String(all[i].className || "");
+      var acc = String(all[i].getAttribute("accept") || "");
+      if (/image-file-reader/i.test(cls) || /jpg|jpeg|png|image/i.test(acc)) known.push(all[i]);
+      else rest.push(all[i]);
+    }
+    return known.concat(rest);
   }
   var TRIGGERS = [
     '[class*="camera"]', '[class*="Camera"]', '[class*="photo"]', '[class*="Photo"]',
@@ -744,6 +2593,21 @@ function clickPanelSearch() {
     return ok;
   }
 
+  /* 1688 화면을 직접 열어 확인한 자리부터 누른다.
+     사진을 올리면 오른쪽에 "같은 스타일을 찾아드립니다" 패널이 뜨고,
+     그 안의 .copy-image-container .search-btn 이 진짜 검색 버튼이다.
+     누르면 결과가 새 탭에서 열린다. */
+  /* 이미 결과 화면이면 다시 누르지 않는다. 누르면 탭만 늘어난다. */
+  if (/pc-image-search|imageSearch/i.test(location.href)) {
+    return { clicked: false, panels: 0, hits: 0, pressed: 0, via: "onResults" };
+  }
+
+  var known = document.querySelector(".copy-image-container .search-btn");
+  if (known) {
+    var okKnown = pressHard(known);
+    if (okKnown) return { clicked: true, panels: 1, hits: 1, pressed: 1, via: "known" };
+  }
+
   /* 반드시 이미지 검색을 가리키는 말만 쓴다.
      "검색" 하나만 넣으면 검색창 옆의 일반 검색 버튼이 걸려 빈 검색이 실행된다. */
   var LABELS = ["이미지 검색", "이미지검색", "以图搜款", "以图搜图", "图片搜索"];
@@ -848,19 +2712,39 @@ async function imageSearchOnce(entryUrl, dataUrl, want, opts) {
   chrome.tabs.onCreated.addListener(onCreated);
 
   try {
-    const tab = await openWorkTab(entryUrl, !!o.visible);
+    /* 1688 이미지 검색은 화면이 실제로 그려져야 돈다.
+       배경 탭으로 열면 크롬이 일을 늦춰 업로드와 검색이 멈춘다.
+       그렇다고 보던 탭을 갈아치우면 화면이 튄다. 그래서 옆에 창을 하나 띄운다.
+       그 창은 초점을 받지 않으므로 소싱 프로 화면은 그대로 남는다. */
+    const tab = await openSideTab(entryUrl);
     tabId = tab.id;
     const loaded = await waitForLoad(tabId);
     if (!loaded) return { ok: false, error: "1688 페이지를 열지 못했습니다." };
-    await sleep(1200);
+    /* 이미지 검색 칸은 화면이 다 뜬 뒤에 붙는다. 너무 일찍 찾으면 없다. */
+    await sleep(1800);
+
+    /* 먼저 브라우저로 직접 확인한 순서를 그대로 밟는다. 본 화면에서만 한다. */
+    let known = null;
+    try {
+      const rk = await chrome.scripting.executeScript({
+        target: { tabId }, func: uploadTheKnownWay, args: [dataUrl]
+      });
+      known = rk && rk[0] ? rk[0].result : null;
+    } catch (e) {
+      known = { ok: false, step: "inject", error: String(e && e.message ? e.message : e) };
+    }
+    if (known && known.ok) {
+      /* 눌렀으면 결과 탭이 뜬다. 아래 기다리는 자리로 바로 넘어간다. */
+      await sleep(2000);
+    }
 
     /* 이미지 검색 칸이 안쪽 프레임에 있는 경우가 있어 모든 프레임에서 시도한다 */
-    let put = null;
-    try {
+    let put = known && known.ok ? { ok: true, how: "clicked" } : null;
+    if (!put) try {
       const r = await chrome.scripting.executeScript({
         target: { tabId, allFrames: true },
         func: putImageIntoSearch,
-        args: [dataUrl, { helper: !!o.visible }]
+        args: [dataUrl, { helper: !!o.assist }]
       });
       const results = (r || []).map((x) => x && x.result).filter(Boolean);
       const good = ["clicked", "file", "file-late", "paste"];
@@ -870,22 +2754,23 @@ async function imageSearchOnce(entryUrl, dataUrl, want, opts) {
       return { ok: false, error: "이미지 검색을 시작하지 못했습니다: " + (e && e.message ? e.message : e) };
     }
     if (!put || !put.ok) {
-      return { ok: false, error: (put && put.error) || "1688 이미지 검색 칸을 찾지 못했습니다." };
+      var why = (known && known.error ? known.error + " (" + known.step + ")" : "") ||
+                (put && put.error) || "1688 이미지 검색 칸을 찾지 못했습니다.";
+      return { ok: false, error: why };
     }
     /* 자동 업로드가 안 되어 안내만 띄운 경우, 탭을 남겨 직접 올리시게 한다 */
-    if (o.visible && put.how === "manual") {
+    if (o.assist && put.how === "manual") {
       keepTab = true;
-      try { await chrome.tabs.update(tabId, { active: true }); } catch (e) {}
       await setAssistedTab(tabId);
       return {
         ok: false, assisted: true, tabId: tabId,
-        error: "1688 이미지 검색 칸이 자동으로 열리지 않아, 탭을 띄우고 사진을 올려두었습니다."
+        error: "1688 이미지 검색 칸이 자동으로 열리지 않았습니다. 1688 탭에 사진을 올려두었으니 그 탭에서 검색을 눌러주세요."
       };
     }
 
     /* 1688은 이미지 검색 버튼을 두 번 눌러야 결과가 나온다.
        결과가 빌 때마다 화면에 남아 있는 검색 버튼을 다시 눌러가며 기다린다. */
-    const deadline = Date.now() + (o.budgetMs || 45000);
+    const deadline = Date.now() + (o.budgetMs || IMG_BUDGET_MS);
     let clicks = 0;
     let diag = { panels: 0, hits: 0, pressed: 0, cards: 0 };
     let cur = tabId;
@@ -906,7 +2791,7 @@ async function imageSearchOnce(entryUrl, dataUrl, want, opts) {
     };
 
     while (Date.now() < deadline) {
-      await sleep(1500);
+      await sleep(IMG_POLL_MS);
       await adopt();
       await waitForLoad(cur);
 
@@ -944,18 +2829,21 @@ async function imageSearchOnce(entryUrl, dataUrl, want, opts) {
             };
             if (info.clicked) did = true;
           }
-          if (did) { clicks++; await sleep(3000); }
+          if (did) {
+        clicks++;
+        /* 누른 뒤에는 결과 탭이 뜰 때까지 조금 더 기다린다 */
+        await sleep(IMG_CLICK_WAIT_MS + 900);
+      }
         } catch (e) { /* 이동 중이면 다음 회차에 */ }
       }
     }
     tabId = cur;
-    if (o.visible) {
+    if (o.assist) {
       keepTab = true;
-      try { await chrome.tabs.update(tabId, { active: true }); } catch (e) {}
       await setAssistedTab(tabId);
       return {
         ok: false, assisted: true, tabId: tabId,
-        error: "1688 탭을 열어두었습니다. 그 탭에서 이미지 검색을 눌러 상품 목록을 띄운 뒤 결과를 가져오세요. " +
+        error: "1688 탭을 뒤에 열어두었습니다. 그 탭에서 이미지 검색을 눌러 상품 목록을 띄운 뒤 결과를 가져오세요. " +
           "(검색 패널 " + diag.panels + "곳, 버튼 후보 " + diag.hits + "개, 누름 " + diag.pressed + "회, 상품 카드 " + diag.cards + "개)"
       };
     }
@@ -1000,8 +2888,9 @@ function collect1688Offers(want) {
   function abs(u) { try { return new URL(u, location.href).href; } catch (e) { return String(u || ""); } }
   function offerIdOf(h) {
     h = String(h || "");
-    var m = h.match(/\/offer\/(\d{6,})/) || h.match(/[?&]offer_?id=(\d{6,})/i) ||
-            h.match(/[?&]id=(\d{9,})/i) || h.match(/(\d{11,})/);
+    /* 상품 번호는 offer/ 뒤나 offerId= 뒤에만 있다.
+       예전에는 주소 안의 아무 긴 숫자나 집어서 광고 추적 번호로 없는 주소를 만들었다. */
+    var m = h.match(/\/offer\/(\d{6,})/) || h.match(/[?&]offer_?id=(\d{6,})/i);
     return m ? m[1] : "";
   }
   function expandAli(u) {
@@ -1070,9 +2959,12 @@ function collect1688Offers(want) {
       else if (/1688\.com/i.test(abs(href))) url = abs(href);
     }
     if (!id) {
+      /* 1688 검색 결과는 카드를 감싼 칸에 상품 번호를 심어둔다.
+         예: data-offer-expose-id="1074029878506", data-renderkey="1_59_p4p_1074029878506"
+         카드에서 위로 여덟 단계까지 훑는다. */
       var probe = [card];
       var up = card.parentElement;
-      for (var g = 0; g < 4 && up; g++) { probe.push(up); up = up.parentElement; }
+      for (var g = 0; g < 8 && up; g++) { probe.push(up); up = up.parentElement; }
       probe = probe.concat(Array.prototype.slice.call(card.querySelectorAll("*")).slice(0, 200));
       for (var q = 0; q < probe.length && !id; q++) {
         var at = probe[q].attributes;
@@ -1082,8 +2974,10 @@ function collect1688Offers(want) {
           if (nm === "class" || nm === "style" || nm === "src" || nm === "srcset" || nm === "alt") continue;
           var val = String(at[r].value || "");
           var got = offerIdOf(val);
-          if (!got && /^data-|^id$|^href$/i.test(nm)) {
-            var dm = val.match(/(\d{9,})/);
+          /* 아무 긴 숫자나 상품 번호로 쓰면 없는 주소가 만들어져 404 가 난다.
+             이름이 상품 번호를 뜻하는 속성만 믿는다. */
+          if (!got && /offer|renderkey|expose|itemid/i.test(nm)) {
+            var dm = val.match(/(?:^|[^0-9])(\d{9,13})(?![0-9])/);
             if (dm) got = dm[1];
           }
           if (got) { id = got; break; }
@@ -1093,7 +2987,22 @@ function collect1688Offers(want) {
     var key = id || (name + "|" + price);
     if (seen.indexOf(key) >= 0) continue;
     seen.push(key);
-    if (!url && id) url = "https://detail.1688.com/offer/" + id + ".html";
+    /* 1688 상품 번호는 9~13 자리다. 실제로 열어 확인했다.
+       916184375338 은 상품 페이지가 열리고, 221938379856960 은 404 뒤 홈으로 튕긴다.
+       그보다 긴 숫자는 광고 추적 번호이지 상품 번호가 아니다. */
+    var realId = function (v) {
+      return /^\d{9,13}$/.test(String(v || "")) ? String(v) : "";
+    };
+
+    /* 링크를 정하는 순서.
+       1) 이미 표준 상품 주소면 그대로 쓴다. 가장 확실하다.
+       2) 제대로 된 상품 번호를 캐낼 수 있으면 표준 주소로 만든다.
+       3) 둘 다 안 되면 링크를 비운다. 404 로 보내는 것보다 낫다. */
+    var standard = /^https?:\/\/(detail|m)\.1688\.com\/offer\/\d{9,13}\.html/i.test(url || "");
+    if (!standard) {
+      id = realId(id) || realId(url ? offerIdOf(url) : "");
+      url = id ? "https://detail.1688.com/offer/" + id + ".html" : "";
+    }
 
     var src = "";
     var imgs = card.querySelectorAll("img");
@@ -1235,7 +3144,7 @@ async function grab1688Tab(limit, withImages) {
   }
 }
 
-async function image1688(dataUrl, limit, withImages) {
+async function image1688(dataUrl, limit, withImages, assist) {
   const want = Math.min(30, Math.max(1, limit || 20));
   if (!dataUrl || String(dataUrl).indexOf("data:") !== 0) {
     return { ok: false, error: "검색에 쓸 썸네일이 없습니다. 쿠팡 상품을 먼저 수집해주세요." };
@@ -1256,7 +3165,10 @@ async function image1688(dataUrl, limit, withImages) {
     /* 탭 하나만 열어 끝까지 밀어붙인다. 안 되면 그 탭을 그대로 남겨 직접 마무리하시게 한다. */
     let r;
     try {
-      r = await imageSearchOnce(IMAGE_SEARCH_URL, dataUrl, want, { budgetMs: 60000, visible: true });
+      const wantAssist = assist !== false;
+      r = await imageSearchOnce(IMAGE_SEARCH_URL, dataUrl, want, {
+        budgetMs: IMG_BUDGET_MS, assist: wantAssist
+      });
     } catch (e) {
       r = { ok: false, error: String(e && e.message ? e.message : e) };
     }
@@ -1280,46 +3192,51 @@ async function search1688(keyword, limit, withImages) {
   await beginJob();
   let tabId = null;
   try {
-    const tab = await openWorkTab("https://www.1688.com/", false);
+    /* 검색창에 입력하는 방식은 1688 이 기획전 화면으로 튕길 때가 있어,
+       그 화면의 상품을 엉뚱하게 긁어왔다.
+       charset=utf8 을 붙이면 주소로 넘겨도 중국어가 깨지지 않는다. 그쪽이 확실하다. */
+    const searchUrl = "https://s.1688.com/selloffer/offer_search.htm?keywords=" +
+      encodeURIComponent(kw) + "&charset=utf8";
+    const tab = await openSideTab(searchUrl);
     tabId = tab.id;
     const loaded = await waitForLoad(tabId);
-    if (!loaded) return { ok: false, error: "1688 을 열지 못했습니다." };
+    if (!loaded) return { ok: false, error: "1688 검색 화면을 열지 못했습니다." };
+    await sleep(1500);
 
-    /* 주소로 검색어를 넘기면 1688 이 옛 인코딩을 요구해 엉뚱한 목록이 나온다.
-       그래서 검색창에 직접 입력해 검색한다. */
-    let typed = null;
-    try {
-      const r = await chrome.scripting.executeScript({
-        target: { tabId }, func: typeAndSearch, args: [kw]
-      });
-      typed = r && r[0] ? r[0].result : null;
-    } catch (e) { typed = null; }
-    if (!typed || !typed.ok) {
-      return { ok: false, error: (typed && typed.error) || "1688 검색창에 입력하지 못했습니다." };
+    /* 검색 결과 화면이 맞는지 확인한다. 기획전이나 홈으로 튕겼으면 읽지 않는다. */
+    let here = "";
+    try { const t = await chrome.tabs.get(tabId); here = (t && t.url) || ""; } catch (e) { here = ""; }
+    if (!/s\.1688\.com\/selloffer\/offer_search/i.test(here)) {
+      return {
+        ok: false,
+        error: "1688 이 검색 결과 대신 다른 화면을 보여줬습니다. 잠시 뒤 다시 시도해주세요."
+      };
     }
-    await sleep(2500);
-    await waitForLoad(tabId);
 
+    /* 한국어판 1688 은 상품 카드가 링크가 아니라서 링크로 찾으면 하나도 못 읽는다.
+       그래서 이미지 검색에 쓰던 방식, 곧 "그림과 ¥가격을 함께 가진 가장 안쪽 상자" 로 읽는다. */
     let items = [];
+    let diag = null;
     const deadline = Date.now() + 25000;
     while (Date.now() < deadline) {
+      await waitForLoad(tabId);
       try {
-        await chrome.scripting.executeScript({ target: { tabId }, files: ["scrape.js"] });
-      } catch (e) { /* 이동 중이면 다음 회차에 */ }
-      const res = await new Promise((resolve) => {
-        chrome.tabs.sendMessage(tabId, { type: "search1688", limit: want }, (r) => {
-          if (chrome.runtime.lastError) return resolve(null);
-          resolve(r || null);
-        });
-      });
-      if (res && res.ok && res.data && res.data.items && res.data.items.length) {
-        items = res.data.items;
-        break;
-      }
-      await sleep(1500);
+        const t2 = await chrome.tabs.get(tabId);
+        if (!/s\.1688\.com\/selloffer\/offer_search/i.test((t2 && t2.url) || "")) break;
+      } catch (e) { break; }
+      const read = await readOffersEverywhere(tabId, want);
+      if (read.items && read.items.length) { items = read.items; break; }
+      diag = read.diag || diag;
+      await sleep(1200);
     }
     if (!items.length) {
-      return { ok: false, error: "1688 검색 결과를 읽지 못했습니다. 크롬에서 1688 에 먼저 로그인해보세요." };
+      return {
+        ok: false,
+        error: "1688 검색 결과를 읽지 못했습니다. " +
+          (diag && diag.cards ? "상품 카드 " + diag.cards + "개를 찾았으나 값을 읽지 못했습니다. "
+                              : "상품 카드를 찾지 못했습니다. ") +
+          "크롬에서 1688 에 먼저 로그인해보세요."
+      };
     }
     if (withImages && items.length) {
       const thumbs = await thumbBatch(items.map((it) => it.image), 240);
@@ -1336,16 +3253,88 @@ async function search1688(keyword, limit, withImages) {
 
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   if (!msg) return;
+  /* 어느 탭에서 온 요청인지 기억해 두었다가, 일이 끝나면 그 탭으로 되돌린다 */
+  if (sender && sender.tab && sender.tab.id != null && sender.tab.id !== loginTabId &&
+      !/coupang\.com|1688\.com|taobao\.com|tmall\.com|temu\.com|alibaba\.com/i.test(sender.tab.url || "")) {
+    appTabId = sender.tab.id;
+    rememberTabs();
+  }
+  if (msg.type === "backToApp") {
+    backToApp(!!msg.closeLogin).then(respond);
+    return true;
+  }
   if (msg.type === "search1688") {
     search1688(msg.keyword, msg.limit, msg.withImages).then(respond);
     return true;
   }
+  if (msg.type === "close1688Tabs") {
+    closeAll1688(!!msg.keepAssisted).then(respond);
+    return true;
+  }
+  if (msg.type === "focus1688Tab") {
+    focus1688Tab().then(respond);
+    return true;
+  }
+  if (msg.type === "login1688Status") {
+    login1688Status().then(respond);
+    return true;
+  }
+  if (msg.type === "login1688Open") {
+    login1688Open().then(respond);
+    return true;
+  }
   if (msg.type === "image1688") {
-    image1688(msg.dataUrl, msg.limit, msg.withImages).then(respond);
+    image1688(msg.dataUrl, msg.limit, msg.withImages, msg.assist).then(respond);
     return true;
   }
   if (msg.type === "sweepTabs") {
-    sweepTabs().then((n) => respond({ ok: true, data: { closed: n } }));
+    sweepTabs()
+      .then(async (n) => { await closeSideWindow(); await closeWingTab(); return n; })
+      .then((n) => respond({ ok: true, data: { closed: n } }));
+    return true;
+  }
+  if (msg.type === "shopLogin") {
+    shopLogin(msg.site).then(respond);
+    return true;
+  }
+  if (msg.type === "shopLoginOpen") {
+    shopLoginOpen(msg.site).then(respond);
+    return true;
+  }
+  if (msg.type === "temuTop") {
+    temuTop(msg.channel, msg.limit, msg.category, !!msg.withImages).then(respond);
+    return true;
+  }
+  if (msg.type === "temuOpen") {
+    temuOpen(msg.channel).then(respond);
+    return true;
+  }
+  if (msg.type === "taobaoTop") {
+    taobaoTop(msg.keyword, msg.limit, !!msg.withImages).then(respond);
+    return true;
+  }
+  if (msg.type === "taobaoOpen") {
+    taobaoOpen(msg.keyword).then(respond);
+    return true;
+  }
+  if (msg.type === "wing28") {
+    wing28(msg.productId).then(respond);
+    return true;
+  }
+  if (msg.type === "wing28Batch") {
+    wing28Batch(msg.ids).then(respond);
+    return true;
+  }
+  if (msg.type === "wingStatus") {
+    wingStatus().then(respond);
+    return true;
+  }
+  if (msg.type === "wingOpen") {
+    wingOpen().then(respond);
+    return true;
+  }
+  if (msg.type === "overlayPref") {
+    overlayPref(msg.on).then(respond);
     return true;
   }
   if (msg.type === "grab1688Tab") {
@@ -1375,8 +3364,90 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
     keywordTool(msg.seed, msg.debug).then(respond);
     return true;
   }
-  if (msg.type === "shopCount") {
-    shopCount(msg.keyword).then(respond);
+  if (msg.type === "partnerStatus") {
+    partnerCreds().then((c) => respond({
+      ok: true,
+      data: {
+        hasKey: !!(c && c.accessKey && c.secret),
+        left: partnerRoom()
+      }
+    }));
+    return true;
+  }
+  if (msg.type === "partnerSearch") {
+    partnerSearch(msg.keyword, msg.limit).then(respond);
+    return true;
+  }
+  if (msg.type === "searchCache") {
+    (msg.clear ? clearSearchCache() : countSearchCache()).then(respond);
+    return true;
+  }
+  if (msg.type === "readActiveCoupang") {
+    readActiveCoupang(msg.limit).then(respond);
+    return true;
+  }
+  if (msg.type === "offer1688Read") {
+    offer1688Read(msg.tabId != null ? msg.tabId : (sender && sender.tab ? sender.tab.id : null)).then(respond);
+    return true;
+  }
+  if (msg.type === "offer1688Download") {
+    offer1688Download(msg.data, msg.kinds, msg.infoText, msg.optionCsv).then(respond);
+    return true;
+  }
+  if (msg.type === "reviewInsightFromPage") {
+    reviewInsightFromPage(msg.productId, msg.name, !!msg.force).then(respond);
+    return true;
+  }
+  if (msg.type === "coupangReviews") {
+    coupangReviews(msg.productId, msg.count).then(respond);
+    return true;
+  }
+  if (msg.type === "catTree") {
+    coupangCatTree(!!msg.force).then(respond);
+    return true;
+  }
+  if (msg.type === "coupangOpenUrl") {
+    coupangOpenUrl(msg.url).then(respond);
+    return true;
+  }
+  if (msg.type === "coupangNextPage") {
+    coupangNextPage().then(respond);
+    return true;
+  }
+  if (msg.type === "openCoupangSearch") {
+    (async () => {
+      const kw = String(msg.keyword || "").trim();
+      if (!kw) return respond({ ok: false, error: "키워드가 비어 있습니다." });
+      try {
+        const url = "https://www.coupang.com/np/search?q=" + encodeURIComponent(kw) +
+          "&channel=user&listSize=36&sorter=scoreDesc";
+        const tab = await chrome.tabs.create({ url, active: true });
+        try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+        /* 이 탭을 기억해 두면, 나중에 읽기를 누를 때 곧바로 이 화면을 본다 */
+        openedCoupangTab = tab.id;
+        respond({ ok: true, data: { tabId: tab.id } });
+      } catch (e) {
+        respond({ ok: false, error: "쿠팡 검색 화면을 열지 못했습니다." });
+      }
+    })();
+    return true;
+  }
+  if (msg.type === "coupangSession") {
+    if (msg.open) {
+      coupangSession = true;
+      coupangHits = 0;
+      respond({ ok: true });
+    } else {
+      endCoupangSession().then(respond);
+    }
+    return true;
+  }
+  if (msg.type === "coupangCooldown") {
+    respond(msg.clear ? clearCoupangCooldown() : { ok: true, data: { left: coupangCooling() } });
+    return true;
+  }
+  if (msg.type === "thumbs") {
+    fetchThumbs(msg.urls, msg.size).then(respond);
     return true;
   }
   if (msg.type === "coupangTop") {

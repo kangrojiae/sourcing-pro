@@ -188,6 +188,35 @@
   }
 
   /* ---------- 현재 탭 수집 ---------- */
+  /* 1688 상품 화면이면 사진·정보·옵션 담기 창을 그 화면 위에 띄운다.
+     화면을 새로고침하지 않아 스크립트가 아직 없으면 먼저 넣고 다시 부른다. */
+  var offerBtn = document.getElementById("offerOpen");
+  function openOfferPanel() {
+    if (!currentTab) return;
+    offerBtn.disabled = true;
+    offerBtn.textContent = "여는 중";
+    var ask = function (retry) {
+      chrome.tabs.sendMessage(currentTab.id, { type: "spOfferOpen" }, function (res) {
+        if (chrome.runtime.lastError || !res || !res.ok) {
+          if (!retry) {
+            say(msg, "1688 상품 상세 화면에서 눌러주세요. 화면을 새로고침한 뒤 다시 시도해도 됩니다.", "err");
+            offerBtn.disabled = false;
+            offerBtn.textContent = "사진·정보·옵션 담기 (파일 받기)";
+            return;
+          }
+          chrome.scripting.executeScript({ target: { tabId: currentTab.id }, files: ["offer1688.js"] }, function () {
+            setTimeout(function () { ask(false); }, 300);
+          });
+          return;
+        }
+        window.close();
+      });
+    };
+    ask(true);
+  }
+  if (offerBtn) offerBtn.addEventListener("click", openOfferPanel);
+  try { document.getElementById("ver").textContent = "v" + chrome.runtime.getManifest().version; } catch (e) {}
+
   function renderGrabState() {
     var url = (currentTab && currentTab.url) || "";
     var isCoupang = /coupang\.com/i.test(url);
@@ -196,7 +225,11 @@
       dot.className = "dot on";
       siteEl.textContent = isCoupang ? "쿠팡 상품 페이지" : "1688 상품 페이지";
       grab.disabled = false;
-      say(msg, "이 페이지의 상품 정보를 읽어옵니다.");
+      var isOffer = is1688 && /\/offer\/\d+\.html/i.test(url);
+      if (offerBtn) offerBtn.hidden = !isOffer;
+      say(msg, isOffer
+        ? "사진과 옵션까지 파일로 받으려면 주황 단추를, 이름·가격만 보려면 초록 단추를 누르세요."
+        : "이 페이지의 상품 정보를 읽어옵니다.");
     } else {
       siteEl.textContent = "지원하지 않는 페이지";
       say(msg, "쿠팡 또는 1688 상품 페이지에서 눌러주세요.");
@@ -259,6 +292,47 @@
     chrome.runtime.openOptionsPage();
     window.close();
   });
+
+  /* ---------- 쿠팡 화면 표시 ---------- */
+  var ovOn = document.getElementById("ovOn");
+  var wingDot = document.getElementById("wingDot");
+  var wingSay = document.getElementById("wingSay");
+  var wingMsg = document.getElementById("wingMsg");
+
+  function refreshWing() {
+    chrome.runtime.sendMessage({ type: "wingStatus" }, function (res) {
+      if (chrome.runtime.lastError || !res || !res.ok) {
+        wingSay.textContent = "확인하지 못했습니다";
+        return;
+      }
+      var d = res.data || {};
+      var ready = d.signedIn || d.open;
+      wingDot.className = "dot" + (ready ? " on" : "");
+      wingSay.textContent = d.signedIn ? "윙 로그인됨 (탭 불필요)"
+        : (d.open ? "윙 탭 열려 있음" : "윙 로그인 필요");
+      say(wingMsg, ready
+        ? "쿠팡에서 검색하면 카드 위에 최근 28일 판매량과 매출이 뜹니다. 윙 탭을 열어둘 필요는 없습니다."
+        : "윙에 한 번 로그인해두면, 이후로는 탭을 열지 않아도 값을 가져옵니다.", ready ? "ok" : "");
+    });
+  }
+
+  if (ovOn) {
+    chrome.runtime.sendMessage({ type: "overlayPref" }, function (res) {
+      ovOn.checked = !(res && res.data && res.data.on === false);
+    });
+    ovOn.addEventListener("change", function () {
+      chrome.runtime.sendMessage({ type: "overlayPref", on: ovOn.checked }, function () {
+        say(wingMsg, ovOn.checked ? "쿠팡 화면에 표시합니다." : "표시하지 않습니다. 쿠팡 화면을 새로고침하면 딱지가 사라집니다.", "");
+      });
+    });
+  }
+  var wo = document.getElementById("wingOpen");
+  if (wo) wo.addEventListener("click", function () {
+    chrome.runtime.sendMessage({ type: "wingOpen" }, function () {
+      setTimeout(refreshWing, 600);
+    });
+  });
+  refreshWing();
 
   /* ---------- 시작 ---------- */
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
